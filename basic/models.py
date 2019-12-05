@@ -4,7 +4,6 @@ from django.contrib.auth.models import AbstractUser
 
 
 class Student(models.Model):
-    #todo FIll with attributes
     zdvId = models.IntegerField()
     name = models.CharField(max_length=50)
     email = models.EmailField()

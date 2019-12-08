@@ -1,0 +1,17 @@
+.internAnmeldung {
+    text-align: center;
+    margin-top: 5%;
+}
+.button {
+    margin: 20px;
+    background-color: lightblue;
+}
+
+.externeAnmeldung {
+    text-align: center;
+}
+
+.externeAnmeldung.inputs::placeholder {
+    color: black;
+}
+

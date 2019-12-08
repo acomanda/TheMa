@@ -1,40 +1,43 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.contrib.auth.models import AbstractUser
+from django.contrib.auth import get_user_model
 
 
 class Student(models.Model):
-    zdvId = models.IntegerField()
+    user = models.OneToOneField(User, on_delete=models.CASCADE, default=0)
+    zdvId = models.CharField(max_length=50)
     name = models.CharField(max_length=50)
     email = models.EmailField()
-    abgabetermin = models.DateField()
-    fach = models.CharField(max_length=50)
-    titel = models.CharField(max_length=50)
-    themengebiet = models.CharField(max_length=50)
-    artDerArbeit = models.CharField(max_length=50)
-    prüfungsamtBestaetigt = models.BooleanField()
-    terminEntstanden = models.BooleanField()
+    abgabetermin = models.DateField(null=True)
+    fach = models.CharField(max_length=50, null=True)
+    titel = models.CharField(max_length=50, null=True)
+    themengebiet = models.CharField(max_length=50, null=True)
+    artDerArbeit = models.CharField(max_length=50, null=True)
+    prüfungsamtBestaetigt = models.BooleanField(null= True)
+    terminEntstanden = models.BooleanField(null=True)
     # Eigentlich sollte das ein Foreign key sein, da wir aber
     # zwei verschiedene Pruefer Tabellen haben, nutzen wir IntegerField
-    betreuer1Bestaetigt = models.BooleanField()
-    betreuer2Bestaetigt = models.BooleanField()
-    pruefungsamtBestaetigtTermin = models.BooleanField()
-    betreuer1 = models.IntegerField()
-    istBetreuer1Intern = models.BooleanField()
-    betreuer2 = models.IntegerField()
-    istBetreuer2Intern = models.BooleanField()
-    drittgutachter = models.IntegerField()
-    istDrittgutachterIntern = models.BooleanField()
-    status = models.CharField(max_length=50)
-    note1 = models.IntegerField()
-    note2 = models.IntegerField()
-    note3 = models.IntegerField()
+    betreuer1Bestaetigt = models.BooleanField(null=True)
+    betreuer2Bestaetigt = models.BooleanField(null=True)
+    pruefungsamtBestaetigtTermin = models.BooleanField(null=True)
+    betreuer1 = models.IntegerField(null=True)
+    istBetreuer1Intern = models.BooleanField(null=True)
+    betreuer2 = models.IntegerField(null=True)
+    istBetreuer2Intern = models.BooleanField(null=True)
+    drittgutachter = models.IntegerField(null=True)
+    istDrittgutachterIntern = models.BooleanField(null=True)
+    status = models.CharField(max_length=50, null=True)
+    note1 = models.IntegerField(null=True)
+    note2 = models.IntegerField(null=True)
+    note3 = models.IntegerField(null=True)
 
 
 class InternerPruefer(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, default=0)
     name = models.CharField(max_length=50)
     email = models.EmailField()
-    zdvId = models.IntegerField()
+    zdvId = models.CharField(max_length=50)
 
 
 class ExternerPruefer(models.Model):
@@ -86,4 +89,22 @@ class Bevorzugt(models.Model):
 class Pruefungsamt(models.Model):
     # Verknuepfung zum Auth_User von Django
     user = models.OneToOneField(User, on_delete=models.CASCADE, default=0)
+
+class PasswordLess(object):
+    def authenticate(self, request, username, password=None, **kwargs):
+        User = get_user_model()
+        try:
+            user = User.objects.get(email=username)
+        except User.DoesNotExist:
+            return None
+        else:
+            if getattr(user, 'is_active', False):
+                return user
+        return None
+    def get_user(self, user_id):
+        User = get_user_model()
+        try:
+            return User.objects.get(pk=user_id)
+        except User.DoesNotExist:
+            return None
 

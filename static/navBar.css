@@ -1,0 +1,4 @@
+* { box-sizing: border-box; }
+body {margin: 0;}
+nav .brand-logo,
+nav ul a{color:rgb(68, 68, 68);}

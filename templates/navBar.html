@@ -1,0 +1,30 @@
+<!doctype html>
+<html>
+<head>
+    <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/css/materialize.min.css">
+    <link rel="stylesheet" href="static/navBar.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/js/materialize.min.js"></script>
+</head>
+<nav role="navigation" class="light-blue lighten-1">
+    <div class="nav-wrapper container">
+        <a id="logo-container" href="#" class="brand-logo white-text">Thesis Management</a>
+        <ul class="right hide-on-med-and-down"><li>
+            {% if user.is_authenticated %}
+                <a href="#" class="white-text">Navbar Link</a></li>
+                <li><a href="#" class="white-text">Navbar Link</a></li></ul>
+            {% endif %}
+
+        <ul id="nav-mobile" class="side-nav light-blue"><li>
+            {% if user.is_authenticated %}
+                <a href="#" class="white-text">Home</a></li>
+            <li><a href="/logout" class="white-text">Abmelden</a></li></ul>
+            {% endif %}
+        <a href="#" data-activates="nav-mobile" class="button-collapse white-text">
+            <i class="material-icons">menu</i></a></div>
+</nav>
+<script type="text/javascript">
+    $('.button-collapse').sideNav();
+</script><!-- this page is generateded by Gramateria -->

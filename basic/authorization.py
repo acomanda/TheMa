@@ -11,24 +11,20 @@ authorize_url = "https://openid.uni-mainz.de/connect/authorize"
 token_url = "https://openid.uni-mainz.de/connect/token"
 user_url = "https://openid.uni-mainz.de/connect/userinfo"
 
-def getAuthorizationURL():
-    state = generateState(30)
+def getAuthorizationURL(group, stateLength):
+    state = generateState(stateLength, group)
     return authorize_url + "?response_type=code&client_id=" \
            + client_id + "&redirect_uri=" + redirect_uri \
            + "&scope=openid+email&state=" + state + "&client_secret=" \
            + client_secret, state
 
-def generateState(length):
-    #todo code into state if user is prüfer or student
+def generateState(length, group):
     state = ""
     for i in range(length):
         state += random.choice(string.ascii_letters + string.digits)
-    if not isStateUsed(state):
-        return state
-    return generateState(length)
+    state += group
+    return state
 
-def isStateUsed(state):
-    return False
 
 def getToken(code):
     data = {'grant_type': 'authorization_code',
@@ -51,10 +47,17 @@ def getEmail(accessToken):
     r = requests.post(user_url, headers=headers)
     return r.json()['email']
 
+def getName(accessToken):
+    headers = {'Authorization': "Bearer " + accessToken}
+    r = requests.post(user_url, headers=headers)
+    return r.json()['name']
+
 def getClaims(code):
     accessToken, idToken = getToken(code)
     sub = getUserId(idToken)
     email = getEmail(accessToken)
-    print(sub)
+    # name = getName(accessToken)
     return {'sub': sub,
-            'email': email}
+            'email': email,
+            'name': "test"}
+            # 'name': name}

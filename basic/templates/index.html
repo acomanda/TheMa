@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="../static/index.css">
+    <meta charset="UTF-8">
+    {% include "navBar.html" %}
+</head>
+<body>
+    <div class="internAnmeldung">
+        <h2>Mit dem ZDV Account anmelden</h2>
+        <form method="post">{% csrf_token %}
+            <button type="submit" name="loginAs" value="student" class="button">Als Student anmelden</button>
+            <button type="submit" name="loginAs" value="pruefer" class="button">Als internen Prüfer anmelden</button>
+        </form>
+    </div>
+    <div class="externeAnmeldung">
+        <h2>Als externer Prüfer oder Prüfungsamt anmelden</h2>
+        <form method="post" class="login-form">
+            {% csrf_token %}
+            {{ error |safe}}
+            <input type="text" placeholder="E-Mail" name="email"/> <br>
+            <input type="password" placeholder="password" name="password"/> <br>
+            <button type="submit" name="loginAs" value="extern">Login</button>
+        </form>
+    </div>
+</body>
+</html>

@@ -1,0 +1,48 @@
+body {margin:0;}
+
+.navbar {
+    overflow: hidden;
+    background-color: lightblue;
+    position: relative;
+    top: 0;
+    width: 100%;
+    text-align: center;
+    display: inline-block;
+}
+
+.left{
+    display: inline-block;
+    height: 50%;
+}
+
+@media only screen and (min-width: 600px) {
+    .left {
+        float: left;
+        width: 30%;
+        display: flex;
+        height: 5%;
+    }
+
+    .left a {
+        margin: 5px;
+        height: 5%;
+    }
+
+    .center {
+        display: inline-block;
+        margin: 0 auto;
+        width: 40%;
+        text-align: left;
+    }
+
+    .right {
+        float: right;
+        width: 15%
+    }
+}
+
+.main {
+  padding: 16px;
+  margin-top: 30px;
+  height: 1500px;
+}

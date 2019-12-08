@@ -65,3 +65,6 @@ def getUser(email, zdvId, state, stateLength,  name="testname"):
         user.save()
         student.save()
         return user[0]
+
+def getUserGroup(user):
+    return "Student"

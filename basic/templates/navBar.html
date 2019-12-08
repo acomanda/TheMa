@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+
+<head>
+    <link rel="stylesheet" href="../static/navBar.css">
+</head>
+<div class="navbar">
+    <div class="left">
+        {% if user.is_authenticated %}
+        <a href="#">Home</a> <br>
+        <a href="/logout">Abmelden</a>
+        {% else%}
+            <p>&emsp;</p>
+        {% endif %}
+    </div>
+    <div class="center"><p class="title"> Thesis Management </p></div>
+    <div class="right">
+        {% if user.is_authenticated %}
+        {{ group }}
+        {% endif %}
+    </div>
+</div>
+
+

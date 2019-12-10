@@ -12,7 +12,7 @@ def index(request):
     if request.method == 'GET' and 'state' in request.GET:
         if request.session['state'] == request.GET['state']:
             claims = getClaims(request.GET['code'])
-            user = getUser(claims['email'], claims['sub'], request.GET['state'], stateLength)
+            user = getUser(claims['email'], claims['sub'], request.GET['state'], stateLength, claims['name'])
             user.backend = 'basic.auth_backend.PasswordlessAuthBackend'
             authenticate(username=claims['email'])
             login(request, user)

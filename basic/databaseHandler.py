@@ -32,7 +32,7 @@ class PasswordlessAuthBackend(ModelBackend):
             return None
 
 #todo add name when i get the right claim from the zdv
-def getUser(email, zdvId, state, stateLength,  name="testname"):
+def getUser(email, zdvId, state, stateLength,  name):
     """Checks if user is already registered and if it is, it returns the user,
     otherwise it creates the user and return it."""
     group = state[stateLength:]

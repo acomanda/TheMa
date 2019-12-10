@@ -15,7 +15,7 @@ def getAuthorizationURL(group, stateLength):
     state = generateState(stateLength, group)
     return authorize_url + "?response_type=code&client_id=" \
            + client_id + "&redirect_uri=" + redirect_uri \
-           + "&scope=openid+email&state=" + state + "&client_secret=" \
+           + "&scope=openid+email+name&state=" + state + "&client_secret=" \
            + client_secret, state
 
 def generateState(length, group):
@@ -56,8 +56,8 @@ def getClaims(code):
     accessToken, idToken = getToken(code)
     sub = getUserId(idToken)
     email = getEmail(accessToken)
-    # name = getName(accessToken)
+    name = getName(accessToken)
+    print(name)
     return {'sub': sub,
             'email': email,
-            'name': "test"}
-            # 'name': name}
+            'name': name}

@@ -14,13 +14,6 @@ class Student(models.Model):
     titel = models.CharField(max_length=50, null=True)
     themengebiet = models.CharField(max_length=50, null=True)
     artDerArbeit = models.CharField(max_length=50, null=True)
-    prüfungsamtBestaetigt = models.BooleanField(null= True)
-    terminEntstanden = models.BooleanField(null=True)
-    # Eigentlich sollte das ein Foreign key sein, da wir aber
-    # zwei verschiedene Pruefer Tabellen haben, nutzen wir IntegerField
-    betreuer1Bestaetigt = models.BooleanField(null=True)
-    betreuer2Bestaetigt = models.BooleanField(null=True)
-    pruefungsamtBestaetigtTermin = models.BooleanField(null=True)
     betreuer1 = models.IntegerField(null=True)
     istBetreuer1Intern = models.BooleanField(null=True)
     betreuer2 = models.IntegerField(null=True)
@@ -32,6 +25,12 @@ class Student(models.Model):
     note2 = models.IntegerField(null=True)
     note3 = models.IntegerField(null=True)
 
+    betreuer1Bestaetigt = models.BooleanField(null=True)
+    betreuer2Bestaetigt = models.BooleanField(null=True)
+    prüfungsamtBestaetigt = models.BooleanField(null=True)
+    terminEntstanden = models.BooleanField(null=True)
+    pruefungsamtBestaetigtTermin = models.BooleanField(null=True)
+
 
 class InternerPruefer(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, default=0)
@@ -41,7 +40,6 @@ class InternerPruefer(models.Model):
 
 
 class ExternerPruefer(models.Model):
-    # Verknuepfung zum Auth_User von Django
     user = models.OneToOneField(User, on_delete=models.CASCADE, default=0)
     name = models.CharField(max_length=50)
     email = models.EmailField()

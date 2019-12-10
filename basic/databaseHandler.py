@@ -3,6 +3,7 @@ import random
 import string
 from django.contrib.auth.backends import ModelBackend
 from django.contrib.auth.models import User
+from django.db import transaction
 
 
 def randomString(length=20):
@@ -62,9 +63,49 @@ def getUser(email, zdvId, state, stateLength,  name="testname"):
         else:
             user = User.objects.create_user(username=email, email=email, password=randomString)
         student = InternerPruefer.objects.create(zdvId=zdvId, name=name, email=email, user=user)
-        user.save()
-        student.save()
-        return user[0]
+        with transaction.atomic():
+            user.save()
+            student.save()
+        return user
 
 def getUserGroup(user):
-    return "Student"
+    results = Pruefungsamt.objects.filter(user=user)
+    if results.exists():
+        return "Prüfungsamt"
+    results = InternerPruefer.objects.filter(user=user)
+    if results.exists():
+        return "Prüfer"
+    results = ExternerPruefer.objects.filter(user=user)
+    if results.exists():
+        return "Prüfer"
+    results = Student.objects.filter(user=user)
+    if results.exists():
+        return "Student"
+    else:
+        return "adsfad"
+
+def haveRequest(user):
+    student = Student.objects.filter(user=user)
+    if student.exists() and student[0].abgabetermin is not None:
+        return True
+    return False
+
+def makeRequest(user, abgabetermin, fach, betreuer1, betreuer2, themengebiet, art, titel, betreuer1Intern, betreuer2Intern):
+    student = Student.objects.filter(user=user)[0]
+    student.abgabetermin = abgabetermin
+    student.fach = fach
+    student.betreuer1 = betreuer1
+    student.betreuer2 = betreuer2
+    student.themengebiet = themengebiet
+    student.artDerArbeit = art
+    student.titel = titel
+    student.istBetreuer1Intern = betreuer1Intern
+    student.istBetreuer2Intern = betreuer2Intern
+    student.save()
+
+def createExternPruefer(name, email, password):
+    user = User.objects.create_user(username=email, email=email, password=password)
+    pruefer = ExternerPruefer.objects.create(name=name, email=email, user=user)
+    with transaction.atomic():
+        user.save()
+        pruefer.save()

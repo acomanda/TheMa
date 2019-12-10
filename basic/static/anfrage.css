@@ -1,0 +1,26 @@
+body {
+    overflow: hidden;
+    position: relative;
+    top: 0;
+    width: 100%;
+    text-align: center;
+    display: inline-block;
+}
+
+.left {
+        float: left;
+        width: 30%;
+        display: flex;
+}
+
+.main {
+        display: inline-block;
+        margin: 0 auto;
+        width: 40%;
+        text-align: left;
+}
+
+.right {
+        float: right;
+        width: 15%
+}

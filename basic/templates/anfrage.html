@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="../static/anfrage.css">
+    <meta charset="UTF-8">
+    <title>Startseite</title>
+    {% include "navBar.html" %}
+</head>
+<body>
+    <div class = left></div>
+    <div class="main">
+        {{ error }}
+        <form method="post">{% csrf_token %}
+            <table>
+                <tr>
+                    <td>
+                        Abgabetermin:
+                    </td>
+                    <td>
+                        <input type="date" name="abgabetermin"/>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        Fach:
+                    </td>
+                    <td>
+                        <select id = "fach" name="fach">
+                            <option></option>
+                            <option value="informatik">Informatik</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        Betreuer1:
+                    </td>
+                    <td>
+                        <select id = "betreuer1" name="betreuer1">
+                            <option></option>
+                            <option value="12">Mustermann</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        Betreuer2:
+                    </td>
+                    <td>
+                        <select id = "betreuer2" name="betreuer2">
+                            <option></option>
+                            <option value="12">Musterfrau</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        Themengebiet:
+                    </td>
+                    <td>
+                        <select id = "themengebiet" name="themengebiet">
+                            <option></option>
+                            <option value="big data">Big Data</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        Art der Arbeit:
+                    </td>
+                    <td>
+                        <select id = "art" name="art">
+                            <option></option>
+                            <option value="b.sc.">B.Sc.</option>
+                            <option value="m.sc.">M.Sc.</option>
+                            <option value="dr.">Dr.</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        Titel:
+                    </td>
+                    <td>
+                        <input type="text" name="titel"/>
+                    </td>
+                </tr>
+            </table>
+            <button type="submit" name="anfrage" value="anfrage">Senden</button>
+        </form>
+    </div>
+    <div class="right"></div>
+</body>
+</html>

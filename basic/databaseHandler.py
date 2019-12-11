@@ -82,7 +82,7 @@ def getUserGroup(user):
     if results.exists():
         return "Student"
     else:
-        return "adsfad"
+        return "No Group"
 
 def haveRequest(user):
     student = Student.objects.filter(user=user)
@@ -108,7 +108,6 @@ def getRequest(user):
     student = Student.objects.filter(user=user)[0]
     result = {}
     result['titel'] = student.titel
-    print(student.betreuer1)
     if student.istBetreuer1Intern:
         betreuer1 = InternerPruefer.objects.filter(id=student.betreuer1)[0]
     else:
@@ -133,3 +132,19 @@ def createExternPruefer(name, email, password):
     with transaction.atomic():
         user.save()
         pruefer.save()
+
+def approveRequest(request, group, pruefer=None):
+    student = Student.objects.filter(id=request)[0]
+    if group == "Prüfungsamt":
+        student.prüfungsamtBestaetigt = True
+        student.save()
+    else:
+        intern = False
+        if InternerPruefer.objects.filter(user=pruefer).exists():
+            intern = True
+        if (student.betreuer1 == pruefer.id and student.istBetreuer1Intern == intern):
+            student.betreuer1Bestaetigt = True
+            student.save()
+        else:
+            student.betreuer2Bestaetigt = True
+            student.save()

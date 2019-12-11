@@ -40,8 +40,26 @@ def home(request):
         if getUserGroup(request.user) == "Student" and not haveRequest(request.user):
             return redirect('/anfrage')
         context = {}
-        context['group'] = getUserGroup(request.user)
-        return render(request, 'home.html', context)
+        group = getUserGroup(request.user)
+        context['group'] = group
+        if group == "Student":
+            content = getRequest(request.user)
+            context['titel'] = content['titel']
+            context['betreuer1'] = content['betreuer1']
+            context['betreuer2'] = content['betreuer2']
+            context['abgabetermin'] = content['abgabetermin']
+            context['themengebiet'] = content['themengebiet']
+            context['art'] = content['art']
+            context['status'] = content['status']
+            if content['note1'] is None:
+                context['note1'] = "/"
+            else:
+                context['note1'] = content['note1']
+            if content['note2'] is None:
+                context['note2'] = "/"
+            else:
+                context['note2'] = content['note2']
+            return render(request, 'homeStudent.html', context)
     else:
         return redirect('/')
 

@@ -101,7 +101,31 @@ def makeRequest(user, abgabetermin, fach, betreuer1, betreuer2, themengebiet, ar
     student.titel = titel
     student.istBetreuer1Intern = betreuer1Intern
     student.istBetreuer2Intern = betreuer2Intern
+    student.status = "Anfrage wird bestätigt"
     student.save()
+
+def getRequest(user):
+    student = Student.objects.filter(user=user)[0]
+    result = {}
+    result['titel'] = student.titel
+    print(student.betreuer1)
+    if student.istBetreuer1Intern:
+        betreuer1 = InternerPruefer.objects.filter(id=student.betreuer1)[0]
+    else:
+        betreuer1 = ExternerPruefer.objects.filter(id=student.betreuer1)[0]
+    result['betreuer1'] = betreuer1.name
+    if student.istBetreuer2Intern:
+        betreuer2 = InternerPruefer.objects.filter(id=student.betreuer2)[0]
+    else:
+        betreuer2 = ExternerPruefer.objects.filter(id=student.betreuer2)[0]
+    result['betreuer2'] = betreuer2.name
+    result['abgabetermin'] = student.abgabetermin
+    result['art'] = student.artDerArbeit
+    result['status'] = student.status
+    result['note1'] = student.note1
+    result['note2'] = student.note2
+    result['themengebiet'] = student.themengebiet
+    return result
 
 def createExternPruefer(name, email, password):
     user = User.objects.create_user(username=email, email=email, password=password)

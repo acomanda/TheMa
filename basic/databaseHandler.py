@@ -4,6 +4,7 @@ import string
 from django.contrib.auth.backends import ModelBackend
 from django.contrib.auth.models import User
 from django.db import transaction
+from django.db.models import Q
 
 
 def randomString(length=20):
@@ -148,3 +149,18 @@ def approveRequest(request, group, pruefer=None):
         else:
             student.betreuer2Bestaetigt = True
             student.save()
+
+def getNotAcceptedRequests(group, user=None):
+    if group == "Prüfungsamt":
+        requests = Student.objects.filter(prüfungsamtBestaetigt=None).order_by('abgabetermin')
+    elif group == "Prüfer":
+        intern = False
+        if InternerPruefer.objects.filter(user=user).exists():
+            intern = True
+        if intern:
+            pruefer = InternerPruefer.objects.filter(user=user)[0]
+        else:
+            pruefer = ExternerPruefer.objects.filter(user=user)[0]
+        requests = Student.objects.filter(Q(istBetreuer1Intern=intern,  betreuer1=pruefer.id) |
+                                          Q(istBetreuer2Intern=intern,  betreuer2=pruefer.id))
+    return requests

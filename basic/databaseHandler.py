@@ -134,6 +134,13 @@ def createExternPruefer(name, email, password):
         user.save()
         pruefer.save()
 
+def createPruefunsamt(email, password):
+    user = User.objects.create_user(username=email, email=email, password=password)
+    pruefungsamt = Pruefungsamt.objects.create(user=user)
+    with transaction.atomic():
+        user.save()
+        pruefungsamt.save()
+
 def approveRequest(request, group, pruefer=None):
     student = Student.objects.filter(id=request)[0]
     if group == "Prüfungsamt":

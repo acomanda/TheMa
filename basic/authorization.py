@@ -57,7 +57,6 @@ def getClaims(code):
     sub = getUserId(idToken)
     email = getEmail(accessToken)
     name = getName(accessToken)
-    print(name)
     return {'sub': sub,
             'email': email,
             'name': name}

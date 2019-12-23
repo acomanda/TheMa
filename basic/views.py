@@ -60,6 +60,10 @@ def home(request):
             else:
                 context['note2'] = content['note2']
             return render(request, 'homeStudent.html', context)
+        if group == "Prüfungsamt":
+            return render(request, 'homePruefungsamt.html', context)
+        if group == "Prüfer":
+            return render(request, 'homePruefer.html', context)
     else:
         return redirect('/')
 

@@ -10,9 +10,17 @@ body {margin:0;}
     display: inline-block;
 }
 
-.left{
-    display: inline-block;
-    height: 50%;
+@media only screen and (max-width: 599px) {
+    .left{
+        height: 50%;
+        width: 100%;
+        display: inline-block;
+    }
+
+    .right{
+        height: 10%;
+        width: 100%;
+    }
 }
 
 @media only screen and (min-width: 600px) {

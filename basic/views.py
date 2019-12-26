@@ -69,13 +69,34 @@ def home(request):
             context['container1'] = container1
             return render(request, 'homePruefungsamt.html', context)
         if group == "Prüfer":
-            container1Request = getNotAcceptedRequests("Prüfer", request.user)
+            if request.POST.get('details'):
+                #TODO redirect to a details page
+                print(request.POST.get('details'))
+            #Container 1
             container1 = ""
+            container1Request = getNotAcceptedRequests("Prüfer", request.user)
             for elem in container1Request:
                 container1 += '<p class="alignleft">' + elem.name + ' </p>'
                 container1 += '<p class="alignright"><button type="submit" name="details" value="' + str(elem.id) \
                               + '">Details</button></p><br/><br/>'
+            container1Request = getRequestsOfPrüfer(request.user, "Schreibphase")
+            for elem in container1Request:
+                container1 += '<p class="alignleft">' + elem.name + ' </p>'
+                container1 += '<p class="alignright">In Schreibphase</p><br/><br/>'
             context['container1'] = container1
+
+            #Container 2
+            container2 = ""
+            container2Request = getNotRatedRequests(request.user)
+            for elem in container2Request:
+                container2 += '<p class="alignleft">' + elem.name + ' </p>'
+                container2 += '<p class="alignright"><button type="submit" name="bewerten" value="' + str(elem.id) \
+                              + '">Bewerten</button></p><br/><br/>'
+            container2Request = getRatedRequests(request.user)
+            for elem in container2Request:
+                container2 += '<p class="alignleft">' + elem.name + ' </p>'
+                container2 += '<p class="alignright">Bewertet</p><br/><br/>'
+            context['container2'] = container2
             return render(request, 'homePruefer.html', context)
     else:
         return redirect('/')

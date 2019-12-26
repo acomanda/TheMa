@@ -25,8 +25,9 @@
                     Wartet auf Gutachten:
                 </div>
                 <div class="containerScroll">
-                    <p class="alignleft">Text on the left.</p>
-                    <p class="alignright">Text on the right.</p>
+                    <form method="post">{% csrf_token %}
+                        {{ container2 |safe}}
+                    </form>
                 </div>
             </div>
         </div>

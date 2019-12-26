@@ -171,3 +171,22 @@ def getNotAcceptedRequests(group, user=None):
         requests = Student.objects.filter(Q(istBetreuer1Intern=intern,  betreuer1=pruefer.id) |
                                           Q(istBetreuer2Intern=intern,  betreuer2=pruefer.id))
     return requests
+
+def checkStatus(student):
+    if student.status == "Anfrage wird bestätigt":
+        if student.prüfungsamtBestaetigt and student.betreuer1Bestaetigt and student.betreuer2Bestaetigt:
+            student.status = "Schreibphase"
+            student.save()
+    if student.status == "Gutachteneingabe":
+        if student.note1 is not None and student.note2 is not None:
+            if student.note1 == 1 and student.note2 == 1:
+                if student.note3 is not None:
+                    student.status = "Terminfindung"
+                    student.save()
+            else:
+                student.status = "Terminfindung"
+                student.save()
+    if student.status == "Terminfindung":
+        if student.terminEntstanden is not None and student.pruefungsamtBestaetigtTermin is not None:
+            student.status = "Termin entstanden"
+            student.save()

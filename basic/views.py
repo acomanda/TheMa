@@ -61,8 +61,21 @@ def home(request):
                 context['note2'] = content['note2']
             return render(request, 'homeStudent.html', context)
         if group == "Prüfungsamt":
+            container1Request = getNotAcceptedRequests("Prüfer", request.user)
+            container1 = ""
+            for elem in container1Request:
+                container1 += '<p class="alignleft">' + elem.name + ' </p> \n'
+                container1 += '<p class="alignright">Text on the right</p>'
+            context['container1'] = container1
             return render(request, 'homePruefungsamt.html', context)
         if group == "Prüfer":
+            container1Request = getNotAcceptedRequests("Prüfer", request.user)
+            container1 = ""
+            for elem in container1Request:
+                container1 += '<p class="alignleft">' + elem.name + ' </p>'
+                container1 += '<p class="alignright"><button type="submit" name="details" value="' + str(elem.id) \
+                              + '">Details</button></p><br/><br/>'
+            context['container1'] = container1
             return render(request, 'homePruefer.html', context)
     else:
         return redirect('/')

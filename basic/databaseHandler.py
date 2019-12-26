@@ -170,6 +170,73 @@ def getNotAcceptedRequests(group, user=None):
             pruefer = ExternerPruefer.objects.filter(user=user)[0]
         requests = Student.objects.filter(Q(istBetreuer1Intern=intern,  betreuer1=pruefer.id) |
                                           Q(istBetreuer2Intern=intern,  betreuer2=pruefer.id))
+        for elem in requests:
+            if elem.istBetreuer1Intern == intern and elem.betreuer1 == pruefer.id:
+                if elem.betreuer1Bestaetigt:
+                    requests = requests.exclude(id=elem.id)
+            elif elem.istBetreuer2Intern == intern and elem.betreuer2 == pruefer.id:
+                if elem.betreuer2Bestaetigt:
+                    requests = requests.exclude(id=elem.id)
+    return requests
+
+def getRequestsOfPrüfer(user, status):
+    intern = False
+    if InternerPruefer.objects.filter(user=user).exists():
+        intern = True
+    if intern:
+        pruefer = InternerPruefer.objects.filter(user=user)[0]
+    else:
+        pruefer = ExternerPruefer.objects.filter(user=user)[0]
+
+    if status == "Schreibphase":
+        requests = Student.objects.filter((Q(istBetreuer1Intern=intern,  betreuer1=pruefer.id) |
+                                          Q(istBetreuer2Intern=intern,  betreuer2=pruefer.id)), status=status)
+    return requests
+
+def getNotRatedRequests(user):
+    intern = False
+    if InternerPruefer.objects.filter(user=user).exists():
+        intern = True
+    if intern:
+        pruefer = InternerPruefer.objects.filter(user=user)[0]
+    else:
+        pruefer = ExternerPruefer.objects.filter(user=user)[0]
+    requests = Student.objects.filter(Q(istBetreuer1Intern=intern, betreuer1=pruefer.id) |
+                                      Q(istBetreuer2Intern=intern, betreuer2=pruefer.id) |
+                                      Q(istDrittgutachterIntern=intern, drittgutachter=pruefer.id))
+    for elem in requests:
+        if elem.istBetreuer1Intern == intern and elem.betreuer1 == pruefer.id:
+            if elem.note1 is not None:
+                requests = requests.exclude(id=elem.id)
+        elif elem.istBetreuer2Intern == intern and elem.betreuer2 == pruefer.id:
+            if elem.note2 is not None:
+                requests = requests.exclude(id=elem.id)
+        elif elem.istDrittgutachterIntern == intern and elem.drittgutachter == pruefer.id:
+            if elem.note3 is not None:
+                requests = requests.exclude(id=elem.id)
+    return requests
+
+def getRatedRequests(user):
+    intern = False
+    if InternerPruefer.objects.filter(user=user).exists():
+        intern = True
+    if intern:
+        pruefer = InternerPruefer.objects.filter(user=user)[0]
+    else:
+        pruefer = ExternerPruefer.objects.filter(user=user)[0]
+    requests = Student.objects.filter(Q(istBetreuer1Intern=intern, betreuer1=pruefer.id) |
+                                      Q(istBetreuer2Intern=intern, betreuer2=pruefer.id) |
+                                      Q(istDrittgutachterIntern=intern, drittgutachter=pruefer.id))
+    for elem in requests:
+        if elem.istBetreuer1Intern == intern and elem.betreuer1 == pruefer.id:
+            if elem.note1 is None:
+                requests = requests.exclude(id=elem.id)
+        elif elem.istBetreuer2Intern == intern and elem.betreuer2 == pruefer.id:
+            if elem.note2 is None:
+                requests = requests.exclude(id=elem.id)
+        elif elem.istDrittgutachterIntern == intern and elem.drittgutachter == pruefer.id:
+            if elem.note3 is None:
+                requests = requests.exclude(id=elem.id)
     return requests
 
 def checkStatus(student):

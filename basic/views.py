@@ -97,6 +97,23 @@ def home(request):
                 container2 += '<p class="alignleft">' + elem.name + ' </p>'
                 container2 += '<p class="alignright">Bewertet</p><br/><br/>'
             context['container2'] = container2
+
+            #Container 3
+            container3 = ""
+            container3Request = getNotAnsweredInvitations(request.user)
+            for elem in container3Request:
+                container3 += '<p class="alignleft">' + getStudentName(elem.student) + ' </p>'
+                container3 += '<p class="alignright"><button type="submit" name="antworten" value="' + str(elem.id) \
+                              + '">Antworten</button></p><br/><br/>'
+            context['container3'] = container3
+
+            #Container 4
+            container4 = ""
+            container4Request = getAnsweredInvitations(request.user)
+            for elem in container4Request:
+                container4 += '<p class="alignleft">' + getStudentName(elem.student) + ' </p>'
+                container4 += '<p class="alignright">Beantwortet</p><br/><br/>'
+            context['container4'] = container4
             return render(request, 'homePruefer.html', context)
     else:
         return redirect('/')

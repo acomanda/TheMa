@@ -55,7 +55,7 @@ class Qualifikation(models.Model):
 
 
 class Einladung(models.Model):
-    angenommen = models.BooleanField()
+    angenommen = models.BooleanField(null=True)
     anzahlEinladungen = models.IntegerField()
     pruefer = models.IntegerField()
     istPrueferIntern = models.BooleanField()

@@ -239,6 +239,31 @@ def getRatedRequests(user):
                 requests = requests.exclude(id=elem.id)
     return requests
 
+def getNotAnsweredInvitations(user):
+    intern = False
+    if InternerPruefer.objects.filter(user=user).exists():
+        intern = True
+    if intern:
+        pruefer = InternerPruefer.objects.filter(user=user)[0]
+    else:
+        pruefer = ExternerPruefer.objects.filter(user=user)[0]
+    invitations = Einladung.objects.filter(pruefer=pruefer.id, istPrueferIntern=intern, angenommen__isnull=True)
+    return invitations
+
+def getAnsweredInvitations(user):
+    intern = False
+    if InternerPruefer.objects.filter(user=user).exists():
+        intern = True
+    if intern:
+        pruefer = InternerPruefer.objects.filter(user=user)[0]
+    else:
+        pruefer = ExternerPruefer.objects.filter(user=user)[0]
+    invitations = Einladung.objects.filter(pruefer=pruefer.id, istPrueferIntern=intern, angenommen__isnull=False)
+    return invitations
+
+def getStudentName(student):
+    return student.name
+
 def checkStatus(student):
     if student.status == "Anfrage wird bestätigt":
         if student.prüfungsamtBestaetigt and student.betreuer1Bestaetigt and student.betreuer2Bestaetigt:

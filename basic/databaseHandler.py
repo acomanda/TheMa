@@ -264,6 +264,19 @@ def getAnsweredInvitations(user):
 def getStudentName(student):
     return student.name
 
+def getFinalDates(user):
+    intern = False
+    if InternerPruefer.objects.filter(user=user).exists():
+        intern = True
+    if intern:
+        pruefer = InternerPruefer.objects.filter(user=user)[0]
+    else:
+        pruefer = ExternerPruefer.objects.filter(user=user)[0]
+    studentId = Einladung.objects.filter(pruefer=pruefer.id, istPrueferIntern=intern, angenommen=True)
+    studentIdList = studentId.values('student').distinct()
+    students = Student.objects.filter(id__in=studentIdList).distinct()
+    return students
+
 def checkStatus(student):
     if student.status == "Anfrage wird bestätigt":
         if student.prüfungsamtBestaetigt and student.betreuer1Bestaetigt and student.betreuer2Bestaetigt:

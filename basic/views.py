@@ -101,19 +101,35 @@ def home(request):
             #Container 3
             container3 = ""
             container3Request = getNotAnsweredInvitations(request.user)
+            names = []
             for elem in container3Request:
-                container3 += '<p class="alignleft">' + getStudentName(elem.student) + ' </p>'
-                container3 += '<p class="alignright"><button type="submit" name="antworten" value="' + str(elem.id) \
-                              + '">Antworten</button></p><br/><br/>'
+                name = getStudentName(elem.student)
+                if name not in names:
+                    container3 += '<p class="alignleft">' + name + ' </p>'
+                    container3 += '<p class="alignright"><button type="submit" name="antworten" value="' + str(elem.id) \
+                                  + '">Antworten</button></p><br/><br/>'
+                    names.append(name)
             context['container3'] = container3
 
             #Container 4
             container4 = ""
             container4Request = getAnsweredInvitations(request.user)
+            names = []
             for elem in container4Request:
-                container4 += '<p class="alignleft">' + getStudentName(elem.student) + ' </p>'
-                container4 += '<p class="alignright">Beantwortet</p><br/><br/>'
+                name = getStudentName(elem.student)
+                if name not in names:
+                    container4 += '<p class="alignleft">' + name + ' </p>'
+                    container4 += '<p class="alignright">Beantwortet</p><br/><br/>'
+                    names.append(name)
             context['container4'] = container4
+
+            # Container 5
+            container5 = ""
+            container5Request = getFinalDates(request.user)
+            for elem in container5Request:
+                container5 += '<p class="alignleft">' + elem.name + ' </p>'
+                container5 += '<p class="alignright">' + str(elem.verteidigungstermin)[:16] + '</p><br/><br/>'
+            context['container5'] = container5
             return render(request, 'homePruefer.html', context)
     else:
         return redirect('/')

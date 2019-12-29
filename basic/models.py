@@ -24,6 +24,7 @@ class Student(models.Model):
     note1 = models.IntegerField(null=True)
     note2 = models.IntegerField(null=True)
     note3 = models.IntegerField(null=True)
+    verteidigungstermin = models.DateTimeField(null=True)
 
     betreuer1Bestaetigt = models.BooleanField(null=True)
     betreuer2Bestaetigt = models.BooleanField(null=True)

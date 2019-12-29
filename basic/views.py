@@ -70,8 +70,21 @@ def home(request):
             return render(request, 'homePruefungsamt.html', context)
         if group == "Prüfer":
             if request.POST.get('details'):
-                #TODO redirect to a details page
-                print(request.POST.get('details'))
+                request.session['requestId'] = request.POST.get('details')
+                content = getStudentRequest(None, request.POST.get('details'))
+                context['titel'] = content['titel']
+                context['betreuer1'] = content['betreuer1']
+                context['betreuer2'] = content['betreuer2']
+                context['abgabetermin'] = content['abgabetermin']
+                context['themengebiet'] = content['themengebiet']
+                context['art'] = content['art']
+                context['status'] = content['status']
+                return render(request, 'homeStudent.html', context)
+            if request.POST.get('answerRequest'):
+                if request.POST.get('answerRequest') == "accept":
+                    approveRequest(request.session['requestId'], None, request.user)
+                elif request.POST.get('answerRequest') == "reject":
+                    rejectRequest(request.session['requestId'], None, request.user)
             #Container 1
             container1 = ""
             container1Request = getNotAcceptedRequests("Prüfer", request.user)

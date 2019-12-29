@@ -13,9 +13,6 @@ def randomString(length=20):
     for i in range(length):
         result += random.choice(symbols)
 
-
-
-
 class PasswordlessAuthBackend(ModelBackend):
     """Log in to Django without providing a password.
 
@@ -105,8 +102,11 @@ def makeRequest(user, abgabetermin, fach, betreuer1, betreuer2, themengebiet, ar
     student.status = "Anfrage wird bestätigt"
     student.save()
 
-def getRequest(user):
-    student = Student.objects.filter(user=user)[0]
+def getStudentRequest(user, id=None):
+    if user is not None:
+        student = Student.objects.filter(user=user)[0]
+    else:
+        student = Student.objects.filter(id=id)[0]
     result = {}
     result['titel'] = student.titel
     if student.istBetreuer1Intern:
@@ -127,6 +127,10 @@ def getRequest(user):
     result['themengebiet'] = student.themengebiet
     return result
 
+def getRequest(id):
+    student = Student.objects.filter(id=id).first()
+    return student
+
 def createExternPruefer(name, email, password):
     user = User.objects.create_user(username=email, email=email, password=password)
     pruefer = ExternerPruefer.objects.create(name=name, email=email, user=user)
@@ -141,20 +145,44 @@ def createPruefunsamt(email, password):
         user.save()
         pruefungsamt.save()
 
-def approveRequest(request, group, pruefer=None):
+def approveRequest(request, group, user=None):
     student = Student.objects.filter(id=request)[0]
     if group == "Prüfungsamt":
         student.prüfungsamtBestaetigt = True
         student.save()
     else:
         intern = False
-        if InternerPruefer.objects.filter(user=pruefer).exists():
+        if InternerPruefer.objects.filter(user=user).exists():
             intern = True
+        if intern:
+            pruefer = InternerPruefer.objects.filter(user=user)[0]
+        else:
+            pruefer = ExternerPruefer.objects.filter(user=user)[0]
         if (student.betreuer1 == pruefer.id and student.istBetreuer1Intern == intern):
             student.betreuer1Bestaetigt = True
             student.save()
         else:
             student.betreuer2Bestaetigt = True
+            student.save()
+
+def rejectRequest(request, group, user=None):
+    student = Student.objects.filter(id=request)[0]
+    if group == "Prüfungsamt":
+        student.prüfungsamtBestaetigt = True
+        student.save()
+    else:
+        intern = False
+        if InternerPruefer.objects.filter(user=user).exists():
+            intern = True
+        if intern:
+            pruefer = InternerPruefer.objects.filter(user=user)[0]
+        else:
+            pruefer = ExternerPruefer.objects.filter(user=user)[0]
+        if (student.betreuer1 == pruefer.id and student.istBetreuer1Intern == intern):
+            student.betreuer1Bestaetigt = False
+            student.save()
+        else:
+            student.betreuer2Bestaetigt = False
             student.save()
 
 def getNotAcceptedRequests(group, user=None):

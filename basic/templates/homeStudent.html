@@ -16,10 +16,16 @@
             Abgabetermin:<br><br>
             Themengebiet:<br><br>
             Art der Arbeit:<br><br>
+            {% if group == "Student"%}
             Status:<br><br>
             Note Betreuer 1:<br><br>
             Note Betreuer 2:<br><br>
             {{ drittgutachter }}
+            {% else %}
+            <form method="post">{% csrf_token %}
+                <button type="submit" name="answerRequest" value="accept">Accept</button>
+            </form>
+            {% endif %}
         </div>
         <div class="mainRight">
             &nbsp; &nbsp; {{ titel }}<br><br>
@@ -28,10 +34,16 @@
             &nbsp; &nbsp; {{abgabetermin}}<br><br>
             &nbsp; &nbsp; {{themengebiet}}<br><br>
             &nbsp; &nbsp; {{ art }}<br><br>
+                {% if group == "Student"%}
             &nbsp; &nbsp; <u>{{status}}</u><br><br>
             &nbsp; &nbsp; {{note1}}<br><br>
             &nbsp; &nbsp; {{note2}}<br><br>
-            {{drittgutachterNote}}
+                {{drittgutachterNote}}
+                {% else %}
+                <form method="post">{% csrf_token %}
+                    <button type="submit" name="answerRequest" value="reject">Reject</button>
+                </form>
+                {% endif %}
         </div>
     </div>
     <div class="right"></div>

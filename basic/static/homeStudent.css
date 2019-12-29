@@ -13,7 +13,7 @@ body {
     display: flex;
 }
 
-.main {
+.main.main {
     display: flex;
     margin: 0 auto;
     width: 40%;

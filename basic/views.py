@@ -44,13 +44,14 @@ def home(request):
         context['group'] = group
         if group == "Student":
             content = getStudentRequest(request.user)
-            context['titel'] = content['titel']
-            context['betreuer1'] = content['betreuer1']
-            context['betreuer2'] = content['betreuer2']
-            context['abgabetermin'] = content['abgabetermin']
-            context['themengebiet'] = content['themengebiet']
-            context['art'] = content['art']
+            context['title'] = content['title']
+            context['supervisor1'] = content['supervisor1']
+            context['supervisor2'] = content['supervisor2']
+            context['deadline'] = content['deadline']
+            context['topic'] = content['topic']
+            context['type'] = content['type']
             context['status'] = content['status']
+            context['subject'] = content['subject']
             if content['note1'] is None:
                 context['note1'] = "/"
             else:
@@ -60,52 +61,57 @@ def home(request):
             else:
                 context['note2'] = content['note2']
             return render(request, 'homeStudent.html', context)
-        if group == "Prüfungsamt":
-            container1Request = getNotAcceptedRequests("Prüfer", request.user)
+        if group == "Office":
+            container1Request = getRequestsOfOffice("Anfrage wird bestätigt", False)
             container1 = ""
             for elem in container1Request:
                 container1 += '<p class="alignleft">' + elem.name + ' </p> \n'
                 container1 += '<p class="alignright">Text on the right</p>'
             context['container1'] = container1
             return render(request, 'homePruefungsamt.html', context)
-        if group == "Prüfer":
+        if group == "Examiner":
             if request.POST.get('details'):
                 request.session['requestId'] = request.POST.get('details')
                 content = getStudentRequest(None, request.POST.get('details'))
-                context['titel'] = content['titel']
-                context['betreuer1'] = content['betreuer1']
-                context['betreuer2'] = content['betreuer2']
-                context['abgabetermin'] = content['abgabetermin']
-                context['themengebiet'] = content['themengebiet']
-                context['art'] = content['art']
+                context['title'] = content['title']
+                context['supervisor1'] = content['supervisor1']
+                context['supervisor2'] = content['supervisor2']
+                context['deadline'] = content['deadline']
+                context['topic'] = content['topic']
+                context['type'] = content['type']
                 context['status'] = content['status']
+                context['subject'] = content['subject']
                 return render(request, 'homeStudent.html', context)
             if request.POST.get('answerRequest'):
                 if request.POST.get('answerRequest') == "accept":
-                    approveRequest(request.session['requestId'], None, request.user)
+                    confirmRequest(request.session['requestId'], True, "Examiner", request.user)
                 elif request.POST.get('answerRequest') == "reject":
-                    rejectRequest(request.session['requestId'], None, request.user)
+                    confirmRequest(request.session['requestId'], False, "Examiner", request.user)
             #Container 1
             container1 = ""
-            container1Request = getNotAcceptedRequests("Prüfer", request.user)
+            container1Request = getRequestsOfExaminer(request.user, "Anfrage wird bestätigt", False)
             for elem in container1Request:
                 container1 += '<p class="alignleft">' + elem.name + ' </p>'
                 container1 += '<p class="alignright"><button type="submit" name="details" value="' + str(elem.id) \
                               + '">Details</button></p><br/><br/>'
-            container1Request = getRequestsOfPrüfer(request.user, "Schreibphase")
+            container1Request = getRequestsOfExaminer(request.user, "Schreibphase", True)
             for elem in container1Request:
                 container1 += '<p class="alignleft">' + elem.name + ' </p>'
                 container1 += '<p class="alignright">In Schreibphase</p><br/><br/>'
+            container1Request = getRequestsOfExaminer(request.user, "Anfrage wird bestätigt", True)
+            for elem in container1Request:
+                container1 += '<p class="alignleft">' + elem.name + ' </p>'
+                container1 += '<p class="alignright">Anfrage wird bestätigt</p><br/><br/>'
             context['container1'] = container1
 
             #Container 2
             container2 = ""
-            container2Request = getNotRatedRequests(request.user)
+            container2Request = getRequestsOfExaminer(request.user, "Gutachteneingabe", None, False)
             for elem in container2Request:
                 container2 += '<p class="alignleft">' + elem.name + ' </p>'
                 container2 += '<p class="alignright"><button type="submit" name="bewerten" value="' + str(elem.id) \
                               + '">Bewerten</button></p><br/><br/>'
-            container2Request = getRatedRequests(request.user)
+            container2Request = getRequestsOfExaminer(request.user, "Gutachteneingabe", None, True)
             for elem in container2Request:
                 container2 += '<p class="alignleft">' + elem.name + ' </p>'
                 container2 += '<p class="alignright">Bewertet</p><br/><br/>'
@@ -113,32 +119,25 @@ def home(request):
 
             #Container 3
             container3 = ""
-            container3Request = getNotAnsweredInvitations(request.user)
-            names = []
+            container3Request = getRequestsOfExaminer(request.user, "Terminfindung", None, None, False)
             for elem in container3Request:
-                name = getStudentName(elem.student)
-                if name not in names:
-                    container3 += '<p class="alignleft">' + name + ' </p>'
-                    container3 += '<p class="alignright"><button type="submit" name="antworten" value="' + str(elem.id) \
-                                  + '">Antworten</button></p><br/><br/>'
-                    names.append(name)
+                container3 += '<p class="alignleft">' + elem.name + ' </p>'
+                container3 += '<p class="alignright"><button type="submit" name="antworten" value="' + str(elem.id) \
+                              + '">Antworten</button></p><br/><br/>'
             context['container3'] = container3
 
             #Container 4
             container4 = ""
-            container4Request = getAnsweredInvitations(request.user)
+            container4Request = getRequestsOfExaminer(request.user, "Terminfindung", None, None, True)
             names = []
             for elem in container4Request:
-                name = getStudentName(elem.student)
-                if name not in names:
-                    container4 += '<p class="alignleft">' + name + ' </p>'
-                    container4 += '<p class="alignright">Beantwortet</p><br/><br/>'
-                    names.append(name)
+                container4 += '<p class="alignleft">' + elem.name + ' </p>'
+                container4 += '<p class="alignright">Beantwortet</p><br/><br/>'
             context['container4'] = container4
 
             # Container 5
             container5 = ""
-            container5Request = getFinalDates(request.user)
+            container5Request = getRequestsOfExaminer(request.user, "Termin enstanden", None, None, None, True)
             for elem in container5Request:
                 container5 += '<p class="alignleft">' + elem.name + ' </p>'
                 container5 += '<p class="alignright">' + str(elem.verteidigungstermin)[:16] + '</p><br/><br/>'

@@ -14,6 +14,7 @@
             Betreuer 1:<br><br>
             Betreuer 2:<br><br>
             Abgabetermin:<br><br>
+            Fach:<br><br>
             Themengebiet:<br><br>
             Art der Arbeit:<br><br>
             {% if group == "Student"%}
@@ -28,17 +29,18 @@
             {% endif %}
         </div>
         <div class="mainRight">
-            &nbsp; &nbsp; {{ titel }}<br><br>
-            &nbsp; &nbsp; {{betreuer1}}<br><br>
-            &nbsp; &nbsp; {{betreuer2}}<br><br>
-            &nbsp; &nbsp; {{abgabetermin}}<br><br>
-            &nbsp; &nbsp; {{themengebiet}}<br><br>
-            &nbsp; &nbsp; {{ art }}<br><br>
+            &nbsp; &nbsp; {{title}}<br><br>
+            &nbsp; &nbsp; {{supervisor1}}<br><br>
+            &nbsp; &nbsp; {{supervisor1}}<br><br>
+            &nbsp; &nbsp; {{deadline}}<br><br>
+                {{subject}}<br><br>
+            &nbsp; &nbsp; {{topic}}<br><br>
+            &nbsp; &nbsp; {{ type }}<br><br>
                 {% if group == "Student"%}
             &nbsp; &nbsp; <u>{{status}}</u><br><br>
             &nbsp; &nbsp; {{note1}}<br><br>
             &nbsp; &nbsp; {{note2}}<br><br>
-                {{drittgutachterNote}}
+                {{note3}}
                 {% else %}
                 <form method="post">{% csrf_token %}
                     <button type="submit" name="answerRequest" value="reject">Reject</button>

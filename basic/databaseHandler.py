@@ -8,18 +8,15 @@ from django.db.models import Q
 
 
 def randomString(length=20):
+    """Function generates a random string of numbers and letters that is 'length' long."""
     symbols = string.ascii_letters + string.digits
     result = ""
     for i in range(length):
         result += random.choice(symbols)
 
 
-
-
 class PasswordlessAuthBackend(ModelBackend):
-    """Log in to Django without providing a password.
-
-    """
+    """Log in to Django without providing a password."""
     def authenticate(self, username=None):
         try:
             return User.objects.get(username=username)
@@ -32,8 +29,8 @@ class PasswordlessAuthBackend(ModelBackend):
         except User.DoesNotExist:
             return None
 
-#todo add name when i get the right claim from the zdv
-def getUser(email, zdvId, state, stateLength,  name):
+
+def getUser(email, zdvId, state, stateLength, name):
     """Checks if user is already registered and if it is, it returns the user,
     otherwise it creates the user and return it."""
     group = state[stateLength:]
@@ -54,7 +51,7 @@ def getUser(email, zdvId, state, stateLength,  name):
         return user[0]
 
     if group == "pruefer":
-        results = InternerPruefer.objects.filter(email=email)
+        results = InternExaminer.objects.filter(email=email)
         if results.exists():
             user = User.objects.filter(email=email)
             return user[0]
@@ -63,185 +60,198 @@ def getUser(email, zdvId, state, stateLength,  name):
             user = temp[0]
         else:
             user = User.objects.create_user(username=email, email=email, password=randomString)
-        student = InternerPruefer.objects.create(zdvId=zdvId, name=name, email=email, user=user)
+        student = InternExaminer.objects.create(zdvId=zdvId, name=name, email=email, user=user)
         with transaction.atomic():
             user.save()
             student.save()
         return user
 
+
 def getUserGroup(user):
-    results = Pruefungsamt.objects.filter(user=user)
+    """Receives a django user object and return the User Group of the user."""
+    results = Office.objects.filter(user=user)
     if results.exists():
-        return "Prüfungsamt"
-    results = InternerPruefer.objects.filter(user=user)
+        return "Office"
+    results = InternExaminer.objects.filter(user=user)
     if results.exists():
-        return "Prüfer"
-    results = ExternerPruefer.objects.filter(user=user)
+        return "Examiner"
+    results = ExternalExaminer.objects.filter(user=user)
     if results.exists():
-        return "Prüfer"
+        return "Examiner"
     results = Student.objects.filter(user=user)
     if results.exists():
         return "Student"
     else:
         return "No Group"
 
+
 def haveRequest(user):
+    """Receives a django user object and returns True,
+    if the user is a student and the user has already make a request."""
     student = Student.objects.filter(user=user)
-    if student.exists() and student[0].abgabetermin is not None:
+    if student.exists() and student[0].deadline is not None:
         return True
     return False
 
-def makeRequest(user, abgabetermin, fach, betreuer1, betreuer2, themengebiet, art, titel, betreuer1Intern, betreuer2Intern):
+
+def makeRequest(user, deadline, subject, supervisor1, supervisor2, topic, type, title, isSupervisor1Intern,
+    isSupervisor2Intern):
+    """Function initiates a students request."""
     student = Student.objects.filter(user=user)[0]
-    student.abgabetermin = abgabetermin
-    student.fach = fach
-    student.betreuer1 = betreuer1
-    student.betreuer2 = betreuer2
-    student.themengebiet = themengebiet
-    student.artDerArbeit = art
-    student.titel = titel
-    student.istBetreuer1Intern = betreuer1Intern
-    student.istBetreuer2Intern = betreuer2Intern
+    student.deadline = deadline
+    student.subject = subject
+    student.supervisor1 = supervisor1
+    student.supervisor2 = supervisor2
+    student.topic = topic
+    student.type = type
+    student.title = title
+    student.isSupervisor1Intern = isSupervisor1Intern
+    student.isSupervisor2Intern = isSupervisor2Intern
     student.status = "Anfrage wird bestätigt"
     student.save()
 
-def getRequest(user):
-    student = Student.objects.filter(user=user)[0]
+
+def getStudentRequest(user, id=None):
+    """Receives a django user object or an student id and returns a
+    dictionary with the informations about the request."""
+    if user is not None:
+        student = Student.objects.filter(user=user)[0]
+    else:
+        student = Student.objects.filter(id=id)[0]
     result = {}
-    result['titel'] = student.titel
-    if student.istBetreuer1Intern:
-        betreuer1 = InternerPruefer.objects.filter(id=student.betreuer1)[0]
+    result['title'] = student.title
+    if student.isSupervisor1Intern:
+        betreuer1 = InternExaminer.objects.filter(id=student.supervisor1)[0]
     else:
-        betreuer1 = ExternerPruefer.objects.filter(id=student.betreuer1)[0]
-    result['betreuer1'] = betreuer1.name
-    if student.istBetreuer2Intern:
-        betreuer2 = InternerPruefer.objects.filter(id=student.betreuer2)[0]
+        betreuer1 = ExternalExaminer.objects.filter(id=student.supervisor1)[0]
+    result['supervisor1'] = betreuer1.name
+    if student.isSupervisor2Intern:
+        betreuer2 = InternExaminer.objects.filter(id=student.supervisor2)[0]
     else:
-        betreuer2 = ExternerPruefer.objects.filter(id=student.betreuer2)[0]
-    result['betreuer2'] = betreuer2.name
-    result['abgabetermin'] = student.abgabetermin
-    result['art'] = student.artDerArbeit
+        betreuer2 = ExternalExaminer.objects.filter(id=student.supervisor2)[0]
+    result['supervisor2'] = betreuer2.name
+    result['deadline'] = student.deadline
+    result['type'] = student.type
     result['status'] = student.status
     result['note1'] = student.note1
     result['note2'] = student.note2
-    result['themengebiet'] = student.themengebiet
+    result['topic'] = student.topic
+    result['subject'] = student.subject
     return result
 
-def createExternPruefer(name, email, password):
+
+def createExternalExaminer(name, email, password):
+    """Function creates a new External Examiner"""
     user = User.objects.create_user(username=email, email=email, password=password)
-    pruefer = ExternerPruefer.objects.create(name=name, email=email, user=user)
+    examiner = ExternalExaminer.objects.create(name=name, email=email, user=user)
     with transaction.atomic():
         user.save()
-        pruefer.save()
+        examiner.save()
 
-def createPruefunsamt(email, password):
+
+def createOfficeAccount(email, password):
+    """Function creates a new Office Account."""
     user = User.objects.create_user(username=email, email=email, password=password)
-    pruefungsamt = Pruefungsamt.objects.create(user=user)
+    office = Office.objects.create(user=user)
     with transaction.atomic():
         user.save()
-        pruefungsamt.save()
+        office.save()
 
-def approveRequest(request, group, pruefer=None):
-    student = Student.objects.filter(id=request)[0]
-    if group == "Prüfungsamt":
-        student.prüfungsamtBestaetigt = True
+
+def confirmOrNotRequest(requestId, confirm, group, user=None):
+    """Receives a student object, the user Group and the bool, that tells if the request should be confirmed.
+    If the user is an Examiner, the user object is also needed.
+    The function saves the confirmation in the database."""
+    student = Student.objects.filter(id=requestId)[0]
+    if group == "Office":
+        student.officeConfirmed = confirm
         student.save()
     else:
-        intern = False
-        if InternerPruefer.objects.filter(user=pruefer).exists():
-            intern = True
-        if (student.betreuer1 == pruefer.id and student.istBetreuer1Intern == intern):
-            student.betreuer1Bestaetigt = True
+        examinerId, intern = getExaminer(user)
+        if student.supervisor1 == examinerId and student.isSupervisor1Intern == intern:
+            student.supervisor1Confirmed = confirm
             student.save()
-        else:
-            student.betreuer2Bestaetigt = True
+        elif student.supervisor2 == examinerId and student.isSupervisor2Intern == intern:
+            student.supervisor2Confirmed = confirm
             student.save()
+    checkStatus(student)
 
-def getNotAcceptedRequests(group, user=None):
-    if group == "Prüfungsamt":
-        requests = Student.objects.filter(prüfungsamtBestaetigt=None).order_by('abgabetermin')
-    elif group == "Prüfer":
+
+def getExaminer(user):
+    """Receives a Django user object that should correspond to an examiner.
+    The function returns a tuple that stores the examiner id and the boolean that says,
+    if the examiner is intern or not."""
+    if getUserGroup(user) == "Examiner":
         intern = False
-        if InternerPruefer.objects.filter(user=user).exists():
+        if InternExaminer.objects.filter(user=user).exists():
             intern = True
         if intern:
-            pruefer = InternerPruefer.objects.filter(user=user)[0]
+            examiner = InternExaminer.objects.filter(user=user)[0]
         else:
-            pruefer = ExternerPruefer.objects.filter(user=user)[0]
-        requests = Student.objects.filter(Q(istBetreuer1Intern=intern,  betreuer1=pruefer.id) |
-                                          Q(istBetreuer2Intern=intern,  betreuer2=pruefer.id))
-        for elem in requests:
-            if elem.istBetreuer1Intern == intern and elem.betreuer1 == pruefer.id:
-                if elem.betreuer1Bestaetigt:
-                    requests = requests.exclude(id=elem.id)
-            elif elem.istBetreuer2Intern == intern and elem.betreuer2 == pruefer.id:
-                if elem.betreuer2Bestaetigt:
-                    requests = requests.exclude(id=elem.id)
-    return requests
-
-def getRequestsOfPrüfer(user, status):
-    intern = False
-    if InternerPruefer.objects.filter(user=user).exists():
-        intern = True
-    if intern:
-        pruefer = InternerPruefer.objects.filter(user=user)[0]
+            examiner = ExternalExaminer.objects.filter(user=user)[0]
+        return examiner.id, intern
     else:
-        pruefer = ExternerPruefer.objects.filter(user=user)[0]
+        return False
 
-    if status == "Schreibphase":
-        requests = Student.objects.filter((Q(istBetreuer1Intern=intern,  betreuer1=pruefer.id) |
-                                          Q(istBetreuer2Intern=intern,  betreuer2=pruefer.id)), status=status)
-    return requests
 
-def getNotRatedRequests(user):
-    intern = False
-    if InternerPruefer.objects.filter(user=user).exists():
-        intern = True
-    if intern:
-        pruefer = InternerPruefer.objects.filter(user=user)[0]
+def getRequestsOfOffice(status, accepted=None, final=None):
+    """The function returns the requests of the user group 'Office'.
+        If a status is passed, all requests that have this status are returned.
+        The other parameters can be used to receive more specific requests."""
+    if status is not None:
+        requests = Student.objects.filter(status=status).order_by('deadline')
+        if accepted is not None:
+            requests = requests.filter(officeConfirmed__isnull=not accepted)
+        if final is not None:
+            requests = requests.filter(
+                appointment__isnull=not final
+            )
+        return requests
     else:
-        pruefer = ExternerPruefer.objects.filter(user=user)[0]
-    requests = Student.objects.filter(Q(istBetreuer1Intern=intern, betreuer1=pruefer.id) |
-                                      Q(istBetreuer2Intern=intern, betreuer2=pruefer.id) |
-                                      Q(istDrittgutachterIntern=intern, drittgutachter=pruefer.id))
-    for elem in requests:
-        if elem.istBetreuer1Intern == intern and elem.betreuer1 == pruefer.id:
-            if elem.note1 is not None:
-                requests = requests.exclude(id=elem.id)
-        elif elem.istBetreuer2Intern == intern and elem.betreuer2 == pruefer.id:
-            if elem.note2 is not None:
-                requests = requests.exclude(id=elem.id)
-        elif elem.istDrittgutachterIntern == intern and elem.drittgutachter == pruefer.id:
-            if elem.note3 is not None:
-                requests = requests.exclude(id=elem.id)
-    return requests
+        return False
 
-def getRatedRequests(user):
-    intern = False
-    if InternerPruefer.objects.filter(user=user).exists():
-        intern = True
-    if intern:
-        pruefer = InternerPruefer.objects.filter(user=user)[0]
+
+def getRequestsOfExaminer(user, status, accepted=None, rated=None, answered=None, final=None):
+    """The function returns the requests of the user group 'Examiner'.
+    If a status is passed, all requests that have this status are returned.
+    The other parameters can be used to receive more specific requests."""
+    if status is not None:
+        examinerId, intern = getExaminer(user)
+        requests = Student.objects.filter(
+            (Q(isSupervisor1Intern=intern, supervisor1=examinerId) |
+             Q(isSupervisor2Intern=intern, supervisor2=examinerId) |
+             Q(isSupervisor3Intern=intern, supervisor3=examinerId)), status=status
+        )
+        if accepted is not None:
+            requests = requests.filter(
+                Q(isSupervisor1Intern=intern, supervisor1=examinerId, supervisor1Confirmed__isnull=not accepted) |
+                Q(isSupervisor2Intern=intern, supervisor2=examinerId, supervisor2Confirmed__isnull=not accepted)
+            )
+        if rated is not None:
+            requests = requests.filter(
+                Q(isSupervisor1Intern=intern, supervisor1=examinerId, note1__isnull=not rated) |
+                Q(isSupervisor2Intern=intern, supervisor2=examinerId, note2__isnull=not rated) |
+                Q(isSupervisor3Intern=intern, supervisor3=examinerId, note3__isnull=not rated)
+            )
+        if answered is not None:
+            invitations = Invitation.objects.filter(
+                examiner=examinerId, isExaminerIntern=intern, accepted__isnull=not answered
+            )
+            requests = requests.exclude(id__in=invitations.values('student'))
+        if final is not None:
+            requests = requests.filter(
+                appointment__isnull=not final
+            )
+        return requests
     else:
-        pruefer = ExternerPruefer.objects.filter(user=user)[0]
-    requests = Student.objects.filter(Q(istBetreuer1Intern=intern, betreuer1=pruefer.id) |
-                                      Q(istBetreuer2Intern=intern, betreuer2=pruefer.id) |
-                                      Q(istDrittgutachterIntern=intern, drittgutachter=pruefer.id))
-    for elem in requests:
-        if elem.istBetreuer1Intern == intern and elem.betreuer1 == pruefer.id:
-            if elem.note1 is None:
-                requests = requests.exclude(id=elem.id)
-        elif elem.istBetreuer2Intern == intern and elem.betreuer2 == pruefer.id:
-            if elem.note2 is None:
-                requests = requests.exclude(id=elem.id)
-        elif elem.istDrittgutachterIntern == intern and elem.drittgutachter == pruefer.id:
-            if elem.note3 is None:
-                requests = requests.exclude(id=elem.id)
-    return requests
+        return False
+
 
 def checkStatus(student):
+    """This function get a student object and checks if the status must be changed.
+    If so, the status will be adjusted."""
     if student.status == "Anfrage wird bestätigt":
-        if student.prüfungsamtBestaetigt and student.betreuer1Bestaetigt and student.betreuer2Bestaetigt:
+        if student.officeConfirmed and student.supervisor1Confirmed and student.supervisor2Confirmed:
             student.status = "Schreibphase"
             student.save()
     if student.status == "Gutachteneingabe":
@@ -254,6 +264,6 @@ def checkStatus(student):
                 student.status = "Terminfindung"
                 student.save()
     if student.status == "Terminfindung":
-        if student.terminEntstanden is not None and student.pruefungsamtBestaetigtTermin is not None:
+        if student.appointmentEmerged is not None and student.officeConfirmedAppointment is not None:
             student.status = "Termin entstanden"
             student.save()

@@ -6,9 +6,9 @@
 <div class="navbar">
     <div class="left">
         {% if user.is_authenticated %}
-            <a href="#">Home</a> <br>
+            <a href="/">Home</a> <br>
             <a href="/logout">Abmelden</a> <br>
-        {% if group == "Prüfungsamt" %}
+        {% if group == "Office" %}
             <a href="management">Adminseite</a>
         {% endif %}
         {% else%}

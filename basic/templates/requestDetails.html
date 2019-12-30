@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="../static/requestDetails.css">
+    <meta charset="UTF-8">
+    <title>Home</title>
+    {% include "navBar.html" %}
+</head>
+<body>
+    <div class = left></div>
+    <div class="main">
+        <div class="mainLeft">
+            Titel:<br><br>
+            Betreuer 1:<br><br>
+            Betreuer 2:<br><br>
+            Abgabetermin:<br><br>
+            Fach:<br><br>
+            Themengebiet:<br><br>
+            Art der Arbeit:<br><br>
+            {% if group == "Student"%}
+            Status:<br><br>
+            Note Betreuer 1:<br><br>
+            Note Betreuer 2:<br><br>
+            {{ drittgutachter }}
+            {% else %}
+            <form method="post">{% csrf_token %}
+                <button type="submit" name="answerRequest" value="accept">Accept</button>
+            </form>
+            {% endif %}
+        </div>
+        <div class="mainRight">
+            &nbsp; &nbsp; {{title}}<br><br>
+            &nbsp; &nbsp; {{supervisor1}}<br><br>
+            &nbsp; &nbsp; {{supervisor1}}<br><br>
+            &nbsp; &nbsp; {{deadline}}<br><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;{{subject}}<br><br>
+            &nbsp; &nbsp; {{topic}}<br><br>
+            &nbsp; &nbsp; {{type}}<br><br>
+                {% if group == "Student"%}
+            &nbsp; &nbsp; <u>{{status}}</u><br><br>
+            &nbsp; &nbsp; {{note1}}<br><br>
+            &nbsp; &nbsp; {{note2}}<br><br>
+                {{note3}}
+                {% else %}
+                <form method="post">{% csrf_token %}
+                    <button type="submit" name="answerRequest" value="reject">Reject</button>
+                </form>
+                {% endif %}
+        </div>
+    </div>
+    <div class="right"></div>
+</body>
+</html>

@@ -174,6 +174,7 @@ def confirmOrNotRequest(requestId, confirm, group, user=None):
         elif student.supervisor2 == examinerId and student.isSupervisor2Intern == intern:
             student.supervisor2Confirmed = confirm
             student.save()
+    checkStatus(student)
 
 
 def getExaminer(user):
@@ -250,7 +251,7 @@ def checkStatus(student):
     """This function get a student object and checks if the status must be changed.
     If so, the status will be adjusted."""
     if student.status == "Anfrage wird bestätigt":
-        if student.prüfungsamtBestaetigt and student.betreuer1Bestaetigt and student.betreuer2Bestaetigt:
+        if student.officeConfirmed and student.supervisor1Confirmed and student.supervisor2Confirmed:
             student.status = "Schreibphase"
             student.save()
     if student.status == "Gutachteneingabe":
@@ -263,6 +264,6 @@ def checkStatus(student):
                 student.status = "Terminfindung"
                 student.save()
     if student.status == "Terminfindung":
-        if student.terminEntstanden is not None and student.pruefungsamtBestaetigtTermin is not None:
+        if student.appointmentEmerged is not None and student.officeConfirmedAppointment is not None:
             student.status = "Termin entstanden"
             student.save()

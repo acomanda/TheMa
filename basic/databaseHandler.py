@@ -158,7 +158,7 @@ def createOfficeAccount(email, password):
         office.save()
 
 
-def confirmRequest(requestId, confirm, group, user=None):
+def confirmOrNotRequest(requestId, confirm, group, user=None):
     """Receives a student object, the user Group and the bool, that tells if the request should be confirmed.
     If the user is an Examiner, the user object is also needed.
     The function saves the confirmation in the database."""

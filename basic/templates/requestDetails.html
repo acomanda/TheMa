@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="stylesheet" href="../static/homeStudent.css">
+    <link rel="stylesheet" href="../static/requestDetails.css">
     <meta charset="UTF-8">
     <title>Home</title>
     {% include "navBar.html" %}
@@ -33,9 +33,9 @@
             &nbsp; &nbsp; {{supervisor1}}<br><br>
             &nbsp; &nbsp; {{supervisor1}}<br><br>
             &nbsp; &nbsp; {{deadline}}<br><br>
-                {{subject}}<br><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;{{subject}}<br><br>
             &nbsp; &nbsp; {{topic}}<br><br>
-            &nbsp; &nbsp; {{ type }}<br><br>
+            &nbsp; &nbsp; {{type}}<br><br>
                 {% if group == "Student"%}
             &nbsp; &nbsp; <u>{{status}}</u><br><br>
             &nbsp; &nbsp; {{note1}}<br><br>

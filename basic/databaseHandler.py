@@ -13,9 +13,9 @@ def randomString(length=20):
     for i in range(length):
         result += random.choice(symbols)
 
+
 class PasswordlessAuthBackend(ModelBackend):
     """Log in to Django without providing a password.
-
     """
     def authenticate(self, username=None):
         try:
@@ -29,7 +29,7 @@ class PasswordlessAuthBackend(ModelBackend):
         except User.DoesNotExist:
             return None
 
-#todo add name when i get the right claim from the zdv
+
 def getUser(email, zdvId, state, stateLength,  name):
     """Checks if user is already registered and if it is, it returns the user,
     otherwise it creates the user and return it."""
@@ -51,7 +51,7 @@ def getUser(email, zdvId, state, stateLength,  name):
         return user[0]
 
     if group == "pruefer":
-        results = InternerPruefer.objects.filter(email=email)
+        results = InternExaminer.objects.filter(email=email)
         if results.exists():
             user = User.objects.filter(email=email)
             return user[0]
@@ -60,20 +60,20 @@ def getUser(email, zdvId, state, stateLength,  name):
             user = temp[0]
         else:
             user = User.objects.create_user(username=email, email=email, password=randomString)
-        student = InternerPruefer.objects.create(zdvId=zdvId, name=name, email=email, user=user)
+        student = InternExaminer.objects.create(zdvId=zdvId, name=name, email=email, user=user)
         with transaction.atomic():
             user.save()
             student.save()
         return user
 
 def getUserGroup(user):
-    results = Pruefungsamt.objects.filter(user=user)
+    results = Office.objects.filter(user=user)
     if results.exists():
         return "Prüfungsamt"
-    results = InternerPruefer.objects.filter(user=user)
+    results = InternExaminer.objects.filter(user=user)
     if results.exists():
         return "Prüfer"
-    results = ExternerPruefer.objects.filter(user=user)
+    results = ExternalExaminer.objects.filter(user=user)
     if results.exists():
         return "Prüfer"
     results = Student.objects.filter(user=user)
@@ -84,21 +84,21 @@ def getUserGroup(user):
 
 def haveRequest(user):
     student = Student.objects.filter(user=user)
-    if student.exists() and student[0].abgabetermin is not None:
+    if student.exists() and student[0].deadline is not None:
         return True
     return False
 
 def makeRequest(user, abgabetermin, fach, betreuer1, betreuer2, themengebiet, art, titel, betreuer1Intern, betreuer2Intern):
     student = Student.objects.filter(user=user)[0]
-    student.abgabetermin = abgabetermin
-    student.fach = fach
-    student.betreuer1 = betreuer1
-    student.betreuer2 = betreuer2
-    student.themengebiet = themengebiet
-    student.artDerArbeit = art
-    student.titel = titel
-    student.istBetreuer1Intern = betreuer1Intern
-    student.istBetreuer2Intern = betreuer2Intern
+    student.deadline = abgabetermin
+    student.subject = fach
+    student.supervisor1 = betreuer1
+    student.supervisor2 = betreuer2
+    student.topic = themengebiet
+    student.type = art
+    student.title = titel
+    student.isSupervisor1Intern = betreuer1Intern
+    student.isSupervisor2Intern = betreuer2Intern
     student.status = "Anfrage wird bestätigt"
     student.save()
 
@@ -108,23 +108,23 @@ def getStudentRequest(user, id=None):
     else:
         student = Student.objects.filter(id=id)[0]
     result = {}
-    result['titel'] = student.titel
-    if student.istBetreuer1Intern:
-        betreuer1 = InternerPruefer.objects.filter(id=student.betreuer1)[0]
+    result['titel'] = student.title
+    if student.isSupervisor1Intern:
+        betreuer1 = InternExaminer.objects.filter(id=student.supervisor1)[0]
     else:
-        betreuer1 = ExternerPruefer.objects.filter(id=student.betreuer1)[0]
+        betreuer1 = ExternalExaminer.objects.filter(id=student.supervisor1)[0]
     result['betreuer1'] = betreuer1.name
-    if student.istBetreuer2Intern:
-        betreuer2 = InternerPruefer.objects.filter(id=student.betreuer2)[0]
+    if student.isSupervisor2Intern:
+        betreuer2 = InternExaminer.objects.filter(id=student.supervisor2)[0]
     else:
-        betreuer2 = ExternerPruefer.objects.filter(id=student.betreuer2)[0]
+        betreuer2 = ExternalExaminer.objects.filter(id=student.supervisor2)[0]
     result['betreuer2'] = betreuer2.name
-    result['abgabetermin'] = student.abgabetermin
-    result['art'] = student.artDerArbeit
+    result['abgabetermin'] = student.deadline
+    result['art'] = student.type
     result['status'] = student.status
     result['note1'] = student.note1
     result['note2'] = student.note2
-    result['themengebiet'] = student.themengebiet
+    result['themengebiet'] = student.topic
     return result
 
 def getRequest(id):
@@ -133,14 +133,14 @@ def getRequest(id):
 
 def createExternPruefer(name, email, password):
     user = User.objects.create_user(username=email, email=email, password=password)
-    pruefer = ExternerPruefer.objects.create(name=name, email=email, user=user)
+    pruefer = ExternalExaminer.objects.create(name=name, email=email, user=user)
     with transaction.atomic():
         user.save()
         pruefer.save()
 
 def createPruefunsamt(email, password):
     user = User.objects.create_user(username=email, email=email, password=password)
-    pruefungsamt = Pruefungsamt.objects.create(user=user)
+    pruefungsamt = Office.objects.create(user=user)
     with transaction.atomic():
         user.save()
         pruefungsamt.save()
@@ -148,95 +148,95 @@ def createPruefunsamt(email, password):
 def approveRequest(request, group, user=None):
     student = Student.objects.filter(id=request)[0]
     if group == "Prüfungsamt":
-        student.prüfungsamtBestaetigt = True
+        student.officeConfirmed = True
         student.save()
     else:
         intern = False
-        if InternerPruefer.objects.filter(user=user).exists():
+        if InternExaminer.objects.filter(user=user).exists():
             intern = True
         if intern:
-            pruefer = InternerPruefer.objects.filter(user=user)[0]
+            pruefer = InternExaminer.objects.filter(user=user)[0]
         else:
-            pruefer = ExternerPruefer.objects.filter(user=user)[0]
-        if (student.betreuer1 == pruefer.id and student.istBetreuer1Intern == intern):
-            student.betreuer1Bestaetigt = True
+            pruefer = ExternalExaminer.objects.filter(user=user)[0]
+        if (student.supervisor1 == pruefer.id and student.isSupervisor1Intern == intern):
+            student.supervisor1Confirmed = True
             student.save()
         else:
-            student.betreuer2Bestaetigt = True
+            student.supervisor2Confirmed = True
             student.save()
 
 def rejectRequest(request, group, user=None):
     student = Student.objects.filter(id=request)[0]
     if group == "Prüfungsamt":
-        student.prüfungsamtBestaetigt = True
+        student.officeConfirmed = True
         student.save()
     else:
         intern = False
-        if InternerPruefer.objects.filter(user=user).exists():
+        if InternExaminer.objects.filter(user=user).exists():
             intern = True
         if intern:
-            pruefer = InternerPruefer.objects.filter(user=user)[0]
+            pruefer = InternExaminer.objects.filter(user=user)[0]
         else:
-            pruefer = ExternerPruefer.objects.filter(user=user)[0]
-        if (student.betreuer1 == pruefer.id and student.istBetreuer1Intern == intern):
-            student.betreuer1Bestaetigt = False
+            pruefer = ExternalExaminer.objects.filter(user=user)[0]
+        if (student.supervisor1 == pruefer.id and student.isSupervisor1Intern == intern):
+            student.supervisor1Confirmed = False
             student.save()
         else:
-            student.betreuer2Bestaetigt = False
+            student.supervisor2Confirmed = False
             student.save()
 
 def getNotAcceptedRequests(group, user=None):
     if group == "Prüfungsamt":
-        requests = Student.objects.filter(prüfungsamtBestaetigt=None).order_by('abgabetermin')
+        requests = Student.objects.filter(prüfungsamtBestaetigt=None).order_by('deadline')
     elif group == "Prüfer":
         intern = False
-        if InternerPruefer.objects.filter(user=user).exists():
+        if InternExaminer.objects.filter(user=user).exists():
             intern = True
         if intern:
-            pruefer = InternerPruefer.objects.filter(user=user)[0]
+            pruefer = InternExaminer.objects.filter(user=user)[0]
         else:
-            pruefer = ExternerPruefer.objects.filter(user=user)[0]
-        requests = Student.objects.filter(Q(istBetreuer1Intern=intern,  betreuer1=pruefer.id) |
-                                          Q(istBetreuer2Intern=intern,  betreuer2=pruefer.id))
+            pruefer = ExternalExaminer.objects.filter(user=user)[0]
+        requests = Student.objects.filter(Q(isSupervisor1Intern=intern,  supervisor1=pruefer.id) |
+                                          Q(isSupervisor2Intern=intern,  supervisor2=pruefer.id))
         for elem in requests:
-            if elem.istBetreuer1Intern == intern and elem.betreuer1 == pruefer.id:
-                if elem.betreuer1Bestaetigt:
+            if elem.isSupervisor1Intern == intern and elem.supervisor1 == pruefer.id:
+                if elem.supervisor1Confirmed:
                     requests = requests.exclude(id=elem.id)
-            elif elem.istBetreuer2Intern == intern and elem.betreuer2 == pruefer.id:
-                if elem.betreuer2Bestaetigt:
+            elif elem.isSupervisor2Intern == intern and elem.supervisor2 == pruefer.id:
+                if elem.supervisor2Confirmed:
                     requests = requests.exclude(id=elem.id)
     return requests
 
 def getRequestsOfPrüfer(user, status):
     intern = False
-    if InternerPruefer.objects.filter(user=user).exists():
+    if InternExaminer.objects.filter(user=user).exists():
         intern = True
     if intern:
-        pruefer = InternerPruefer.objects.filter(user=user)[0]
+        pruefer = InternExaminer.objects.filter(user=user)[0]
     else:
-        pruefer = ExternerPruefer.objects.filter(user=user)[0]
+        pruefer = ExternalExaminer.objects.filter(user=user)[0]
 
     if status == "Schreibphase":
-        requests = Student.objects.filter((Q(istBetreuer1Intern=intern,  betreuer1=pruefer.id) |
-                                          Q(istBetreuer2Intern=intern,  betreuer2=pruefer.id)), status=status)
+        requests = Student.objects.filter((Q(isSupervisor1Intern=intern,  supervisor1=pruefer.id) |
+                                          Q(isSupervisor2Intern=intern,  supervisor2=pruefer.id)), status=status)
     return requests
 
 def getNotRatedRequests(user):
     intern = False
-    if InternerPruefer.objects.filter(user=user).exists():
+    if InternExaminer.objects.filter(user=user).exists():
         intern = True
     if intern:
-        pruefer = InternerPruefer.objects.filter(user=user)[0]
+        pruefer = InternExaminer.objects.filter(user=user)[0]
     else:
-        pruefer = ExternerPruefer.objects.filter(user=user)[0]
-    requests = Student.objects.filter(Q(istBetreuer1Intern=intern, betreuer1=pruefer.id) |
-                                      Q(istBetreuer2Intern=intern, betreuer2=pruefer.id) |
-                                      Q(istDrittgutachterIntern=intern, drittgutachter=pruefer.id))
+        pruefer = ExternalExaminer.objects.filter(user=user)[0]
+    requests = Student.objects.filter(Q(isSupervisor1Intern=intern, supervisor1=pruefer.id) |
+                                      Q(isSupervisor2Intern=intern, supervisor2=pruefer.id) |
+                                      Q(isSupervisor3Intern=intern, supervisor3=pruefer.id))
     for elem in requests:
-        if elem.istBetreuer1Intern == intern and elem.betreuer1 == pruefer.id:
+        if elem.isSupervisor1Intern == intern and elem.supervisor1 == pruefer.id:
             if elem.note1 is not None:
                 requests = requests.exclude(id=elem.id)
-        elif elem.istBetreuer2Intern == intern and elem.betreuer2 == pruefer.id:
+        elif elem.isSupervisor2Intern == intern and elem.betreuer2 == pruefer.id:
             if elem.note2 is not None:
                 requests = requests.exclude(id=elem.id)
         elif elem.istDrittgutachterIntern == intern and elem.drittgutachter == pruefer.id:
@@ -246,47 +246,47 @@ def getNotRatedRequests(user):
 
 def getRatedRequests(user):
     intern = False
-    if InternerPruefer.objects.filter(user=user).exists():
+    if InternExaminer.objects.filter(user=user).exists():
         intern = True
     if intern:
-        pruefer = InternerPruefer.objects.filter(user=user)[0]
+        pruefer = InternExaminer.objects.filter(user=user)[0]
     else:
-        pruefer = ExternerPruefer.objects.filter(user=user)[0]
-    requests = Student.objects.filter(Q(istBetreuer1Intern=intern, betreuer1=pruefer.id) |
-                                      Q(istBetreuer2Intern=intern, betreuer2=pruefer.id) |
-                                      Q(istDrittgutachterIntern=intern, drittgutachter=pruefer.id))
+        pruefer = ExternalExaminer.objects.filter(user=user)[0]
+    requests = Student.objects.filter(Q(isSupervisor1Intern=intern, supervisor1=pruefer.id) |
+                                      Q(isSupervisor2Intern=intern, supervisor2=pruefer.id) |
+                                      Q(isSupervisor3Intern=intern, supervisor2=pruefer.id))
     for elem in requests:
-        if elem.istBetreuer1Intern == intern and elem.betreuer1 == pruefer.id:
+        if elem.isSupervisor1Intern == intern and elem.supervisor1 == pruefer.id:
             if elem.note1 is None:
                 requests = requests.exclude(id=elem.id)
-        elif elem.istBetreuer2Intern == intern and elem.betreuer2 == pruefer.id:
+        elif elem.isSupervisor2Intern == intern and elem.supervisor2 == pruefer.id:
             if elem.note2 is None:
                 requests = requests.exclude(id=elem.id)
-        elif elem.istDrittgutachterIntern == intern and elem.drittgutachter == pruefer.id:
+        elif elem.isSupervisor3Intern == intern and elem.supervisor3 == pruefer.id:
             if elem.note3 is None:
                 requests = requests.exclude(id=elem.id)
     return requests
 
 def getNotAnsweredInvitations(user):
     intern = False
-    if InternerPruefer.objects.filter(user=user).exists():
+    if InternExaminer.objects.filter(user=user).exists():
         intern = True
     if intern:
-        pruefer = InternerPruefer.objects.filter(user=user)[0]
+        pruefer = InternExaminer.objects.filter(user=user)[0]
     else:
-        pruefer = ExternerPruefer.objects.filter(user=user)[0]
-    invitations = Einladung.objects.filter(pruefer=pruefer.id, istPrueferIntern=intern, angenommen__isnull=True)
+        pruefer = ExternalExaminer.objects.filter(user=user)[0]
+    invitations = Invitation.objects.filter(examiner=pruefer.id, isExaminerIntern=intern, accepted__isnull=True)
     return invitations
 
 def getAnsweredInvitations(user):
     intern = False
-    if InternerPruefer.objects.filter(user=user).exists():
+    if InternExaminer.objects.filter(user=user).exists():
         intern = True
     if intern:
-        pruefer = InternerPruefer.objects.filter(user=user)[0]
+        pruefer = InternExaminer.objects.filter(user=user)[0]
     else:
-        pruefer = ExternerPruefer.objects.filter(user=user)[0]
-    invitations = Einladung.objects.filter(pruefer=pruefer.id, istPrueferIntern=intern, angenommen__isnull=False)
+        pruefer = ExternalExaminer.objects.filter(user=user)[0]
+    invitations = Invitation.objects.filter(examiner=pruefer.id, isExaminerIntern=intern, accepted__isnull=False)
     return invitations
 
 def getStudentName(student):
@@ -294,13 +294,13 @@ def getStudentName(student):
 
 def getFinalDates(user):
     intern = False
-    if InternerPruefer.objects.filter(user=user).exists():
+    if InternExaminer.objects.filter(user=user).exists():
         intern = True
     if intern:
-        pruefer = InternerPruefer.objects.filter(user=user)[0]
+        pruefer = InternExaminer.objects.filter(user=user)[0]
     else:
-        pruefer = ExternerPruefer.objects.filter(user=user)[0]
-    studentId = Einladung.objects.filter(pruefer=pruefer.id, istPrueferIntern=intern, angenommen=True)
+        pruefer = ExternalExaminer.objects.filter(user=user)[0]
+    studentId = Invitation.objects.filter(examiner=pruefer.id, isExaminerIntern=intern, accepted=True)
     studentIdList = studentId.values('student').distinct()
     students = Student.objects.filter(id__in=studentIdList).distinct()
     return students

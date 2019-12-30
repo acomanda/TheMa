@@ -43,7 +43,7 @@ def home(request):
         group = getUserGroup(request.user)
         context['group'] = group
         if group == "Student":
-            content = getRequest(request.user)
+            content = getStudentRequest(request.user)
             context['titel'] = content['titel']
             context['betreuer1'] = content['betreuer1']
             context['betreuer2'] = content['betreuer2']

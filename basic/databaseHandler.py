@@ -267,3 +267,21 @@ def checkStatus(student):
         if student.appointmentEmerged is not None and student.officeConfirmedAppointment is not None:
             student.status = "Termin entstanden"
             student.save()
+
+def changeStatus(studentId, status):
+    """Receives the Id of the Student/Request row and a status String.
+    The function sets the status value of the request to the new status."""
+    student = Student.objects.filter(id=studentId).first()
+    if student.exists():
+        student.status = status
+        student.save()
+    else:
+        return False
+
+def confirmAppointment(studentId):
+    student = Student.objects.filter(id=studentId).first()
+    if student.exists():
+        student.officeConfirmedAppointment = True
+        student.save()
+    else:
+        return False

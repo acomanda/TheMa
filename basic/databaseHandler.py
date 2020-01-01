@@ -194,7 +194,7 @@ def getExaminer(user):
         return False
 
 
-def getRequestsOfOffice(status, accepted=None, final=None):
+def getRequestsOfOffice(status, accepted=None, appointmentEmerged=None, final=None):
     """The function returns the requests of the user group 'Office'.
         If a status is passed, all requests that have this status are returned.
         The other parameters can be used to receive more specific requests."""
@@ -202,10 +202,10 @@ def getRequestsOfOffice(status, accepted=None, final=None):
         requests = Student.objects.filter(status=status).order_by('deadline')
         if accepted is not None:
             requests = requests.filter(officeConfirmed__isnull=not accepted)
+        if appointmentEmerged is not None:
+            requests = requests.filter(appointmentEmerged__isnull=not appointmentEmerged)
         if final is not None:
-            requests = requests.filter(
-                appointment__isnull=not final
-            )
+            requests = requests.filter(appointment__isnull=not final)
         return requests
     else:
         return False
@@ -268,20 +268,87 @@ def checkStatus(student):
             student.status = "Termin entstanden"
             student.save()
 
+
 def changeStatus(studentId, status):
     """Receives the Id of the Student/Request row and a status String.
     The function sets the status value of the request to the new status."""
-    student = Student.objects.filter(id=studentId).first()
+    student = Student.objects.filter(id=studentId)
     if student.exists():
+        student = student.first()
         student.status = status
         student.save()
     else:
         return False
 
+
 def confirmAppointment(studentId):
-    student = Student.objects.filter(id=studentId).first()
+    """Receives the Id of the Student/Request row.
+    The function sets the value officeConfirmedAppointment of the request to True."""
+    student = Student.objects.filter(id=studentId)
     if student.exists():
+        student = student.first()
         student.officeConfirmedAppointment = True
         student.save()
     else:
         return False
+
+
+def gradeRequest(user, studentId, note):
+    """Receives a django user object, the id of the Student/Request and the note.
+    The function sets the users note for the request."""
+    student = Student.objects.filter(id=studentId)
+    if student.exists():
+        student = student.first()
+        examinerId, intern = getExaminer(user)
+        if student.supervisor1 == examinerId and student.isSupervisor1Intern == intern:
+            student.note1 = note
+            student.save()
+        elif student.supervisor2 == examinerId and student.isSupervisor2Intern == intern:
+            student.note2 = note
+            student.save()
+        elif student.supervisor3 == examinerId and student.isSupervisor3Intern == intern:
+            student.note3 = note
+            student.save()
+        checkStatus(student)
+    else:
+        return False
+
+
+def getOpenAvailabilities(studentId):
+    """Receives the id of the Student/Request.
+    Returns the time slots that are available for the request."""
+    availabilities = AvailabilityRequest.objects.filter(student=studentId)
+    if availabilities.exists():
+        timeSlots = TimeSlot.objects.filter(id__in=availabilities.values('timeSlot'))
+        return timeSlots
+    else:
+        return "all"
+
+
+def acceptOrNotInvitation(user, studentId, confirm):
+    """"Receives the django user object of an examiner and the id of the Student/Request.
+    The Function saves the confirmation of the examiner inside the invitation row of the database."""
+    examinerId, intern = getExaminer(user)
+    invitation = Invitation.objects.filter(
+        examiner=examinerId, isExaminerIntern=intern, student=studentId
+    ).last()
+    invitation.accepted = confirm
+    invitation.save()
+
+
+def answerInvitation(user, studentId, timeSlotIdsList):
+    """Receives the django user object of an examiner and the id of the Student/Request.
+    Another parameter is filled with the ids of the selected slots.
+    Saves the chosen timeSlots for the invitation inside of the database."""
+    examinerId, intern = getExaminer(user)
+    invitation = Invitation.objects.filter(
+        examiner=examinerId, isExaminerIntern=intern, student=studentId
+    ).last()
+    availabilities = []
+    for id in timeSlotIdsList:
+        timeSlot = TimeSlot.objects.filter(id=id).first()
+        availabilities.append(AvailabilityInvitation(invitation=invitation, timeSlot=timeSlot))
+    with transaction.atomic():
+        for elem in availabilities:
+            elem.save()
+

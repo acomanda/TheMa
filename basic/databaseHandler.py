@@ -194,7 +194,8 @@ def getExaminer(user):
         return False
 
 
-def getRequestsOfOffice(status, accepted=None, appointmentEmerged=None, final=None):
+def getRequestsOfOffice(status, accepted=None, allAccepted=None, allRated=None, supervisor3Needed=None,
+                        appointmentEmerged=None, final=None):
     """The function returns the requests of the user group 'Office'.
         If a status is passed, all requests that have this status are returned.
         The other parameters can be used to receive more specific requests."""
@@ -202,6 +203,33 @@ def getRequestsOfOffice(status, accepted=None, appointmentEmerged=None, final=No
         requests = Student.objects.filter(status=status).order_by('deadline')
         if accepted is not None:
             requests = requests.filter(officeConfirmed__isnull=not accepted)
+        if allAccepted is not None:
+            if allAccepted:
+                requests = requests.filter(
+                    officeConfirmed__isnull=False, supervisor1Confirmed__isnull=False,
+                    supervisor2Confirmed__isnull=False
+                )
+            else:
+                requests = requests.exclude(
+                    officeConfirmed__isnull=False, supervisor1Confirmed__isnull=False,
+                    supervisor2Confirmed__isnull=False
+                )
+        if allRated is not None:
+            if allRated:
+                requests = requests.filter(
+                    Q(note1__isnull=False, note2__isnull=False, note3__isnull=False) |
+                    Q(note1__isnull=False, note2__isnull=False, note1__gt=1, note2__gt=1)
+                )
+            else:
+                requests = requests.exclude(
+                    Q(note1__isnull=False, note2__isnull=False, note3__isnull=False) |
+                    Q(note1__isnull=False, note2__isnull=False, note1__gt=1, note2__gt=1)
+                )
+        if supervisor3Needed is not None:
+            if supervisor3Needed:
+                requests = requests.filter(note1__isnull=False, note2__isnull=False, note1=1, note2=1)
+            else:
+                requests = requests.exclude(note1__isnull=False, note2__isnull=False, note1=1, note2=1)
         if appointmentEmerged is not None:
             requests = requests.filter(appointmentEmerged__isnull=not appointmentEmerged)
         if final is not None:
@@ -351,4 +379,3 @@ def answerInvitation(user, studentId, timeSlotIdsList):
     with transaction.atomic():
         for elem in availabilities:
             elem.save()
-

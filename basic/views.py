@@ -59,12 +59,47 @@ def homeOffice(request):
         context = {}
         group = getUserGroup(request.user)
         context['group'] = group
+        if request.POST.get('details'):
+            request.session['requestId'] = request.POST.get('details')
+            return redirect('/confirmrequest')
+        if request.POST.get('rating'):
+            changeStatus(request.POST.get('rating'), "Gutachteneingabe")
+
+        # Container 1
         container1Request = getRequestsOfOffice("Anfrage wird bestätigt", False)
         container1 = ""
         for elem in container1Request:
             container1 += '<p class="alignleft">' + elem.name + ' </p> \n'
-            container1 += '<p class="alignright">Text on the right</p>'
+            container1 += '<p class="alignright"><button type="submit" name="details" value="' + str(elem.id) \
+                          + '">Details</button></p><br/><br/>'
+        container1Request = getRequestsOfOffice("Anfrage wird bestätigt", True)
+        for elem in container1Request:
+            container1 += '<p class="alignleft">' + elem.name + ' </p> \n'
+            container1 += '<p class="alignright">Bestätigt</p><br/><br/>'
+        container1Request = getRequestsOfOffice("Schreibphase", None, True)
+        for elem in container1Request:
+            container1 += '<p class="alignleft">' + elem.name + ' </p> \n'
+            container1 += '<p class="alignright"><button type="submit" name="rating" value="' + str(elem.id) \
+                          + '">Gutachteineingabe frei geben</button></p><br/><br/>'
+        container1Request = getRequestsOfOffice("Schreibphase").exclude(id__in=container1Request.values('id'))
+        for elem in container1Request:
+            container1 += '<p class="alignleft">' + elem.name + ' </p> \n'
+            container1 += '<p class="alignright">In Schreibphase</p><br/><br/>'
         context['container1'] = container1
+
+        # Container 2
+        container2Request = getRequestsOfOffice("Gutachteneingabe", None, None, None, True)
+        container2 = ""
+        for elem in container2Request:
+            container2 += '<p class="alignleft">' + elem.name + ' </p> \n'
+            container2 += '<p class="alignright"><button type="submit" name="supervisor3" value="' + str(elem.id) \
+                          + '">Drittgutachter wählen</button></p><br/><br/>'
+        container2Request = getRequestsOfOffice("Gutachteneingabe").exclude(id__in=container2Request.values('id'))
+        for elem in container2Request:
+            container2 += '<p class="alignleft">' + elem.name + ' </p> \n'
+            container2 += '<p class="alignright">Wartet auf Noten</p><br/><br/>'
+        context['container2'] = container2
+
         return render(request, 'homePruefungsamt.html', context)
     else:
         return redirect('/')
@@ -184,11 +219,19 @@ def confirmRequest(request):
     context['subject'] = content['subject']
     if request.POST.get('answerRequest'):
         if request.POST.get('answerRequest') == "accept":
-            confirmOrNotRequest(request.session['requestId'], True, "Examiner", request.user)
-            return redirect('/')
+            if group == "Examiner":
+                confirmOrNotRequest(request.session['requestId'], True, "Examiner", request.user)
+                return redirect('/')
+            else:
+                confirmOrNotRequest(request.session['requestId'], True, "Office", request.user)
+                return redirect('/')
         elif request.POST.get('answerRequest') == "reject":
-            confirmOrNotRequest(request.session['requestId'], False, "Examiner", request.user)
-            return redirect('/')
+            if group == "Examiner":
+                confirmOrNotRequest(request.session['requestId'], False, "Examiner", request.user)
+                return redirect('/')
+            else:
+                confirmOrNotRequest(request.session['requestId'], False, "Office", request.user)
+                return redirect('/')
     return render(request, 'requestDetails.html', context)
 
 

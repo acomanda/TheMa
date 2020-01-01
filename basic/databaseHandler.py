@@ -233,7 +233,7 @@ def getRequestsOfOffice(status, accepted=None, allAccepted=None, allRated=None, 
         if appointmentEmerged is not None:
             requests = requests.filter(appointmentEmerged__isnull=not appointmentEmerged)
         if final is not None:
-            requests = requests.filter(appointment__isnull=not final)
+            requests = requests.filter(officeConfirmedAppointment__isnull=not final)
         return requests
     else:
         return False

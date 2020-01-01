@@ -100,6 +100,31 @@ def homeOffice(request):
             container2 += '<p class="alignright">Wartet auf Noten</p><br/><br/>'
         context['container2'] = container2
 
+        # Container 3
+        container3Request = getRequestsOfOffice("Terminfindung", None, None, None, None, False)
+        container3 = ""
+        for elem in container3Request:
+            container3 += '<p class="alignleft">' + elem.name + ' </p> \n'
+            container3 += '<p class="alignright">In Terminfindung</p><br/><br/>'
+        context['container3'] = container3
+
+        # Container 4
+        container4Request = getRequestsOfOffice("Terminfindung", None, None, None, None, True, False)
+        container4 = ""
+        for elem in container4Request:
+            container4 += '<p class="alignleft">' + elem.name + ' </p> \n'
+            container4 += '<p class="alignright"><button type="submit" name="supervisor3" value="' + str(elem.id) \
+                          + '">Details</button></p><br/><br/>'
+        context['container4'] = container4
+
+        # Container 5
+        container5Request = getRequestsOfOffice("Termin entstanden", None, None, None, None, None, True)
+        container5 = ""
+        for elem in container5Request:
+            container5 += '<p class="alignleft">' + elem.name + ' </p> \n'
+            container5 += '<p class="alignright">' + str(elem.appointment)[:16] + '</p><br/><br/>'
+        context['container5'] = container5
+
         return render(request, 'homePruefungsamt.html', context)
     else:
         return redirect('/')

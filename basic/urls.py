@@ -9,4 +9,5 @@ urlpatterns = [
     path('logout', views.logout),
     path('anfrage', views.anfrage),
     path('confirmrequest', views.confirmRequest),
+    path('grading', views.grading),
 ]

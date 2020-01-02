@@ -169,7 +169,9 @@ def homeExaminer(request):
         if request.POST.get('details'):
             request.session['requestId'] = request.POST.get('details')
             return redirect('/confirmrequest')
-
+        if request.POST.get('rate'):
+            request.session['requestId'] = request.POST.get('rate')
+            return redirect('/grading')
         #Container 1
         container1 = ""
         container1Request = getRequestsOfExaminer(request.user, "Anfrage wird bestätigt", False)
@@ -192,7 +194,7 @@ def homeExaminer(request):
         container2Request = getRequestsOfExaminer(request.user, "Gutachteneingabe", None, False)
         for elem in container2Request:
             container2 += '<p class="alignleft">' + elem.name + ' </p>'
-            container2 += '<p class="alignright"><button type="submit" name="bewerten" value="' + str(elem.id) \
+            container2 += '<p class="alignright"><button type="submit" name="rate" value="' + str(elem.id) \
                           + '">Bewerten</button></p><br/><br/>'
         container2Request = getRequestsOfExaminer(request.user, "Gutachteneingabe", None, True)
         for elem in container2Request:
@@ -292,3 +294,22 @@ def logout(request):
     """This function is used to logout a user."""
     django_logout(request)
     return redirect('/')
+
+
+def grading(request):
+    context = {}
+    group = getUserGroup(request.user)
+    context['group'] = group
+    if request.POST.get('confirm'):
+        gradeRequest(request.user, request.session['requestId'], float(request.POST.get('grade')))
+        return redirect('/')
+    content = getStudentRequest(None, request.session['requestId'])
+    context['title'] = content['title']
+    context['supervisor1'] = content['supervisor1']
+    context['supervisor2'] = content['supervisor2']
+    context['deadline'] = content['deadline']
+    context['topic'] = content['topic']
+    context['type'] = content['type']
+    context['status'] = content['status']
+    context['subject'] = content['subject']
+    return render(request, 'requestDetails.html', context)

@@ -227,7 +227,8 @@ def getRequestsOfOffice(status, accepted=None, allAccepted=None, allRated=None, 
                 )
         if supervisor3Needed is not None:
             if supervisor3Needed:
-                requests = requests.filter(note1__isnull=False, note2__isnull=False, note1=1, note2=1)
+                requests = requests.filter(note1__isnull=False, note2__isnull=False, note1=1, note2=1,
+                                           supervisor3__isnull=True)
             else:
                 requests = requests.exclude(note1__isnull=False, note2__isnull=False, note1=1, note2=1)
         if appointmentEmerged is not None:
@@ -382,3 +383,33 @@ def answerInvitation(user, studentId, timeSlotIdsList):
     with transaction.atomic():
         for elem in availabilities:
             elem.save()
+
+
+def getExaminers(approvalToTest=None, subject=None, topic=None, title=None):
+    qualifications = Qualification.objects.all()
+    if approvalToTest is not None:
+        qualifications = qualifications.filter(approvalToTest=approvalToTest)
+    if subject is not None:
+        qualifications = qualifications.filter(subject=subject)
+    if topic is not None:
+        qualifications = qualifications.filter(topic=topic)
+    if title is not None:
+        qualifications = qualifications.filter(title=title)
+    externalExaminers = ExternalExaminer.objects.none()
+    internExaminers = InternExaminer.objects.none()
+    for elem in qualifications:
+        if elem.isExaminerIntern == False:
+            externalExaminers = externalExaminers | ExternalExaminer.objects.filter(id=elem.examiner)
+        if elem.isExaminerIntern == True:
+            internExaminers = internExaminers | InternExaminer.objects.filter(id=elem.examiner)
+    return externalExaminers, internExaminers
+
+def setSupervisor3(studentId, examiner, isExaminerIntern):
+    student = Student.objects.filter(id=studentId)
+    if student.exists():
+        student = student.first()
+        student.isSupervisor3Intern = isExaminerIntern
+        student.supervisor3 = examiner
+        student.save()
+    else:
+        return False

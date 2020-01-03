@@ -64,7 +64,11 @@ def homeOffice(request):
             return redirect('/confirmrequest')
         if request.POST.get('rating'):
             changeStatus(request.POST.get('rating'), "Gutachteneingabe")
-
+        if request.POST.get('scheduling'):
+            changeStatus(request.POST.get('scheduling'), "Terminfindung")
+        if request.POST.get('supervisor3'):
+            request.session['requestId'] = request.POST.get('supervisor3')
+            return redirect('/supervisor3')
         # Container 1
         container1Request = getRequestsOfOffice("Anfrage wird bestätigt", False)
         container1 = ""
@@ -88,13 +92,19 @@ def homeOffice(request):
         context['container1'] = container1
 
         # Container 2
-        container2Request = getRequestsOfOffice("Gutachteneingabe", None, None, None, True)
         container2 = ""
-        for elem in container2Request:
+        container2Request1 = getRequestsOfOffice("Gutachteneingabe", None, None, None, True)
+        for elem in container2Request1:
             container2 += '<p class="alignleft">' + elem.name + ' </p> \n'
             container2 += '<p class="alignright"><button type="submit" name="supervisor3" value="' + str(elem.id) \
                           + '">Drittgutachter wählen</button></p><br/><br/>'
-        container2Request = getRequestsOfOffice("Gutachteneingabe").exclude(id__in=container2Request.values('id'))
+        container2Request2 = getRequestsOfOffice("Gutachteneingabe", None, None, None, False)
+        for elem in container2Request2:
+            container2 += '<p class="alignleft">' + elem.name + ' </p> \n'
+            container2 += '<p class="alignright"><button type="submit" name="scheduling" value="' + str(elem.id) \
+                          + '">Terminfindung starten</button></p><br/><br/>'
+        container2Request = getRequestsOfOffice("Gutachteneingabe").exclude(Q(id__in=container2Request1.values('id')) |
+                                                                            Q(id__in=container2Request2.values('id')))
         for elem in container2Request:
             container2 += '<p class="alignleft">' + elem.name + ' </p> \n'
             container2 += '<p class="alignright">Wartet auf Noten</p><br/><br/>'
@@ -312,4 +322,31 @@ def grading(request):
     context['type'] = content['type']
     context['status'] = content['status']
     context['subject'] = content['subject']
+    return render(request, 'requestDetails.html', context)
+
+
+def supervisor3(request):
+    context = {}
+    group = getUserGroup(request.user)
+    context['group'] = group
+    if request.POST.get('confirm'):
+        setSupervisor3(request.session['requestId'], request.POST.get('supervisor3')[1],
+                       request.POST.get('supervisor3')[0])
+        return redirect('/')
+    content = getStudentRequest(None, request.session['requestId'])
+    context['title'] = content['title']
+    context['supervisor1'] = content['supervisor1']
+    context['supervisor2'] = content['supervisor2']
+    context['deadline'] = content['deadline']
+    context['topic'] = content['topic']
+    context['type'] = content['type']
+    context['status'] = content['status']
+    context['subject'] = content['subject']
+    supervisors = ''
+    externalExaminers, internExaminers = getExaminers(True)
+    for elem in externalExaminers:
+        supervisors += '<option value="0' + str(elem.id) + '">' + elem.name + '</option>'
+    for elem in internExaminers:
+        supervisors += '<option value="1' + str(elem.id) + '">' + elem.name + '</option>'
+    context['supervisors'] = supervisors
     return render(request, 'requestDetails.html', context)

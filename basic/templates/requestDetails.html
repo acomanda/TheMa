@@ -28,6 +28,8 @@
             </form>
             {% elif request.path == '/grading'%}
                 Note:<br><br>
+            {% elif request.path == '/supervisor3'%}
+                Drittgutachter:<br><br>
             {% endif %}
         </div>
         <div class="mainRight">
@@ -63,6 +65,13 @@
                             <option value="5.0">5.0</option>
                         </select>
                         <button type="submit" name="confirm" value=" ">Benoten</button>
+                    </form>
+                {% elif request.path == '/supervisor3'%}
+                    <form method="post">{% csrf_token %}
+                        <select name="supervisor3">
+                            {{ supervisors | safe}}
+                        </select>
+                        <button type="submit" name="confirm" value="1">Bestätigen</button>
                     </form>
                 {% endif %}
         </div>

@@ -276,6 +276,7 @@ def anfrage(request):
     """This function controls the behavior of the page that is used to make a new request."""
     #TODO Fill the drop down selections with data from the database
     if request.user.is_authenticated:
+        context = {}
         if request.POST.get('anfrage') == "anfrage":
             form = Anfrage(request.POST)
             if (form.is_valid()):
@@ -295,7 +296,27 @@ def anfrage(request):
                 context['error'] = form.errors
                 return render(request, 'anfrage.html', context)
         if getUserGroup(request.user) == "Student" and not haveRequest(request.user):
-            return render(request, 'anfrage.html')
+            # Fill supervisor selections with data of database
+            supervisors = getExaminers()
+            supervisorSelections = ''
+            for elem in supervisors[0]:
+                supervisorSelections += '<option value="1' + str(elem.id) + '">' + elem.name + '</option>'
+            for elem in supervisors[1]:
+                supervisorSelections += '<option value="0' + str(elem.id) + '">' + elem.name + '</option>'
+            context['supervisors'] = supervisorSelections
+            # Fill subjects selection with data of database
+            subjectsList = getSubjects()
+            subjects = ''
+            for elem in subjectsList:
+                subjects = '<option value="' + elem + '">' + elem + '</option>'
+            context['subjects'] = subjects
+            # Fill topics selection with data of database
+            topicsList = getTopics('Informatik')
+            topics = ''
+            for elem in topicsList:
+                topics += '<option value="' + elem + '">' + elem + '</option>'
+            context['topics'] = topics
+            return render(request, 'anfrage.html', context)
         return redirect('/home')
     else:
         return redirect('/')

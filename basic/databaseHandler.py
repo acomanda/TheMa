@@ -402,6 +402,7 @@ def getExaminers(approvalToTest=None, subject=None, topic=None, title=None):
             externalExaminers = externalExaminers | ExternalExaminer.objects.filter(id=elem.examiner)
         if elem.isExaminerIntern == True:
             internExaminers = internExaminers | InternExaminer.objects.filter(id=elem.examiner)
+
     return externalExaminers, internExaminers
 
 def setSupervisor3(studentId, examiner, isExaminerIntern):
@@ -413,3 +414,20 @@ def setSupervisor3(studentId, examiner, isExaminerIntern):
         student.save()
     else:
         return False
+
+
+def getSubjects():
+    qualifications = Qualification.objects.all()
+    subjects = qualifications.values_list('subject').distinct()
+    result = []
+    for elem in subjects:
+        result.append(elem[0])
+    return result
+
+def getTopics(subject):
+    qualifications = Qualification.objects.filter(subject=subject)
+    topics = qualifications.values_list('topic').distinct()
+    result = []
+    for elem in topics:
+        result.append(elem[0])
+    return result

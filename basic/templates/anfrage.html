@@ -9,6 +9,7 @@
 <body>
     <div class = left></div>
     <div class="main">
+        {{ errorSupervisor |safe }}
         {{ error }}
         <form method="post">{% csrf_token %}
             <table>

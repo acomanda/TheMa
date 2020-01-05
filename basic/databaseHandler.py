@@ -283,18 +283,6 @@ def checkStatus(student):
         if student.officeConfirmed and student.supervisor1Confirmed and student.supervisor2Confirmed:
             student.status = "Schreibphase"
             student.save()
-
-    # Must be initialized by the Office and not automatically
-
-    # if student.status == "Gutachteneingabe":
-        # if student.note1 is not None and student.note2 is not None:
-            # if student.note1 == 1 and student.note2 == 1:
-            #    if student.note3 is not None:
-            #        student.status = "Terminfindung"
-            #        student.save()
-            # else:
-            #    student.status = "Terminfindung"
-            #    student.save()
     if student.status == "Terminfindung":
         if student.appointmentEmerged is not None and student.officeConfirmedAppointment is not None:
             student.status = "Termin entstanden"

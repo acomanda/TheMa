@@ -133,8 +133,8 @@ def getStudentRequest(user, id=None):
     result['deadline'] = student.deadline
     result['type'] = student.type
     result['status'] = student.status
-    result['note1'] = student.note1
-    result['note2'] = student.note2
+    result['grade1'] = student.grade1
+    result['grade2'] = student.grade2
     result['topic'] = student.topic
     result['subject'] = student.subject
     return result
@@ -217,20 +217,20 @@ def getRequestsOfOffice(status, accepted=None, allAccepted=None, allRated=None, 
         if allRated is not None:
             if allRated:
                 requests = requests.filter(
-                    Q(note1__isnull=False, note2__isnull=False, note3__isnull=False) |
-                    (Q(note1__isnull=False, note2__isnull=False) and Q(note1__gt=1) | Q(note2__gt=1))
+                    Q(grade1__isnull=False, grade2__isnull=False, grade3__isnull=False) |
+                    (Q(grade1__isnull=False, grade2__isnull=False) and Q(grade1__gt=1) | Q(grade2__gt=1))
                 )
             else:
                 requests = requests.exclude(
-                    Q(note1__isnull=False, note2__isnull=False, note3__isnull=False) |
-                    Q(note1__isnull=False, note2__isnull=False, note1__gt=1, note2__gt=1)
+                    Q(grade1__isnull=False, grade2__isnull=False, grade3__isnull=False) |
+                    Q(grade1__isnull=False, grade2__isnull=False, grade1__gt=1, grade2__gt=1)
                 )
         if supervisor3Needed is not None:
             if supervisor3Needed:
-                requests = requests.filter(note1__isnull=False, note2__isnull=False, note1=1, note2=1,
+                requests = requests.filter(grade1__isnull=False, grade2__isnull=False, grade1=1, grade2=1,
                                            supervisor3__isnull=True)
             else:
-                requests = requests.exclude(note1__isnull=False, note2__isnull=False, note1=1, note2=1)
+                requests = requests.exclude(grade1__isnull=False, grade2__isnull=False, grade1=1, grade2=1)
         if appointmentEmerged is not None:
             requests = requests.filter(appointmentEmerged__isnull=not appointmentEmerged)
         if final is not None:
@@ -258,9 +258,9 @@ def getRequestsOfExaminer(user, status, accepted=None, rated=None, answered=None
             )
         if rated is not None:
             requests = requests.filter(
-                Q(isSupervisor1Intern=intern, supervisor1=examinerId, note1__isnull=not rated) |
-                Q(isSupervisor2Intern=intern, supervisor2=examinerId, note2__isnull=not rated) |
-                Q(isSupervisor3Intern=intern, supervisor3=examinerId, note3__isnull=not rated)
+                Q(isSupervisor1Intern=intern, supervisor1=examinerId, grade1__isnull=not rated) |
+                Q(isSupervisor2Intern=intern, supervisor2=examinerId, grade2__isnull=not rated) |
+                Q(isSupervisor3Intern=intern, supervisor3=examinerId, grade3__isnull=not rated)
             )
         if answered is not None:
             invitations = Invitation.objects.filter(
@@ -321,13 +321,13 @@ def gradeRequest(user, studentId, note):
         student = student.first()
         examinerId, intern = getExaminer(user)
         if student.supervisor1 == examinerId and student.isSupervisor1Intern == intern:
-            student.note1 = note
+            student.grade1 = note
             student.save()
         elif student.supervisor2 == examinerId and student.isSupervisor2Intern == intern:
-            student.note2 = note
+            student.grade2 = note
             student.save()
         elif student.supervisor3 == examinerId and student.isSupervisor3Intern == intern:
-            student.note3 = note
+            student.grade3 = note
             student.save()
         checkStatus(student)
     else:

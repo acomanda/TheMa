@@ -156,14 +156,14 @@ def homeStudent(request):
         context['type'] = content['type']
         context['status'] = content['status']
         context['subject'] = content['subject']
-        if content['note1'] is None:
-            context['note1'] = "/"
+        if content['grade1'] is None:
+            context['grade1'] = "/"
         else:
-            context['note1'] = content['note1']
-        if content['note2'] is None:
-            context['note2'] = "/"
+            context['grade1'] = content['grade1']
+        if content['grade2'] is None:
+            context['grade2'] = "/"
         else:
-            context['note2'] = content['note2']
+            context['grade2'] = content['grade2']
         return render(request, 'requestDetails.html', context)
     else:
         return redirect('/')

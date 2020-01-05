@@ -50,9 +50,9 @@
             &nbsp; &nbsp; {{type}}<br><br>
                 {% if group == "Student"%}
             &nbsp; &nbsp; <u>{{status}}</u><br><br>
-            &nbsp; &nbsp; {{note1}}<br><br>
-            &nbsp; &nbsp; {{note2}}<br><br>
-                {{note3}}
+            &nbsp; &nbsp; {{grade1}}<br><br>
+            &nbsp; &nbsp; {{grade2}}<br><br>
+                {{grade3}}
                 {% elif request.path == '/confirmrequest' %}
                 <form method="post">{% csrf_token %}
                     <button type="submit" name="answerRequest" value="reject">Reject</button>

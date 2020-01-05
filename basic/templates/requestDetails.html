@@ -69,10 +69,12 @@
                 {% elif request.path == '/supervisor3'%}
                     <form method="post">{% csrf_token %}
                         <select name="supervisor3">
+                            <option></option>
                             {{ supervisors | safe}}
                         </select>
                         <button type="submit" name="confirm" value="1">Bestätigen</button>
                     </form>
+                    {{ error | safe }}
                 {% endif %}
         </div>
     </div>

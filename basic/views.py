@@ -98,7 +98,7 @@ def homeOffice(request):
             container2 += '<p class="alignleft">' + elem.name + ' </p> \n'
             container2 += '<p class="alignright"><button type="submit" name="supervisor3" value="' + str(elem.id) \
                           + '">Drittgutachter wählen</button></p><br/><br/>'
-        container2Request2 = getRequestsOfOffice("Gutachteneingabe", None, None, None, False)
+        container2Request2 = getRequestsOfOffice("Gutachteneingabe", None, None, True, None)
         for elem in container2Request2:
             container2 += '<p class="alignleft">' + elem.name + ' </p> \n'
             container2 += '<p class="alignright"><button type="submit" name="scheduling" value="' + str(elem.id) \
@@ -352,9 +352,13 @@ def supervisor3(request):
     group = getUserGroup(request.user)
     context['group'] = group
     if request.POST.get('confirm'):
-        setSupervisor3(request.session['requestId'], request.POST.get('supervisor3')[1],
-                       request.POST.get('supervisor3')[0])
-        return redirect('/')
+        if not setSupervisor3(request.session['requestId'], request.POST.get('supervisor3')[1],
+                       request.POST.get('supervisor3')[0]):
+            print(setSupervisor3(request.session['requestId'], request.POST.get('supervisor3')[1],
+                       request.POST.get('supervisor3')[0]))
+            context['error'] = 'Wähle einen Drittprüfer, der nicht bereits ein Prüfer ist.'
+        else:
+            return redirect('/')
     content = getStudentRequest(None, request.session['requestId'])
     context['title'] = content['title']
     context['supervisor1'] = content['supervisor1']

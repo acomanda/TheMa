@@ -218,7 +218,7 @@ def getRequestsOfOffice(status, accepted=None, allAccepted=None, allRated=None, 
             if allRated:
                 requests = requests.filter(
                     Q(note1__isnull=False, note2__isnull=False, note3__isnull=False) |
-                    Q(note1__isnull=False, note2__isnull=False, note1__gt=1, note2__gt=1)
+                    (Q(note1__isnull=False, note2__isnull=False) and Q(note1__gt=1) | Q(note2__gt=1))
                 )
             else:
                 requests = requests.exclude(
@@ -409,9 +409,13 @@ def setSupervisor3(studentId, examiner, isExaminerIntern):
     student = Student.objects.filter(id=studentId)
     if student.exists():
         student = student.first()
+        if (student.isSupervisor1Intern == isExaminerIntern and student.supervisor1 == examiner) | \
+                (student.isSupervisor2Intern == isExaminerIntern and student.supervisor2 == examiner):
+            return False
         student.isSupervisor3Intern = isExaminerIntern
         student.supervisor3 = examiner
         student.save()
+        return True
     else:
         return False
 

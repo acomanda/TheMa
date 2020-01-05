@@ -374,6 +374,7 @@ def answerInvitation(user, studentId, timeSlotIdsList):
 
 
 def getExaminers(approvalToTest=None, subject=None, topic=None, title=None):
+    """Returns all examiners that correpsond to the given specifications"""
     qualifications = Qualification.objects.all()
     if approvalToTest is not None:
         qualifications = qualifications.filter(approvalToTest=approvalToTest)
@@ -394,6 +395,8 @@ def getExaminers(approvalToTest=None, subject=None, topic=None, title=None):
     return externalExaminers, internExaminers
 
 def setSupervisor3(studentId, examiner, isExaminerIntern):
+    """Receives a studentId and the data of an examiner.
+    The function sets this examiner as the third supervisor of the student"""
     student = Student.objects.filter(id=studentId)
     if student.exists():
         student = student.first()
@@ -409,6 +412,7 @@ def setSupervisor3(studentId, examiner, isExaminerIntern):
 
 
 def getSubjects():
+    """Returns all functions of the database."""
     qualifications = Qualification.objects.all()
     subjects = qualifications.values_list('subject').distinct()
     result = []
@@ -417,6 +421,7 @@ def getSubjects():
     return result
 
 def getTopics(subject):
+    """Returns all topics that correspond to the givenn subject"""
     qualifications = Qualification.objects.filter(subject=subject)
     topics = qualifications.values_list('topic').distinct()
     result = []

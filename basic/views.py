@@ -149,8 +149,8 @@ def homeStudent(request):
         context['group'] = group
         content = getStudentRequest(request.user)
         context['title'] = content['title']
-        context['supervisor1'] = content['supervisor1']
-        context['supervisor2'] = content['supervisor2']
+        context['supervisor1'] = content['supervisor1'].name
+        context['supervisor2'] = content['supervisor2'].name
         context['deadline'] = content['deadline']
         context['topic'] = content['topic']
         context['type'] = content['type']

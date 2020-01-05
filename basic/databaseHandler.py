@@ -124,12 +124,23 @@ def getStudentRequest(user, id=None):
         betreuer1 = InternExaminer.objects.filter(id=student.supervisor1)[0]
     else:
         betreuer1 = ExternalExaminer.objects.filter(id=student.supervisor1)[0]
-    result['supervisor1'] = betreuer1.name
+    result['supervisor1'] = betreuer1
     if student.isSupervisor2Intern:
         betreuer2 = InternExaminer.objects.filter(id=student.supervisor2)[0]
     else:
         betreuer2 = ExternalExaminer.objects.filter(id=student.supervisor2)[0]
-    result['supervisor2'] = betreuer2.name
+    if student.isSupervisor3Intern is not None:
+        if student.isSupervisor3Intern:
+            betreuer3 = InternExaminer.objects.filter(id=student.supervisor3)[0]
+        else:
+            betreuer3 = ExternalExaminer.objects.filter(id=student.supervisor3)[0]
+        grade3 = student.grade3
+    else:
+        betreuer3 = None
+        grade3 = None
+    result['grade3'] = grade3
+    result['supervisor3'] = betreuer3
+    result['supervisor2'] = betreuer2
     result['deadline'] = student.deadline
     result['type'] = student.type
     result['status'] = student.status

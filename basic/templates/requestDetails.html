@@ -3,7 +3,15 @@
 <head>
     <link rel="stylesheet" href="../static/requestDetails.css">
     <meta charset="UTF-8">
-    <title>Home</title>
+    <title>
+        {% if group == "Student"%}
+            Student Home page
+        {% elif request.path == '/grading'%}
+            Benoten
+        {% elif request.path == '/supervisor3'%}
+            Drittgutachter
+        {% endif %}
+    </title>
     {% include "navBar.html" %}
 </head>
 <body>

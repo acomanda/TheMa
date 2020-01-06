@@ -3,6 +3,7 @@ from .authorization import *
 from .databaseHandler import *
 from django.contrib.auth import authenticate, login, logout as django_logout
 from .forms import *
+from .process import *
 
 stateLength = 30
 
@@ -65,7 +66,8 @@ def homeOffice(request):
         if request.POST.get('rating'):
             changeStatus(request.POST.get('rating'), "Gutachteneingabe")
         if request.POST.get('scheduling'):
-            changeStatus(request.POST.get('scheduling'), "Terminfindung")
+            request.session['requestId'] = request.POST.get('scheduling')
+            return redirect('/chairman')
         if request.POST.get('supervisor3'):
             request.session['requestId'] = request.POST.get('supervisor3')
             return redirect('/supervisor3')
@@ -354,15 +356,45 @@ def supervisor3(request):
     if request.POST.get('confirm'):
         if not setSupervisor3(request.session['requestId'], request.POST.get('supervisor3')[1],
                        request.POST.get('supervisor3')[0]):
-            print(setSupervisor3(request.session['requestId'], request.POST.get('supervisor3')[1],
-                       request.POST.get('supervisor3')[0]))
             context['error'] = 'Wähle einen Drittprüfer, der nicht bereits ein Prüfer ist.'
         else:
             return redirect('/')
     content = getStudentRequest(None, request.session['requestId'])
     context['title'] = content['title']
-    context['supervisor1'] = content['supervisor1']
-    context['supervisor2'] = content['supervisor2']
+    context['supervisor1'] = content['supervisor1'].name
+    context['supervisor2'] = content['supervisor2'].name
+    context['deadline'] = content['deadline']
+    context['topic'] = content['topic']
+    context['type'] = content['type']
+    context['status'] = content['status']
+    context['subject'] = content['subject']
+    supervisors = ''
+    externalExaminers, internExaminers = getExaminers(True)
+    for elem in externalExaminers:
+        supervisors += '<option value="0' + str(elem.id) + '">' + elem.name + '</option>'
+    for elem in internExaminers:
+        supervisors += '<option value="1' + str(elem.id) + '">' + elem.name + '</option>'
+    context['supervisors'] = supervisors
+    return render(request, 'requestDetails.html', context)
+
+
+def chairman(request):
+    context = {}
+    group = getUserGroup(request.user)
+    context['group'] = group
+    if request.POST.get('confirm'):
+        if not createExaminerConstellation(Student.objects.filter(id=request.session['requestId'])[0].user,
+                                           {'chairman': ExternalExaminer.objects.filter(id=1)[0]}):
+
+            context['error'] = 'Leider gibt es nicht genug Prüfer um eine Konstellation zu generieren.'
+        else:
+            print('hallo')
+            changeStatus(request.session['requestId'], "Terminfindung")
+            return redirect('/')
+    content = getStudentRequest(None, request.session['requestId'])
+    context['title'] = content['title']
+    context['supervisor1'] = content['supervisor1'].name
+    context['supervisor2'] = content['supervisor2'].name
     context['deadline'] = content['deadline']
     context['topic'] = content['topic']
     context['type'] = content['type']

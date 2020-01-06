@@ -38,6 +38,8 @@
                 Note:<br><br>
             {% elif request.path == '/supervisor3'%}
                 Drittgutachter:<br><br>
+            {% elif request.path == '/chairman'%}
+                Vorsitzender:<br><br>
             {% endif %}
         </div>
         <div class="mainRight">
@@ -77,6 +79,15 @@
                 {% elif request.path == '/supervisor3'%}
                     <form method="post">{% csrf_token %}
                         <select name="supervisor3">
+                            <option></option>
+                            {{ supervisors | safe}}
+                        </select>
+                        <button type="submit" name="confirm" value="1">Bestätigen</button>
+                    </form>
+                    {{ error | safe }}
+                {% elif request.path == '/chairman'%}
+                    <form method="post">{% csrf_token %}
+                        <select name="chairman">
                             <option></option>
                             {{ supervisors | safe}}
                         </select>

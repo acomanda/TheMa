@@ -11,4 +11,5 @@ urlpatterns = [
     path('confirmrequest', views.confirmRequest),
     path('grading', views.grading),
     path('supervisor3', views.supervisor3),
+    path('chairman', views.chairman),
 ]

@@ -89,4 +89,3 @@ def getConstellationValues(constellation):
         for i in range(constellationValues.count(None)):
             constellationValues.remove(None)
     return constellationValues
-

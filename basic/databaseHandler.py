@@ -276,7 +276,7 @@ def getRequestsOfExaminer(user, status, accepted=None, rated=None, answered=None
             )
         if answered is not None:
             invitations = Invitation.objects.filter(
-                examiner=examinerId, isExaminerIntern=intern, accepted__isnull=not answered
+                examiner=examinerId, isExaminerIntern=intern, accepted__isnull=answered
             )
             requests = requests.exclude(id__in=invitations.values('student'))
         if final is not None:

@@ -12,11 +12,12 @@
         <div id="firstRow">
             <div id="container1">
                 <div class="containerTitle">
-                    Student in Schreibphase:
+                    Student in Schreibphase / Bestätigungsabfrage:
                 </div>
                 <div class="containerScroll">
-                    <p class="alignleft">Text on the left.</p>
-                    <p class="alignright">Text on the right.</p>
+                    <form method="post">{% csrf_token %}
+                        {{ container1 |safe}}
+                    </form>
                 </div>
             </div>
             <div id="container2">
@@ -24,8 +25,9 @@
                     Wartet auf Gutachten:
                 </div>
                 <div class="containerScroll">
-                    <p class="alignleft">Text on the left.</p>
-                    <p class="alignright">Text on the right.</p>
+                    <form method="post">{% csrf_token %}
+                        {{ container2 |safe}}
+                    </form>
                 </div>
             </div>
         </div>
@@ -35,8 +37,9 @@
                     Terminfindung für Verteidigungen:
                 </div>
                 <div class="containerScroll">
-                    <p class="alignleft">Text on the left.</p>
-                    <p class="alignright">Text on the right.</p>
+                    <form method="post">{% csrf_token %}
+                        {{ container3 |safe}}
+                    </form>
                 </div>
             </div>
             <div id="container4">
@@ -44,8 +47,9 @@
                     Entstandene Verteidigungen:
                 </div>
                 <div class="containerScroll">
-                    <p class="alignleft">Text on the left.</p>
-                    <p class="alignright">Text on the right.</p>
+                    <form method="post">{% csrf_token %}
+                        {{ container4 |safe}}
+                    </form>
                 </div>
             </div>
         </div>
@@ -55,8 +59,9 @@
                     Endgültige Verteidigungen:
                 </div>
                 <div class="containerScroll">
-                    <p class="alignleft">Text on the left.</p>
-                    <p class="alignright">Text on the right.</p>
+                    <form method="post">{% csrf_token %}
+                        {{ container5 |safe}}
+                    </form>
                 </div>
             </div>
         </div>

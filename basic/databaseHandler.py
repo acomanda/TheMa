@@ -17,6 +17,7 @@ def randomString(length=20):
 
 class PasswordlessAuthBackend(ModelBackend):
     """Log in to Django without providing a password."""
+
     def authenticate(self, username=None):
         try:
             return User.objects.get(username=username)
@@ -95,7 +96,7 @@ def haveRequest(user):
 
 
 def makeRequest(user, deadline, subject, supervisor1, supervisor2, topic, type, title, isSupervisor1Intern,
-    isSupervisor2Intern):
+                isSupervisor2Intern):
     """Function initiates a students request."""
     student = Student.objects.filter(user=user)[0]
     student.deadline = deadline
@@ -124,17 +125,28 @@ def getStudentRequest(user, id=None):
         betreuer1 = InternExaminer.objects.filter(id=student.supervisor1)[0]
     else:
         betreuer1 = ExternalExaminer.objects.filter(id=student.supervisor1)[0]
-    result['supervisor1'] = betreuer1.name
+    result['supervisor1'] = betreuer1
     if student.isSupervisor2Intern:
         betreuer2 = InternExaminer.objects.filter(id=student.supervisor2)[0]
     else:
         betreuer2 = ExternalExaminer.objects.filter(id=student.supervisor2)[0]
-    result['supervisor2'] = betreuer2.name
+    if student.isSupervisor3Intern is not None:
+        if student.isSupervisor3Intern:
+            betreuer3 = InternExaminer.objects.filter(id=student.supervisor3)[0]
+        else:
+            betreuer3 = ExternalExaminer.objects.filter(id=student.supervisor3)[0]
+        grade3 = student.grade3
+    else:
+        betreuer3 = None
+        grade3 = None
+    result['grade3'] = grade3
+    result['supervisor3'] = betreuer3
+    result['supervisor2'] = betreuer2
     result['deadline'] = student.deadline
     result['type'] = student.type
     result['status'] = student.status
-    result['note1'] = student.note1
-    result['note2'] = student.note2
+    result['grade1'] = student.grade1
+    result['grade2'] = student.grade2
     result['topic'] = student.topic
     result['subject'] = student.subject
     return result
@@ -194,7 +206,8 @@ def getExaminer(user):
         return False
 
 
-def getRequestsOfOffice(status, accepted=None, final=None):
+def getRequestsOfOffice(status, accepted=None, allAccepted=None, allRated=None, supervisor3Needed=None,
+                        appointmentEmerged=None, final=None):
     """The function returns the requests of the user group 'Office'.
         If a status is passed, all requests that have this status are returned.
         The other parameters can be used to receive more specific requests."""
@@ -202,10 +215,38 @@ def getRequestsOfOffice(status, accepted=None, final=None):
         requests = Student.objects.filter(status=status).order_by('deadline')
         if accepted is not None:
             requests = requests.filter(officeConfirmed__isnull=not accepted)
+        if allAccepted is not None:
+            if allAccepted:
+                requests = requests.filter(
+                    officeConfirmed__isnull=False, supervisor1Confirmed__isnull=False,
+                    supervisor2Confirmed__isnull=False
+                )
+            else:
+                requests = requests.exclude(
+                    officeConfirmed__isnull=False, supervisor1Confirmed__isnull=False,
+                    supervisor2Confirmed__isnull=False
+                )
+        if allRated is not None:
+            if allRated:
+                requests = requests.filter(
+                    Q(grade1__isnull=False, grade2__isnull=False, grade3__isnull=False) |
+                    (Q(grade1__isnull=False, grade2__isnull=False) and Q(grade1__gt=1) | Q(grade2__gt=1))
+                )
+            else:
+                requests = requests.exclude(
+                    Q(grade1__isnull=False, grade2__isnull=False, grade3__isnull=False) |
+                    Q(grade1__isnull=False, grade2__isnull=False, grade1__gt=1, grade2__gt=1)
+                )
+        if supervisor3Needed is not None:
+            if supervisor3Needed:
+                requests = requests.filter(grade1__isnull=False, grade2__isnull=False, grade1=1, grade2=1,
+                                           supervisor3__isnull=True)
+            else:
+                requests = requests.exclude(grade1__isnull=False, grade2__isnull=False, grade1=1, grade2=1)
+        if appointmentEmerged is not None:
+            requests = requests.filter(appointmentEmerged__isnull=not appointmentEmerged)
         if final is not None:
-            requests = requests.filter(
-                appointment__isnull=not final
-            )
+            requests = requests.filter(officeConfirmedAppointment__isnull=not final)
         return requests
     else:
         return False
@@ -229,13 +270,13 @@ def getRequestsOfExaminer(user, status, accepted=None, rated=None, answered=None
             )
         if rated is not None:
             requests = requests.filter(
-                Q(isSupervisor1Intern=intern, supervisor1=examinerId, note1__isnull=not rated) |
-                Q(isSupervisor2Intern=intern, supervisor2=examinerId, note2__isnull=not rated) |
-                Q(isSupervisor3Intern=intern, supervisor3=examinerId, note3__isnull=not rated)
+                Q(isSupervisor1Intern=intern, supervisor1=examinerId, grade1__isnull=not rated) |
+                Q(isSupervisor2Intern=intern, supervisor2=examinerId, grade2__isnull=not rated) |
+                Q(isSupervisor3Intern=intern, supervisor3=examinerId, grade3__isnull=not rated)
             )
         if answered is not None:
             invitations = Invitation.objects.filter(
-                examiner=examinerId, isExaminerIntern=intern, accepted__isnull=not answered
+                examiner=examinerId, isExaminerIntern=intern, accepted__isnull=answered
             )
             requests = requests.exclude(id__in=invitations.values('student'))
         if final is not None:
@@ -254,16 +295,170 @@ def checkStatus(student):
         if student.officeConfirmed and student.supervisor1Confirmed and student.supervisor2Confirmed:
             student.status = "Schreibphase"
             student.save()
-    if student.status == "Gutachteneingabe":
-        if student.note1 is not None and student.note2 is not None:
-            if student.note1 == 1 and student.note2 == 1:
-                if student.note3 is not None:
-                    student.status = "Terminfindung"
-                    student.save()
-            else:
-                student.status = "Terminfindung"
-                student.save()
     if student.status == "Terminfindung":
         if student.appointmentEmerged is not None and student.officeConfirmedAppointment is not None:
             student.status = "Termin entstanden"
             student.save()
+
+
+def changeStatus(studentId, status):
+    """Receives the Id of the Student/Request row and a status String.
+    The function sets the status value of the request to the new status."""
+    student = Student.objects.filter(id=studentId)
+    if student.exists():
+        student = student.first()
+        student.status = status
+        student.save()
+    else:
+        return False
+
+
+def confirmAppointment(studentId):
+    """Receives the Id of the Student/Request row.
+    The function sets the value officeConfirmedAppointment of the request to True."""
+    student = Student.objects.filter(id=studentId)
+    if student.exists():
+        student = student.first()
+        student.officeConfirmedAppointment = True
+        student.save()
+    else:
+        return False
+
+
+def gradeRequest(user, studentId, note):
+    """Receives a django user object, the id of the Student/Request and the note.
+    The function sets the users note for the request."""
+    student = Student.objects.filter(id=studentId)
+    if student.exists():
+        student = student.first()
+        examinerId, intern = getExaminer(user)
+        if student.supervisor1 == examinerId and student.isSupervisor1Intern == intern:
+            student.grade1 = note
+            student.save()
+        elif student.supervisor2 == examinerId and student.isSupervisor2Intern == intern:
+            student.grade2 = note
+            student.save()
+        elif student.supervisor3 == examinerId and student.isSupervisor3Intern == intern:
+            student.grade3 = note
+            student.save()
+        checkStatus(student)
+    else:
+        return False
+
+
+def getOpenAvailabilities(studentId):
+    """Receives the id of the Student/Request.
+    Returns the time slots that are available for the request."""
+    availabilities = AvailabilityRequest.objects.filter(student=studentId)
+    if availabilities.exists():
+        timeSlots = TimeSlot.objects.filter(id__in=availabilities.values('timeSlot'))
+        return timeSlots
+    else:
+        return "all"
+
+
+def acceptOrNotInvitation(user, studentId, confirm):
+    """"Receives the django user object of an examiner and the id of the Student/Request.
+    The Function saves the confirmation of the examiner inside the invitation row of the database."""
+    examinerId, intern = getExaminer(user)
+    invitation = Invitation.objects.filter(
+        examiner=examinerId, isExaminerIntern=intern, student=studentId
+    ).last()
+    invitation.accepted = confirm
+    invitation.save()
+
+
+def answerInvitation(user, studentId, timeSlotIdsList):
+    """Receives the django user object of an examiner and the id of the Student/Request.
+    Another parameter is filled with the ids of the selected slots.
+    Saves the chosen timeSlots for the invitation inside of the database."""
+    examinerId, intern = getExaminer(user)
+    invitation = Invitation.objects.filter(
+        examiner=examinerId, isExaminerIntern=intern, student=studentId
+    ).last()
+    availabilities = []
+    for id in timeSlotIdsList:
+        timeSlot = TimeSlot.objects.filter(id=id).first()
+        availabilities.append(AvailabilityInvitation(invitation=invitation, timeSlot=timeSlot))
+    with transaction.atomic():
+        for elem in availabilities:
+            elem.save()
+
+
+def getExaminers(approvalToTest=None, subject=None, topic=None, title=None, excludedTopic=None, excludedExaminers=None):
+    """Returns all examiners that correpsond to the given specifications"""
+    qualifications = Qualification.objects.all()
+    if approvalToTest is not None:
+        qualifications = qualifications.filter(approvalToTest=approvalToTest)
+    if subject is not None:
+        qualifications = qualifications.filter(subject=subject)
+    if topic is not None:
+        qualifications = qualifications.filter(topic=topic)
+    if title is not None:
+        qualifications = qualifications.filter(title=title)
+    if excludedTopic is not None:
+        qualifications = qualifications.exclude(topic=excludedTopic)
+    externalExaminers = ExternalExaminer.objects.none()
+    internExaminers = InternExaminer.objects.none()
+    for elem in qualifications:
+        if elem.isExaminerIntern == False:
+            externalExaminers = externalExaminers | ExternalExaminer.objects.filter(id=elem.examiner)
+        if elem.isExaminerIntern == True:
+            internExaminers = internExaminers | InternExaminer.objects.filter(id=elem.examiner)
+    if excludedExaminers is not None:
+        externalExaminers = externalExaminers and ExternalExaminer.objects.exclude(
+            user_id__in=[o.user_id for o in excludedExaminers])
+        internExaminers = internExaminers and InternExaminer.objects.exclude(
+            user_id__in=[o.user_id for o in excludedExaminers])
+    return externalExaminers, internExaminers
+
+
+def setSupervisor3(studentId, examiner, isExaminerIntern):
+    """Receives a studentId and the data of an examiner.
+    The function sets this examiner as the third supervisor of the student"""
+    student = Student.objects.filter(id=studentId)
+    if student.exists():
+        student = student.first()
+        if (student.isSupervisor1Intern == isExaminerIntern and student.supervisor1 == examiner) | \
+                (student.isSupervisor2Intern == isExaminerIntern and student.supervisor2 == examiner):
+            return False
+        student.isSupervisor3Intern = isExaminerIntern
+        student.supervisor3 = examiner
+        student.save()
+        return True
+    else:
+        return False
+
+
+def getSubjects():
+    """Returns all functions of the database."""
+    qualifications = Qualification.objects.all()
+    subjects = qualifications.values_list('subject').distinct()
+    result = []
+    for elem in subjects:
+        result.append(elem[0])
+    return result
+
+
+def getTopics(subject):
+    """Returns all topics that correspond to the givenn subject"""
+    qualifications = Qualification.objects.filter(subject=subject)
+    topics = qualifications.values_list('topic').distinct()
+    result = []
+    for elem in topics:
+        result.append(elem[0])
+    return result
+
+
+def inviteExaminer(student, examiner, role, numberInvitation):
+    """Creates the invitation for one examiner for one request"""
+    if isinstance(examiner, ExternalExaminer):
+        invitation = Invitation(numberInvitations=numberInvitation, examiner=examiner.id,
+                                isExaminerIntern=0, student=student, role=role)
+        invitation.save()
+
+
+def getStudent(user):
+    student = Student.objects.filter(user=user)
+    if student.exists():
+        return student[0]

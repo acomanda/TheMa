@@ -3,6 +3,7 @@ from .authorization import *
 from .databaseHandler import *
 from django.contrib.auth import authenticate, login, logout as django_logout
 from .forms import *
+from .process import *
 
 stateLength = 30
 
@@ -59,12 +60,83 @@ def homeOffice(request):
         context = {}
         group = getUserGroup(request.user)
         context['group'] = group
+        if request.POST.get('details'):
+            request.session['requestId'] = request.POST.get('details')
+            return redirect('/confirmrequest')
+        if request.POST.get('rating'):
+            changeStatus(request.POST.get('rating'), "Gutachteneingabe")
+        if request.POST.get('scheduling'):
+            request.session['requestId'] = request.POST.get('scheduling')
+            return redirect('/chairman')
+        if request.POST.get('supervisor3'):
+            request.session['requestId'] = request.POST.get('supervisor3')
+            return redirect('/supervisor3')
+        # Container 1
         container1Request = getRequestsOfOffice("Anfrage wird bestätigt", False)
         container1 = ""
         for elem in container1Request:
             container1 += '<p class="alignleft">' + elem.name + ' </p> \n'
-            container1 += '<p class="alignright">Text on the right</p>'
+            container1 += '<p class="alignright"><button type="submit" name="details" value="' + str(elem.id) \
+                          + '">Details</button></p><br/><br/>'
+        container1Request = getRequestsOfOffice("Anfrage wird bestätigt", True)
+        for elem in container1Request:
+            container1 += '<p class="alignleft">' + elem.name + ' </p> \n'
+            container1 += '<p class="alignright">Bestätigt</p><br/><br/>'
+        container1Request = getRequestsOfOffice("Schreibphase", None, True)
+        for elem in container1Request:
+            container1 += '<p class="alignleft">' + elem.name + ' </p> \n'
+            container1 += '<p class="alignright"><button type="submit" name="rating" value="' + str(elem.id) \
+                          + '">Gutachteineingabe frei geben</button></p><br/><br/>'
+        container1Request = getRequestsOfOffice("Schreibphase").exclude(id__in=container1Request.values('id'))
+        for elem in container1Request:
+            container1 += '<p class="alignleft">' + elem.name + ' </p> \n'
+            container1 += '<p class="alignright">In Schreibphase</p><br/><br/>'
         context['container1'] = container1
+
+        # Container 2
+        container2 = ""
+        container2Request1 = getRequestsOfOffice("Gutachteneingabe", None, None, None, True)
+        for elem in container2Request1:
+            container2 += '<p class="alignleft">' + elem.name + ' </p> \n'
+            container2 += '<p class="alignright"><button type="submit" name="supervisor3" value="' + str(elem.id) \
+                          + '">Drittgutachter wählen</button></p><br/><br/>'
+        container2Request2 = getRequestsOfOffice("Gutachteneingabe", None, None, True, None)
+        for elem in container2Request2:
+            container2 += '<p class="alignleft">' + elem.name + ' </p> \n'
+            container2 += '<p class="alignright"><button type="submit" name="scheduling" value="' + str(elem.id) \
+                          + '">Terminfindung starten</button></p><br/><br/>'
+        container2Request = getRequestsOfOffice("Gutachteneingabe").exclude(Q(id__in=container2Request1.values('id')) |
+                                                                            Q(id__in=container2Request2.values('id')))
+        for elem in container2Request:
+            container2 += '<p class="alignleft">' + elem.name + ' </p> \n'
+            container2 += '<p class="alignright">Wartet auf Noten</p><br/><br/>'
+        context['container2'] = container2
+
+        # Container 3
+        container3Request = getRequestsOfOffice("Terminfindung", None, None, None, None, False)
+        container3 = ""
+        for elem in container3Request:
+            container3 += '<p class="alignleft">' + elem.name + ' </p> \n'
+            container3 += '<p class="alignright">In Terminfindung</p><br/><br/>'
+        context['container3'] = container3
+
+        # Container 4
+        container4Request = getRequestsOfOffice("Terminfindung", None, None, None, None, True, False)
+        container4 = ""
+        for elem in container4Request:
+            container4 += '<p class="alignleft">' + elem.name + ' </p> \n'
+            container4 += '<p class="alignright"><button type="submit" name="supervisor3" value="' + str(elem.id) \
+                          + '">Details</button></p><br/><br/>'
+        context['container4'] = container4
+
+        # Container 5
+        container5Request = getRequestsOfOffice("Termin entstanden", None, None, None, None, None, True)
+        container5 = ""
+        for elem in container5Request:
+            container5 += '<p class="alignleft">' + elem.name + ' </p> \n'
+            container5 += '<p class="alignright">' + str(elem.appointment)[:16] + '</p><br/><br/>'
+        context['container5'] = container5
+
         return render(request, 'homePruefungsamt.html', context)
     else:
         return redirect('/')
@@ -79,21 +151,21 @@ def homeStudent(request):
         context['group'] = group
         content = getStudentRequest(request.user)
         context['title'] = content['title']
-        context['supervisor1'] = content['supervisor1']
-        context['supervisor2'] = content['supervisor2']
+        context['supervisor1'] = content['supervisor1'].name
+        context['supervisor2'] = content['supervisor2'].name
         context['deadline'] = content['deadline']
         context['topic'] = content['topic']
         context['type'] = content['type']
         context['status'] = content['status']
         context['subject'] = content['subject']
-        if content['note1'] is None:
-            context['note1'] = "/"
+        if content['grade1'] is None:
+            context['grade1'] = "/"
         else:
-            context['note1'] = content['note1']
-        if content['note2'] is None:
-            context['note2'] = "/"
+            context['grade1'] = content['grade1']
+        if content['grade2'] is None:
+            context['grade2'] = "/"
         else:
-            context['note2'] = content['note2']
+            context['grade2'] = content['grade2']
         return render(request, 'requestDetails.html', context)
     else:
         return redirect('/')
@@ -109,7 +181,9 @@ def homeExaminer(request):
         if request.POST.get('details'):
             request.session['requestId'] = request.POST.get('details')
             return redirect('/confirmrequest')
-
+        if request.POST.get('rate'):
+            request.session['requestId'] = request.POST.get('rate')
+            return redirect('/grading')
         #Container 1
         container1 = ""
         container1Request = getRequestsOfExaminer(request.user, "Anfrage wird bestätigt", False)
@@ -132,7 +206,7 @@ def homeExaminer(request):
         container2Request = getRequestsOfExaminer(request.user, "Gutachteneingabe", None, False)
         for elem in container2Request:
             container2 += '<p class="alignleft">' + elem.name + ' </p>'
-            container2 += '<p class="alignright"><button type="submit" name="bewerten" value="' + str(elem.id) \
+            container2 += '<p class="alignright"><button type="submit" name="rate" value="' + str(elem.id) \
                           + '">Bewerten</button></p><br/><br/>'
         container2Request = getRequestsOfExaminer(request.user, "Gutachteneingabe", None, True)
         for elem in container2Request:
@@ -184,21 +258,29 @@ def confirmRequest(request):
     context['subject'] = content['subject']
     if request.POST.get('answerRequest'):
         if request.POST.get('answerRequest') == "accept":
-            confirmOrNotRequest(request.session['requestId'], True, "Examiner", request.user)
-            return redirect('/')
+            if group == "Examiner":
+                confirmOrNotRequest(request.session['requestId'], True, "Examiner", request.user)
+                return redirect('/')
+            else:
+                confirmOrNotRequest(request.session['requestId'], True, "Office", request.user)
+                return redirect('/')
         elif request.POST.get('answerRequest') == "reject":
-            confirmOrNotRequest(request.session['requestId'], False, "Examiner", request.user)
-            return redirect('/')
+            if group == "Examiner":
+                confirmOrNotRequest(request.session['requestId'], False, "Examiner", request.user)
+                return redirect('/')
+            else:
+                confirmOrNotRequest(request.session['requestId'], False, "Office", request.user)
+                return redirect('/')
     return render(request, 'requestDetails.html', context)
 
 
 def anfrage(request):
     """This function controls the behavior of the page that is used to make a new request."""
-    #TODO Fill the drop down selections with data from the database
     if request.user.is_authenticated:
+        context = {}
         if request.POST.get('anfrage') == "anfrage":
             form = Anfrage(request.POST)
-            if (form.is_valid()):
+            if (form.is_valid() and form.cleaned_data['betreuer1'] != form.cleaned_data['betreuer2']):
                 abgabetermin = form.cleaned_data['abgabetermin']
                 fach = form.cleaned_data['fach']
                 betreuer1 = form.cleaned_data['betreuer1'][1:]
@@ -209,14 +291,36 @@ def anfrage(request):
                 art = form.cleaned_data['art']
                 titel = form.cleaned_data['titel']
                 makeRequest(request.user, abgabetermin, fach, betreuer1, betreuer2, themengebiet, art, titel, betreuer1Intern, betreuer2Intern)
-                return redirect('/home')
+                return redirect('/')
             else:
                 context = {}
                 context['error'] = form.errors
-                return render(request, 'anfrage.html', context)
+                if form.cleaned_data['betreuer1'] == form.cleaned_data['betreuer2']:
+                    context['errorSupervisor'] = '<ul class="errorlist"><li>Betreuer<ul class="errorlist">' \
+                                                 '<li>Wähle verschiedene Betreuer aus.</li></ul></li></ul>'
         if getUserGroup(request.user) == "Student" and not haveRequest(request.user):
-            return render(request, 'anfrage.html')
-        return redirect('/home')
+            # Fill supervisor selections with data of database
+            supervisors = getExaminers()
+            supervisorSelections = ''
+            for elem in supervisors[1]:
+                supervisorSelections += '<option value="1' + str(elem.id) + '">' + elem.name + '</option>'
+            for elem in supervisors[0]:
+                supervisorSelections += '<option value="0' + str(elem.id) + '">' + elem.name + '</option>'
+            context['supervisors'] = supervisorSelections
+            # Fill subjects selection with data of database
+            subjectsList = getSubjects()
+            subjects = ''
+            for elem in subjectsList:
+                subjects = '<option value="' + elem + '">' + elem + '</option>'
+            context['subjects'] = subjects
+            # Fill topics selection with data of database
+            topicsList = getTopics('Informatik')
+            topics = ''
+            for elem in topicsList:
+                topics += '<option value="' + elem + '">' + elem + '</option>'
+            context['topics'] = topics
+            return render(request, 'anfrage.html', context)
+        return redirect('/')
     else:
         return redirect('/')
 
@@ -224,3 +328,83 @@ def logout(request):
     """This function is used to logout a user."""
     django_logout(request)
     return redirect('/')
+
+
+def grading(request):
+    context = {}
+    group = getUserGroup(request.user)
+    context['group'] = group
+    if request.POST.get('confirm'):
+        gradeRequest(request.user, request.session['requestId'], float(request.POST.get('grade')))
+        return redirect('/')
+    content = getStudentRequest(None, request.session['requestId'])
+    context['title'] = content['title']
+    context['supervisor1'] = content['supervisor1']
+    context['supervisor2'] = content['supervisor2']
+    context['deadline'] = content['deadline']
+    context['topic'] = content['topic']
+    context['type'] = content['type']
+    context['status'] = content['status']
+    context['subject'] = content['subject']
+    return render(request, 'requestDetails.html', context)
+
+
+def supervisor3(request):
+    context = {}
+    group = getUserGroup(request.user)
+    context['group'] = group
+    if request.POST.get('confirm'):
+        if not setSupervisor3(request.session['requestId'], request.POST.get('supervisor3')[1],
+                       request.POST.get('supervisor3')[0]):
+            context['error'] = 'Wähle einen Drittprüfer, der nicht bereits ein Prüfer ist.'
+        else:
+            return redirect('/')
+    content = getStudentRequest(None, request.session['requestId'])
+    context['title'] = content['title']
+    context['supervisor1'] = content['supervisor1'].name
+    context['supervisor2'] = content['supervisor2'].name
+    context['deadline'] = content['deadline']
+    context['topic'] = content['topic']
+    context['type'] = content['type']
+    context['status'] = content['status']
+    context['subject'] = content['subject']
+    supervisors = ''
+    externalExaminers, internExaminers = getExaminers(True)
+    for elem in externalExaminers:
+        supervisors += '<option value="0' + str(elem.id) + '">' + elem.name + '</option>'
+    for elem in internExaminers:
+        supervisors += '<option value="1' + str(elem.id) + '">' + elem.name + '</option>'
+    context['supervisors'] = supervisors
+    return render(request, 'requestDetails.html', context)
+
+
+def chairman(request):
+    context = {}
+    group = getUserGroup(request.user)
+    context['group'] = group
+    if request.POST.get('confirm'):
+        if not createExaminerConstellation(Student.objects.filter(id=request.session['requestId'])[0].user,
+                                           {'chairman': ExternalExaminer.objects.filter(id=1)[0]}):
+
+            context['error'] = 'Leider gibt es nicht genug Prüfer um eine Konstellation zu generieren.'
+        else:
+            print('hallo')
+            changeStatus(request.session['requestId'], "Terminfindung")
+            return redirect('/')
+    content = getStudentRequest(None, request.session['requestId'])
+    context['title'] = content['title']
+    context['supervisor1'] = content['supervisor1'].name
+    context['supervisor2'] = content['supervisor2'].name
+    context['deadline'] = content['deadline']
+    context['topic'] = content['topic']
+    context['type'] = content['type']
+    context['status'] = content['status']
+    context['subject'] = content['subject']
+    supervisors = ''
+    externalExaminers, internExaminers = getExaminers(True)
+    for elem in externalExaminers:
+        supervisors += '<option value="0' + str(elem.id) + '">' + elem.name + '</option>'
+    for elem in internExaminers:
+        supervisors += '<option value="1' + str(elem.id) + '">' + elem.name + '</option>'
+    context['supervisors'] = supervisors
+    return render(request, 'requestDetails.html', context)

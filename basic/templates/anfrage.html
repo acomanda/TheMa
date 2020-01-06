@@ -3,12 +3,13 @@
 <head>
     <link rel="stylesheet" href="../static/anfrage.css">
     <meta charset="UTF-8">
-    <title>Startseite</title>
+    <title>Anfrage</title>
     {% include "navBar.html" %}
 </head>
 <body>
     <div class = left></div>
     <div class="main">
+        {{ errorSupervisor |safe }}
         {{ error }}
         <form method="post">{% csrf_token %}
             <table>
@@ -27,7 +28,7 @@
                     <td>
                         <select id = "fach" name="fach">
                             <option></option>
-                            <option value="informatik">Informatik</option>
+                            {{ subjects | safe }}
                         </select>
                     </td>
                 </tr>
@@ -38,7 +39,7 @@
                     <td>
                         <select id = "betreuer1" name="betreuer1">
                             <option></option>
-                            <option value="01">Mustermann</option>
+                            {{ supervisors | safe }}
                         </select>
                     </td>
                 </tr>
@@ -49,7 +50,7 @@
                     <td>
                         <select id = "betreuer2" name="betreuer2">
                             <option></option>
-                            <option value="02">Musterfrau</option>
+                            {{ supervisors | safe }}
                         </select>
                     </td>
                 </tr>
@@ -60,7 +61,7 @@
                     <td>
                         <select id = "themengebiet" name="themengebiet">
                             <option></option>
-                            <option value="big data">Big Data</option>
+                            {{ topics | safe }}
                         </select>
                     </td>
                 </tr>

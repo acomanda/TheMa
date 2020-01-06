@@ -28,9 +28,9 @@ class Student(models.Model):
     isSupervisor3Intern = models.BooleanField(null=True)
     # String that contains the status of the request
     status = models.CharField(max_length=50, null=True)
-    note1 = models.IntegerField(null=True)
-    note2 = models.IntegerField(null=True)
-    note3 = models.IntegerField(null=True)
+    grade1 = models.FloatField(null=True)
+    grade2 = models.FloatField(null=True)
+    grade3 = models.FloatField(null=True)
     # Date for the defense of the thesis
     appointment = models.DateTimeField(null=True)
     # Booleans that are set true if the examination office and the supervisors confirm the request at the beginning
@@ -75,6 +75,7 @@ class Invitation(models.Model):
     examiner = models.IntegerField()
     isExaminerIntern = models.BooleanField()
     student = models.ForeignKey(Student, on_delete=models.CASCADE)
+    role = models.CharField(max_length=50, null=True)
 
 
 class TimeSlot(models.Model):

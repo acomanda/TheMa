@@ -61,10 +61,29 @@ def createExaminerConstellation(user, designations):
                         return False
                     constellation[key] = examiners[0]
                     examiners = examiners[1:]
+            inviteAllExaminers(getStudent(user), constellation)
             return constellation
 
 
+def inviteAllExaminers(student, constellation):
+    """
+    Function invites all examiners of a constellation to the request.
+    :param student: Student object
+    :param constellation: Dictionary that contains the constellation of examiners for
+    the oral exam
+    :return:
+    """
+    for key in constellation:
+        inviteExaminer(student, constellation[key], key, 1)
+
+
 def getConstellationValues(constellation):
+    """
+
+    :param constellation: Dictionary that contains the constellation of examiners for
+    the oral exam
+    :return: A None free list of all examiners of the constellation
+    """
     constellationValues = list(constellation.values())
     if None in constellationValues:
         for i in range(constellationValues.count(None)):

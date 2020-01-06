@@ -17,6 +17,7 @@ def randomString(length=20):
 
 class PasswordlessAuthBackend(ModelBackend):
     """Log in to Django without providing a password."""
+
     def authenticate(self, username=None):
         try:
             return User.objects.get(username=username)
@@ -95,7 +96,7 @@ def haveRequest(user):
 
 
 def makeRequest(user, deadline, subject, supervisor1, supervisor2, topic, type, title, isSupervisor1Intern,
-    isSupervisor2Intern):
+                isSupervisor2Intern):
     """Function initiates a students request."""
     student = Student.objects.filter(user=user)[0]
     student.deadline = deadline
@@ -438,6 +439,7 @@ def getSubjects():
         result.append(elem[0])
     return result
 
+
 def getTopics(subject):
     """Returns all topics that correspond to the givenn subject"""
     qualifications = Qualification.objects.filter(subject=subject)
@@ -447,3 +449,16 @@ def getTopics(subject):
         result.append(elem[0])
     return result
 
+
+def inviteExaminer(student, examiner, role, numberInvitation):
+    """Creates the invitation for one examiner for one request"""
+    if isinstance(examiner, ExternalExaminer):
+        invitation = Invitation(numberInvitations=numberInvitation, examiner=examiner.id,
+                                isExaminerIntern=0, student=student, role=role)
+        invitation.save()
+
+
+def getStudent(user):
+    student = Student.objects.filter(user=user)
+    if student.exists():
+        return student[0]

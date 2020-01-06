@@ -384,7 +384,7 @@ def answerInvitation(user, studentId, timeSlotIdsList):
             elem.save()
 
 
-def getExaminers(approvalToTest=None, subject=None, topic=None, title=None):
+def getExaminers(approvalToTest=None, subject=None, topic=None, title=None, excludedTopic=None, excludedExaminers=None):
     """Returns all examiners that correpsond to the given specifications"""
     qualifications = Qualification.objects.all()
     if approvalToTest is not None:
@@ -395,6 +395,8 @@ def getExaminers(approvalToTest=None, subject=None, topic=None, title=None):
         qualifications = qualifications.filter(topic=topic)
     if title is not None:
         qualifications = qualifications.filter(title=title)
+    if excludedTopic is not None:
+        qualifications = qualifications.exclude(topic=excludedTopic)
     externalExaminers = ExternalExaminer.objects.none()
     internExaminers = InternExaminer.objects.none()
     for elem in qualifications:
@@ -402,8 +404,13 @@ def getExaminers(approvalToTest=None, subject=None, topic=None, title=None):
             externalExaminers = externalExaminers | ExternalExaminer.objects.filter(id=elem.examiner)
         if elem.isExaminerIntern == True:
             internExaminers = internExaminers | InternExaminer.objects.filter(id=elem.examiner)
-
+    if excludedExaminers is not None:
+        externalExaminers = externalExaminers and ExternalExaminer.objects.exclude(
+            user_id__in=[o.user_id for o in excludedExaminers])
+        internExaminers = internExaminers and InternExaminer.objects.exclude(
+            user_id__in=[o.user_id for o in excludedExaminers])
     return externalExaminers, internExaminers
+
 
 def setSupervisor3(studentId, examiner, isExaminerIntern):
     """Receives a studentId and the data of an examiner.
@@ -439,3 +446,4 @@ def getTopics(subject):
     for elem in topics:
         result.append(elem[0])
     return result
+

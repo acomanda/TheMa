@@ -75,6 +75,7 @@ class Invitation(models.Model):
     examiner = models.IntegerField()
     isExaminerIntern = models.BooleanField()
     student = models.ForeignKey(Student, on_delete=models.CASCADE)
+    role = models.CharField(max_length=50, null=True)
 
 
 class TimeSlot(models.Model):

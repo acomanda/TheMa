@@ -459,6 +459,37 @@ def inviteExaminer(student, examiner, role, numberInvitation):
 
 
 def getStudent(user):
+    """Receives a Django User object
+    Returns the corresponding Student Object"""
     student = Student.objects.filter(user=user)
     if student.exists():
         return student[0]
+
+
+def answerInvitation(user, studentId, accept):
+    """
+    Function store in the database if an examiner accept or reject an invitation
+    :param user: Django user object of the examiner
+    :param student: Student id
+    :param accept: Boolean that tells if the examiner accept or reject the invitation
+    :return:
+    """
+    examinerId, intern = getExaminer(user)
+    invitation = Invitation.objects.filter(student_id=studentId, examiner=examinerId, isExaminerIntern=intern)[0]
+    invitation.accepted = accept
+    invitation.save()
+
+
+def addAvailabilityToInvitation(user, studentId, timeSlotId):
+    """
+    Function stores in the database the availability for the invitation
+    :param user: Django user object of the examiner
+    :param student: Student id
+    :param timeSlotId: Id of the timeSlot that should be set as availability
+    :return:
+    """
+    examinerId, intern = getExaminer(user)
+    invitation = Invitation.objects.filter(student_id=studentId, examiner=examinerId, isExaminerIntern=intern)[0]
+    timeSlot = TimeSlot.objects.filter(id=timeSlotId)[0]
+    availability = AvailabilityInvitation(invitation=invitation, timeSlot=timeSlot)
+    availability.save()

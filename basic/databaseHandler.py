@@ -5,6 +5,7 @@ from django.contrib.auth.backends import ModelBackend
 from django.contrib.auth.models import User
 from django.db import transaction
 from django.db.models import Q
+from datetime import timedelta, datetime
 
 
 def randomString(length=20):
@@ -493,3 +494,37 @@ def addAvailabilityToInvitation(user, studentId, timeSlotId):
     timeSlot = TimeSlot.objects.filter(id=timeSlotId)[0]
     availability = AvailabilityInvitation(invitation=invitation, timeSlot=timeSlot)
     availability.save()
+
+
+def generateTimeSlots(year):
+    """
+    Writes all possible time slots for the given year into the database
+    :param year: Year as an Integer
+    :return: Boolean that says whether the function was successful
+    """
+    daysPerYear = getDaysPerYear(year)
+    startDate = datetime(year, 1, 1, 8, 0)
+    for td in (startDate + timedelta(days=it + 1) for it in range(daysPerYear-1)):
+        if td.weekday() < 5:
+            for td2 in (td + timedelta(hours=2*it2) for it2 in range(5)):
+                TimeSlot(start=td2).save()
+    return True
+
+
+def deleteTimeSlots(year):
+    """
+    Deletes all time slots of the given year
+    :param year: Year as an Integer
+    :return: Boolean that says whether the function was successful
+    """
+    TimeSlot.objects.filter(start__year=year).delete()
+    return True
+
+def getDaysPerYear(year):
+    """
+    :param year: Year as an Integer
+    :return: Number of days in the year
+    """
+    if (year % 4 == 0) and (year % 100 != 0) or (year % 400 == 0):
+        return 366
+    return 365

@@ -521,8 +521,31 @@ def deleteTimeSlots(year):
     return True
 
 
-def getTimeSlots(start, end):
-    pass
+def getTimeSlots(studentId, start, end):
+    """
+    Searches the available time slots for an invitation from one day to another day and returns them.
+    :param studentId: Id of the request/student
+    :param start: First day of the week as a date
+    :param end: Last day of the week as a date
+    :return: QuerySet with all availabilities
+    """
+    start = datetime.strptime(start, "%m/%d/%Y")
+    end = datetime.strptime(end, "%m/%d/%Y") + timedelta(days=1)
+    availabilities = AvailabilityRequest.objects.filter(student_id=studentId, timeSlot__start__gte=start,
+                                                        timeSlot__start__lte=end)
+    if availabilities.count() == 0:
+        invitations = Invitation.objects.filter(student_id=studentId)
+        new = True
+        for invitation in invitations:
+            if invitation.accepted:
+                new = False
+        if new:
+            slots = TimeSlot.objects.filter(start__gte=start, start__lte=end)
+            return slots
+        else:
+            return "no slot"
+    slots = TimeSlot.objects.filter(id__in=[o.timeSlot_id for o in availabilities])
+    return slots
 
 
 def getDaysPerYear(year):

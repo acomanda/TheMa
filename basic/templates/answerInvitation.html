@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="../static/answerInvitation.css">
+    <meta charset="UTF-8">
+    <title>Einladung</title>
+    {% include "navBar.html" %}
+</head>
+<body>
+    <div class = "left"></div>
+    <div class="main">
+        <form method="post">{% csrf_token %}
+            <div class="alignleft"><button type="submit" name="weekNavigation" value="back">Woche zurück</button></div>
+            Kalenderwoche {{ week }}: {{ startDate }} - {{ endDate }}
+            <div class="alignright"><button type="submit" name="weekNavigation" value="forth">Woche vor</button></div>
+        </form>
+        <table>
+            <tr>
+                <th>Startuhrzeit</th>
+                <th>Montag {{ startDate }}</th>
+                <th>Dienstag {{ tuesday }}</th>
+                <th>Mittwoch {{ wednesday }}</th>
+                <th>Donnerstag {{ thursday }}</th>
+                <th>Freitag {{ endDate }}</th>
+            </tr>
+            <tr>
+                <th>8:00</th>
+                <th><button>Wählen</button></th>
+                <th><button>Wählen</button></th>
+                <th><button>Wählen</button></th>
+                <th><button>Wählen</button></th>
+                <th><button>Wählen</button></th>
+            </tr>
+            <tr>
+                <th>10:00</th>
+                <th><button>Wählen</button></th>
+                <th><button>Wählen</button></th>
+                <th><button>Wählen</button></th>
+                <th><button>Wählen</button></th>
+                <th><button>Wählen</button></th>
+            </tr>
+            <tr>
+                <th>12:00</th>
+                <th><button>Wählen</button></th>
+                <th><button>Wählen</button></th>
+                <th><button>Wählen</button></th>
+                <th><button>Wählen</button></th>
+                <th><button>Wählen</button></th>
+            </tr>
+            <tr>
+                <th>14:00</th>
+                <th><button>Wählen</button></th>
+                <th><button>Wählen</button></th>
+                <th><button>Wählen</button></th>
+                <th><button>Wählen</button></th>
+                <th><button>Wählen</button></th>
+            </tr>
+            <tr>
+                <th>16:00</th>
+                <th><button>Wählen</button></th>
+                <th><button>Wählen</button></th>
+                <th><button>Wählen</button></th>
+                <th><button>Wählen</button></th>
+                <th><button>Wählen</button></th>
+            </tr>
+            <tr>
+                <th><button>Ganze Woche wählen</button></th>
+                <th><button>Ganzen Tag wählen</button></th>
+                <th><button>Ganzen Tag wählen</button></th>
+                <th><button>Ganzen Tag wählen</button></th>
+                <th><button>Ganzen Tag wählen</button></th>
+                <th><button>Ganzen Tag wählen</button></th>
+            </tr>
+        </table>
+        <form method="post">{% csrf_token %}
+            <button class="rejectButton" type="submit" name="exit" value="accept">Abschließen</button>
+            <button class="rejectButton" type="submit" name="exit" value="reject">Ablehnen</button>
+        </form>
+    </div>
+    <div class="right"></div>
+</body>
+</html>

@@ -467,7 +467,7 @@ def getStudent(user):
         return student[0]
 
 
-def answerInvitation(user, studentId, accept):
+def acceptOrRejectingInvitation(user, studentId, accept):
     """
     Function store in the database if an examiner accept or reject an invitation
     :param user: Django user object of the examiner
@@ -519,6 +519,11 @@ def deleteTimeSlots(year):
     """
     TimeSlot.objects.filter(start__year=year).delete()
     return True
+
+
+def getTimeSlots(start, end):
+    pass
+
 
 def getDaysPerYear(year):
     """

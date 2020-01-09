@@ -184,6 +184,9 @@ def homeExaminer(request):
         if request.POST.get('rate'):
             request.session['requestId'] = request.POST.get('rate')
             return redirect('/grading')
+        if request.POST.get('answer'):
+            request.session['requestId'] = request.POST.get('answer')
+            return redirect('/answerInvitation')
         #Container 1
         container1 = ""
         container1Request = getRequestsOfExaminer(request.user, "Anfrage wird bestätigt", False)
@@ -219,7 +222,7 @@ def homeExaminer(request):
         container3Request = getRequestsOfExaminer(request.user, "Terminfindung", None, None, False)
         for elem in container3Request:
             container3 += '<p class="alignleft">' + elem.name + ' </p>'
-            container3 += '<p class="alignright"><button type="submit" name="antworten" value="' + str(elem.id) \
+            container3 += '<p class="alignright"><button type="submit" name="answer" value="' + str(elem.id) \
                           + '">Antworten</button></p><br/><br/>'
         context['container3'] = container3
 
@@ -408,3 +411,46 @@ def chairman(request):
         supervisors += '<option value="1' + str(elem.id) + '">' + elem.name + '</option>'
     context['supervisors'] = supervisors
     return render(request, 'requestDetails.html', context)
+
+
+def answerInvitation(request):
+    """This function controls the behavior of the page that is used to answer an invitation."""
+    if request.user.is_authenticated:
+        if request.POST.get('exit'):
+            if request.POST.get('exit') == 'accept':
+                #todo Allow accepting only if a time slot was choosen
+                acceptOrNotInvitation(request.user, request.session['requestId'], True)
+            else:
+                acceptOrNotInvitation(request.user, request.session['requestId'], False)
+            return redirect('/')
+        context = {}
+        group = getUserGroup(request.user)
+        context['group'] = group
+        if not request.POST.get('weekNavigation'):
+            now = datetime.today().date()
+            weekday = now.weekday()
+            startDate = now + timedelta(days=7 - weekday)
+            endDate = startDate + timedelta(days=4)
+        else:
+            if request.POST.get('weekNavigation') == "forth":
+                sign = 1
+            else:
+                sign = -1
+            startDate = datetime.strptime(request.session['startDate'], "%m/%d/%Y") + sign * timedelta(days=7)
+            endDate = datetime.strptime(request.session['endDate'], "%m/%d/%Y") + sign * timedelta(days=7)
+        week = startDate.isocalendar()[1]
+        request.session['startDate'] = startDate.strftime("%m/%d/%Y")
+        request.session['endDate'] = endDate.strftime("%m/%d/%Y")
+        request.session['week'] = week
+        context['week'] = week
+        context['startDate'] = startDate.strftime("%d.%m")
+        context['tuesday'] = (startDate + timedelta(days=1)).strftime("%d.%m")
+        context['wednesday'] = (startDate + timedelta(days=2)).strftime("%d.%m")
+        context['thursday'] = (startDate + timedelta(days=3)).strftime("%d.%m")
+        context['endDate'] = endDate.strftime("%d.%m")
+
+        timeSlots = 0
+
+        return render(request, 'answerInvitation.html', context)
+    else:
+        return redirect('/')

@@ -547,6 +547,25 @@ def getTimeSlots(studentId, start, end):
     slots = TimeSlot.objects.filter(id__in=[o.timeSlot_id for o in availabilities])
     return slots
 
+def getWeekSlots(timeSlots, start, end):
+    """
+
+    :param timeSlots: A Query Set of Time Slots
+    :return: A dictionary that divides the time slots into days and times of the week.
+    """
+    dict = {'1': {'8': None, '10': None, '12': None, '14': None, '16': None},
+            '2': {'8': None, '10': None, '12': None, '14': None, '16': None},
+            '3': {'8': None, '10': None, '12': None, '14': None, '16': None},
+            '4': {'8': None, '10': None, '12': None, '14': None, '16': None},
+            '5': {'8': None, '10': None, '12': None, '14': None, '16': None}}
+    for i in range(1,5):
+        for j in range(8,17,2):
+            date = (datetime.strptime(start, "%m/%d/%Y") + timedelta(days=i))
+            slots = timeSlots.filter(start__day=date.day, start__month=date.month, start__year=date.year, start__hour=j)
+            if slots.count() > 0:
+                dict[str(i)][str(j)] = slots.first()
+    return dict
+
 
 def getDaysPerYear(year):
     """

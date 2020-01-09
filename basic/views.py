@@ -416,7 +416,9 @@ def chairman(request):
 def answerInvitation(request):
     """This function controls the behavior of the page that is used to answer an invitation."""
     if request.user.is_authenticated:
-        if request.POST.get('exit'):
+        if 'amountSlots' not in request.session:
+            request.session['amountSlots'] = 0
+        if request.POST.get('exit') and request.session['amountSlots'] > 0:
             if request.POST.get('exit') == 'accept':
                 #todo Allow accepting only if a time slot was choosen
                 acceptOrNotInvitation(request.user, request.session['requestId'], True)
@@ -449,7 +451,9 @@ def answerInvitation(request):
         context['thursday'] = (startDate + timedelta(days=3)).strftime("%d.%m")
         context['endDate'] = endDate.strftime("%d.%m")
 
-        timeSlots = 0
+        timeSlots = getTimeSlots(request.session['requestId'], startDate.strftime("%m/%d/%Y"),
+                                 endDate.strftime("%m/%d/%Y"))
+
 
         return render(request, 'answerInvitation.html', context)
     else:

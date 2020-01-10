@@ -15,6 +15,7 @@
             <div class="alignright"><button type="submit" name="weekNavigation" value="forth">Woche vor</button></div>
         </form>
         <table>
+            <form method="post">{% csrf_token %}
             <tr>
                 <th>Startuhrzeit</th>
                 <th>Montag {{ startDate }}</th>
@@ -25,52 +26,53 @@
             </tr>
             <tr>
                 <th>8:00</th>
-                <th><button>Wählen</button></th>
-                <th><button>Wählen</button></th>
-                <th><button>Wählen</button></th>
-                <th><button>Wählen</button></th>
-                <th><button>Wählen</button></th>
+                <th>{{ slot18 | safe }}</th>
+                <th>{{ slot28 | safe }}</th>
+                <th>{{ slot38 | safe }}</th>
+                <th>{{ slot48 | safe }}</th>
+                <th>{{ slot58 | safe }}</th>
             </tr>
             <tr>
                 <th>10:00</th>
-                <th><button>Wählen</button></th>
-                <th><button>Wählen</button></th>
-                <th><button>Wählen</button></th>
-                <th><button>Wählen</button></th>
-                <th><button>Wählen</button></th>
+                <th>{{ slot110 | safe }}</th>
+                <th>{{ slot210 | safe }}</th>
+                <th>{{ slot310 | safe }}</th>
+                <th>{{ slot410 | safe }}</th>
+                <th>{{ slot510 | safe }}</th>
             </tr>
             <tr>
                 <th>12:00</th>
-                <th><button>Wählen</button></th>
-                <th><button>Wählen</button></th>
-                <th><button>Wählen</button></th>
-                <th><button>Wählen</button></th>
-                <th><button>Wählen</button></th>
+                <th>{{ slot112 | safe }}</th>
+                <th>{{ slot212 | safe }}</th>
+                <th>{{ slot312 | safe }}</th>
+                <th>{{ slot412 | safe }}</th>
+                <th>{{ slot512 | safe }}</th>
             </tr>
             <tr>
                 <th>14:00</th>
-                <th><button>Wählen</button></th>
-                <th><button>Wählen</button></th>
-                <th><button>Wählen</button></th>
-                <th><button>Wählen</button></th>
-                <th><button>Wählen</button></th>
+                <th>{{ slot114 | safe }}</th>
+                <th>{{ slot214 | safe }}</th>
+                <th>{{ slot314 | safe }}</th>
+                <th>{{ slot414 | safe }}</th>
+                <th>{{ slot514 | safe }}</th>
             </tr>
             <tr>
                 <th>16:00</th>
-                <th><button>Wählen</button></th>
-                <th><button>Wählen</button></th>
-                <th><button>Wählen</button></th>
-                <th><button>Wählen</button></th>
-                <th><button>Wählen</button></th>
+                <th>{{ slot116 | safe }}</th>
+                <th>{{ slot216 | safe }}</th>
+                <th>{{ slot316 | safe }}</th>
+                <th>{{ slot416 | safe }}</th>
+                <th>{{ slot516 | safe }}</th>
             </tr>
             <tr>
-                <th><button>Ganze Woche wählen</button></th>
-                <th><button>Ganzen Tag wählen</button></th>
-                <th><button>Ganzen Tag wählen</button></th>
-                <th><button>Ganzen Tag wählen</button></th>
-                <th><button>Ganzen Tag wählen</button></th>
-                <th><button>Ganzen Tag wählen</button></th>
+                <th><button type="submit" name="choose" value="week">Ganze Woche wählen</button></th>
+                <th><button type="submit" name="choose" value="day1">Ganzen Tag wählen</button></th>
+                <th><button type="submit" name="choose" value="day2">Ganzen Tag wählen</button></th>
+                <th><button type="submit" name="choose" value="day3">Ganzen Tag wählen</button></th>
+                <th><button type="submit" name="choose" value="day4">Ganzen Tag wählen</button></th>
+                <th><button type="submit" name="choose" value="day5">Ganzen Tag wählen</button></th>
             </tr>
+            </form>
         </table>
         <form method="post">{% csrf_token %}
             <button class="rejectButton" type="submit" name="exit" value="accept">Abschließen</button>

@@ -471,7 +471,7 @@ def acceptOrRejectingInvitation(user, studentId, accept):
     """
     Function store in the database if an examiner accept or reject an invitation
     :param user: Django user object of the examiner
-    :param student: Student id
+    :param studentId: Student id
     :param accept: Boolean that tells if the examiner accept or reject the invitation
     :return:
     """
@@ -485,7 +485,7 @@ def addAvailabilityToInvitation(user, studentId, timeSlotId):
     """
     Function stores in the database the availability for the invitation
     :param user: Django user object of the examiner
-    :param student: Student id
+    :param studentId: Student id
     :param timeSlotId: Id of the timeSlot that should be set as availability
     :return:
     """
@@ -494,6 +494,27 @@ def addAvailabilityToInvitation(user, studentId, timeSlotId):
     timeSlot = TimeSlot.objects.filter(id=timeSlotId)[0]
     availability = AvailabilityInvitation(invitation=invitation, timeSlot=timeSlot)
     availability.save()
+
+
+def moveAvailabilitiesToRequest(user, studentId):
+    """
+
+    :return:
+    """
+    examinerId, intern = getExaminer(user)
+    invitation = Invitation.objects.filter(student_id=studentId, examiner=examinerId, isExaminerIntern=intern)[0]
+    invitationAvailabilities = AvailabilityInvitation.objects.filter(invitation=invitation)
+    requestAvailabilities = AvailabilityRequest.objects.filter(student_id=studentId)
+    if requestAvailabilities.count() == 0:
+        rows = []
+        for elem in invitationAvailabilities:
+            rows.append(AvailabilityRequest(student_id=studentId, timeSlot=elem.timeSlot))
+        with transaction.atomic():
+            for elem in rows:
+                elem.save()
+    else:
+        AvailabilityRequest.objects.filter(student_id=studentId)\
+            .exclude(timeSlot__in=invitationAvailabilities.values('timeSlot')).delete()
 
 
 def generateTimeSlots(year):
@@ -533,7 +554,7 @@ def getTimeSlots(studentId, start, end):
     end = datetime.strptime(end, "%m/%d/%Y") + timedelta(days=1)
     availabilities = AvailabilityRequest.objects.filter(student_id=studentId, timeSlot__start__gte=start,
                                                         timeSlot__start__lte=end)
-    if availabilities.count() == 0:
+    if AvailabilityRequest.objects.filter(student_id=studentId).count() == 0:
         invitations = Invitation.objects.filter(student_id=studentId)
         new = True
         for invitation in invitations:
@@ -543,11 +564,11 @@ def getTimeSlots(studentId, start, end):
             slots = TimeSlot.objects.filter(start__gte=start, start__lte=end)
             return slots
         else:
-            return "no slot"
+            return TimeSlot.objects.none()
     slots = TimeSlot.objects.filter(id__in=[o.timeSlot_id for o in availabilities])
     return slots
 
-def getWeekSlots(timeSlots, start, end):
+def getWeekSlots(timeSlots, start):
     """
 
     :param timeSlots: A Query Set of Time Slots
@@ -558,9 +579,9 @@ def getWeekSlots(timeSlots, start, end):
             '3': {'8': None, '10': None, '12': None, '14': None, '16': None},
             '4': {'8': None, '10': None, '12': None, '14': None, '16': None},
             '5': {'8': None, '10': None, '12': None, '14': None, '16': None}}
-    for i in range(1,5):
-        for j in range(8,17,2):
-            date = (datetime.strptime(start, "%m/%d/%Y") + timedelta(days=i))
+    for i in range(1, 6):
+        for j in range(8, 17, 2):
+            date = (datetime.strptime(start, "%m/%d/%Y") + timedelta(days=i-1))
             slots = timeSlots.filter(start__day=date.day, start__month=date.month, start__year=date.year, start__hour=j)
             if slots.count() > 0:
                 dict[str(i)][str(j)] = slots.first()

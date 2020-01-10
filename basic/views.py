@@ -425,14 +425,22 @@ def answerInvitation(request):
             else:
                 acceptOrNotInvitation(request.user, request.session['requestId'], False)
             return redirect('/')
+        if request.POST.get('choose'):
+            #todo choose this timeslot
+            request.session['stay'] = True
         context = {}
         group = getUserGroup(request.user)
         context['group'] = group
         if not request.POST.get('weekNavigation'):
-            now = datetime.today().date()
-            weekday = now.weekday()
-            startDate = now + timedelta(days=7 - weekday)
-            endDate = startDate + timedelta(days=4)
+            if 'stay' in request.session:
+                startDate = datetime.strptime(request.session['startDate'], "%m/%d/%Y")
+                endDate = datetime.strptime(request.session['endDate'], "%m/%d/%Y")
+                del request.session['stay']
+            else:
+                now = datetime.today().date()
+                weekday = now.weekday()
+                startDate = now + timedelta(days=7 - weekday)
+                endDate = startDate + timedelta(days=4)
         else:
             if request.POST.get('weekNavigation') == "forth":
                 sign = 1
@@ -453,8 +461,14 @@ def answerInvitation(request):
 
         timeSlots = getTimeSlots(request.session['requestId'], startDate.strftime("%m/%d/%Y"),
                                  endDate.strftime("%m/%d/%Y"))
-
-
+        timeSlots = getWeekSlots(timeSlots, startDate.strftime("%m/%d/%Y"))
+        for i in range(1, 6):
+            for j in range(8, 17, 2):
+                if timeSlots[str(i)][str(j)] is not None:
+                    context['slot' + str(i) + str(j)] = '<button type="submit" name="choose" value="' \
+                                                        + str(timeSlots[str(i)][str(j)].id) + '">Wählen</button>'
+                else:
+                    context['slot' + str(i) + str(j)] = 'Nicht verfügbar'
         return render(request, 'answerInvitation.html', context)
     else:
         return redirect('/')

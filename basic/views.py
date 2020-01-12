@@ -435,11 +435,6 @@ def answerInvitation(request):
                     return redirect('/')
                 else:
                     context['error'] = 'Entferne erst alle Zeitslots, bevor du die Anfrage ablehnst.'
-        if request.POST.get('choose'):
-            if request.POST.get('choose') == 'week':
-                pass
-            addAvailabilityToInvitation(request.user, request.session['requestId'], request.POST.get('choose'))
-            request.session['stay'] = True
         if request.POST.get('delete'):
             deleteAvailabilityOfInvitation(request.user, request.session['requestId'], request.POST.get('delete'))
         if not request.POST.get('weekNavigation'):
@@ -476,6 +471,34 @@ def answerInvitation(request):
         chosenTimeSlots = getRecentAvailabilities(request.user, request.session['requestId'], startDate.strftime("%m/%d/%Y"),
                                  endDate.strftime("%m/%d/%Y"))
         chosenTimeSlots = getWeekSlots(chosenTimeSlots, startDate.strftime("%m/%d/%Y"))
+        if request.POST.get('choose'):
+            if request.POST.get('choose') == 'week':
+                for i in range(1, 6):
+                    for j in range(8, 17, 2):
+                        if chosenTimeSlots[str(i)][str(j)] is not None:
+                            pass
+                        elif timeSlots[str(i)][str(j)] is not None:
+                            addAvailabilityToInvitation(request.user, request.session['requestId'],
+                                                        timeSlots[str(i)][str(j)].id)
+                            request.session['stay'] = True
+            elif request.POST.get('choose')[:3] == 'day':
+                for j in range(8, 17, 2):
+                    if chosenTimeSlots[request.POST.get('choose')[3]][str(j)] is not None:
+                        pass
+                    elif timeSlots[request.POST.get('choose')[3]][str(j)] is not None:
+                        addAvailabilityToInvitation(request.user, request.session['requestId'],
+                                                    timeSlots[request.POST.get('choose')[3]][str(j)].id)
+                        request.session['stay'] = True
+            else:
+                addAvailabilityToInvitation(request.user, request.session['requestId'], request.POST.get('choose'))
+                request.session['stay'] = True
+            timeSlots = getTimeSlots(request.session['requestId'], startDate.strftime("%m/%d/%Y"),
+                                     endDate.strftime("%m/%d/%Y"))
+            timeSlots = getWeekSlots(timeSlots, startDate.strftime("%m/%d/%Y"))
+            chosenTimeSlots = getRecentAvailabilities(request.user, request.session['requestId'],
+                                                      startDate.strftime("%m/%d/%Y"),
+                                                      endDate.strftime("%m/%d/%Y"))
+            chosenTimeSlots = getWeekSlots(chosenTimeSlots, startDate.strftime("%m/%d/%Y"))
         for i in range(1, 6):
             for j in range(8, 17, 2):
                 if chosenTimeSlots[str(i)][str(j)] is not None:

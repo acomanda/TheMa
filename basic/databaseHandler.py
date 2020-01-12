@@ -492,8 +492,9 @@ def addAvailabilityToInvitation(user, studentId, timeSlotId):
     examinerId, intern = getExaminer(user)
     invitation = Invitation.objects.filter(student_id=studentId, examiner=examinerId, isExaminerIntern=intern)[0]
     timeSlot = TimeSlot.objects.filter(id=timeSlotId)[0]
-    availability = AvailabilityInvitation(invitation=invitation, timeSlot=timeSlot)
-    availability.save()
+    if AvailabilityInvitation.objects.filter(invitation=invitation, timeSlot=timeSlot).count() == 0:
+        availability = AvailabilityInvitation(invitation=invitation, timeSlot=timeSlot)
+        availability.save()
 
 
 def deleteAvailabilityOfInvitation(user, studentId, timeSlotId):

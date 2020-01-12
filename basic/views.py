@@ -417,16 +417,24 @@ def chairman(request):
 def answerInvitation(request):
     """This function controls the behavior of the page that is used to answer an invitation."""
     # todo Implement the choice of an entire day and week
+    # todo add some information about the student in this page
     if request.user.is_authenticated:
+        context = {}
         amountSlots = getRecentAvailabilities(request.user, request.session['requestId'], None, None).count()
         if request.POST.get('exit'):
-            if request.POST.get('exit') == 'accept' and amountSlots > 0:
-                moveAvailabilitiesToRequest(request.user, request.session['requestId'])
-                acceptOrNotInvitation(request.user, request.session['requestId'], True)
-                return redirect('/')
-            elif request.POST.get('exit') == 'reject' and amountSlots == 0:
-                acceptOrNotInvitation(request.user, request.session['requestId'], False)
-                return redirect('/')
+            if request.POST.get('exit') == 'accept':
+                if amountSlots > 0:
+                    moveAvailabilitiesToRequest(request.user, request.session['requestId'])
+                    acceptOrNotInvitation(request.user, request.session['requestId'], True)
+                    return redirect('/')
+                else:
+                    context['error'] = 'Wähle erst Zeitslots aus, bevor du die Anfrage akzeptierst.'
+            if request.POST.get('exit') == 'reject':
+                if amountSlots == 0:
+                    acceptOrNotInvitation(request.user, request.session['requestId'], False)
+                    return redirect('/')
+                else:
+                    context['error'] = 'Entferne erst alle Zeitslots, bevor du die Anfrage ablehnst.'
         if request.POST.get('choose'):
             if request.POST.get('choose') == 'week':
                 pass
@@ -434,9 +442,6 @@ def answerInvitation(request):
             request.session['stay'] = True
         if request.POST.get('delete'):
             deleteAvailabilityOfInvitation(request.user, request.session['requestId'], request.POST.get('delete'))
-        context = {}
-        group = getUserGroup(request.user)
-        context['group'] = group
         if not request.POST.get('weekNavigation'):
             if 'stay' in request.session:
                 startDate = datetime.strptime(request.session['startDate'], "%m/%d/%Y")

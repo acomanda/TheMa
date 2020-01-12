@@ -9,6 +9,7 @@
 <body>
     <div class = "left"></div>
     <div class="main">
+        {{ error | safe }}
         <form method="post">{% csrf_token %}
             <div class="alignleft"><button type="submit" name="weekNavigation" value="back">Woche zurück</button></div>
             Kalenderwoche {{ week }}: {{ startDate }} - {{ endDate }}

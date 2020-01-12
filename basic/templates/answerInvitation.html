@@ -9,6 +9,40 @@
 <body>
     <div class = "left"></div>
     <div class="main">
+        <div id="request">
+            <div id="mainLeft">
+                Student:<br><br>
+                Titel:<br><br>
+                Betreuer 1:<br><br>
+                Betreuer 2:<br><br>
+                Abgabetermin:<br><br>
+                Fach:<br><br>
+                Themengebiet:<br><br>
+                Art der Arbeit:<br><br>
+                Status:<br><br>
+                Note Betreuer 1:<br><br>
+                Note Betreuer 2:<br><br>
+                {{ supervisor3 | safe }}
+                {{ grade3 | safe }}
+
+            </div>
+            <div id="mainRight">
+                    &nbsp;&nbsp;&nbsp;&nbsp;{{student}}<br><br>
+                &nbsp; &nbsp; {{title}}<br><br>
+                &nbsp; &nbsp; {{supervisor1}}<br><br>
+                &nbsp; &nbsp; {{supervisor2}}<br><br>
+                &nbsp; &nbsp; {{deadline}}<br><br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;{{subject}}<br><br>
+                &nbsp; &nbsp; {{topic}}<br><br>
+                &nbsp; &nbsp; {{type}}<br><br>
+                &nbsp; &nbsp; {{status}}<br><br>
+                &nbsp; &nbsp; {{grade1}}<br><br>
+                &nbsp; &nbsp; {{grade2}}<br><br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;{{ supervisor3r | safe }}
+                    &nbsp;&nbsp;&nbsp;&nbsp{{ grade3r | safe }}
+            </div>
+        </div>
+
         {{ error | safe }}
         <form method="post">{% csrf_token %}
             <div class="alignleft"><button type="submit" name="weekNavigation" value="back">Woche zurück</button></div>

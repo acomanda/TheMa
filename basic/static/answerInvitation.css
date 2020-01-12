@@ -7,6 +7,28 @@ body {
     display: inline-block;
 }
 
+#request {
+    display: flex;
+    margin: 0 auto;
+    width: 80%;
+    height: 20%;
+    text-align: left;
+    border: 1px solid black;
+    margin-bottom: 10%;
+}
+
+#mainLeft {
+    float: left;
+    width: 50%;
+    display: flex;
+}
+
+#mainRight {
+    float: right;
+    width: 50%;
+    display: flex;
+}
+
 .main.left {
     float: left;
     width: 10%;

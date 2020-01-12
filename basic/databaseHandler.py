@@ -150,6 +150,7 @@ def getStudentRequest(user, id=None):
     result['grade2'] = student.grade2
     result['topic'] = student.topic
     result['subject'] = student.subject
+    result['student'] = student.name
     return result
 
 

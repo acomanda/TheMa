@@ -416,8 +416,6 @@ def chairman(request):
 
 def answerInvitation(request):
     """This function controls the behavior of the page that is used to answer an invitation."""
-    # todo Implement the choice of an entire day and week
-    # todo add some information about the student in this page
     if request.user.is_authenticated:
         context = {}
         amountSlots = getRecentAvailabilities(request.user, request.session['requestId'], None, None).count()
@@ -509,6 +507,31 @@ def answerInvitation(request):
                                                         + str(timeSlots[str(i)][str(j)].id) + '">Wählen</button>'
                 else:
                     context['slot' + str(i) + str(j)] = 'Nicht verfügbar'
+        # Pass request information
+        content = getStudentRequest(request.session['requestId'])
+        context['student'] = content['student']
+        context['title'] = content['title']
+        context['supervisor1'] = content['supervisor1'].name
+        context['supervisor2'] = content['supervisor2'].name
+        context['deadline'] = content['deadline']
+        context['topic'] = content['topic']
+        context['type'] = content['type']
+        context['status'] = content['status']
+        context['subject'] = content['subject']
+        if content['grade1'] is None:
+            context['grade1'] = "/"
+        else:
+            context['grade1'] = content['grade1']
+        if content['grade2'] is None:
+            context['grade2'] = "/"
+        else:
+            context['grade2'] = content['grade2']
+        if content['supervisor3']:
+            context['supervisor3'] = 'Betreuer 3:<br><br>'
+            context['supervisor3r'] = content['supervisor3'].name + '<br><br>'
+        if content['grade3']:
+            context['grade3'] = 'Note Betreuer 3:<br><br>'
+            context['grade3r'] = str(content['grade3']) + '<br><br>'
         return render(request, 'answerInvitation.html', context)
     else:
         return redirect('/')

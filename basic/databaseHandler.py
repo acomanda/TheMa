@@ -496,9 +496,49 @@ def addAvailabilityToInvitation(user, studentId, timeSlotId):
     availability.save()
 
 
-def moveAvailabilitiesToRequest(user, studentId):
+def deleteAvailabilityOfInvitation(user, studentId, timeSlotId):
+    """
+    Deletes the row of AvailabilityInvitation that correspond to the examiner, request and timeSlot
+    :param user: Django user object of the examiner
+    :param studentId: Id of the student/request
+    :param timeSlotId: Id of the timeSlot
+    :return:
+    """
+    examinerId, intern = getExaminer(user)
+    invitation = Invitation.objects.filter(student_id=studentId, examiner=examinerId, isExaminerIntern=intern)[0]
+    availability = AvailabilityInvitation.objects.filter(invitation=invitation, timeSlot_id=timeSlotId)
+    availability.delete()
+
+
+def getRecentAvailabilities(user, studentId, start, end):
     """
 
+    :param user: Django user object of the examiner
+    :param studentId: Id of the student/request
+    :param start: First day of the week as a date
+    :param end: Last day of the week as a date
+    :return: The timeSlots, that were added recently and have not yet been moved to AvailabilityRequest
+    """
+    examinerId, intern = getExaminer(user)
+    invitation = Invitation.objects.filter(student_id=studentId, examiner=examinerId, isExaminerIntern=intern)[0]
+    if start is not None and end is not None:
+        start = datetime.strptime(start, "%m/%d/%Y")
+        end = datetime.strptime(end, "%m/%d/%Y") + timedelta(days=1)
+        availabilities = AvailabilityInvitation.objects.filter(timeSlot__start__gte=start, timeSlot__start__lte=end,
+                                                               invitation=invitation)
+    else:
+        availabilities = AvailabilityInvitation.objects.filter(invitation=invitation)
+
+    slots = TimeSlot.objects.filter(id__in=[o.timeSlot_id for o in availabilities],
+                                    availabilityinvitation__deleted__isnull=True)
+    return slots
+
+
+def moveAvailabilitiesToRequest(user, studentId):
+    """
+    Updates the time slots in AvailabilityRequest of the given examiner and request
+    :param user: Django user objectof the examiner
+    :param studentId: Id of the student/request
     :return:
     """
     examinerId, intern = getExaminer(user)
@@ -510,6 +550,7 @@ def moveAvailabilitiesToRequest(user, studentId):
         for elem in invitationAvailabilities:
             rows.append(AvailabilityRequest(student_id=studentId, timeSlot=elem.timeSlot))
         with transaction.atomic():
+            invitationAvailabilities.update(deleted=False)
             for elem in rows:
                 elem.save()
     else:

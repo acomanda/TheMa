@@ -186,6 +186,7 @@ def homeExaminer(request):
             return redirect('/grading')
         if request.POST.get('answer'):
             request.session['requestId'] = request.POST.get('answer')
+            request.session['amountSlots'] = 0
             return redirect('/answerInvitation')
         #Container 1
         container1 = ""
@@ -415,19 +416,24 @@ def chairman(request):
 
 def answerInvitation(request):
     """This function controls the behavior of the page that is used to answer an invitation."""
+    # todo Implement the choice of an entire day and week
     if request.user.is_authenticated:
-        if 'amountSlots' not in request.session:
-            request.session['amountSlots'] = 0
-        if request.POST.get('exit') and request.session['amountSlots'] > 0:
-            if request.POST.get('exit') == 'accept':
-                #todo Allow accepting only if a time slot was choosen
+        amountSlots = getRecentAvailabilities(request.user, request.session['requestId'], None, None).count()
+        if request.POST.get('exit'):
+            if request.POST.get('exit') == 'accept' and amountSlots > 0:
+                moveAvailabilitiesToRequest(request.user, request.session['requestId'])
                 acceptOrNotInvitation(request.user, request.session['requestId'], True)
-            else:
+                return redirect('/')
+            elif request.POST.get('exit') == 'reject' and amountSlots == 0:
                 acceptOrNotInvitation(request.user, request.session['requestId'], False)
-            return redirect('/')
+                return redirect('/')
         if request.POST.get('choose'):
-            #todo choose this timeslot
+            if request.POST.get('choose') == 'week':
+                pass
+            addAvailabilityToInvitation(request.user, request.session['requestId'], request.POST.get('choose'))
             request.session['stay'] = True
+        if request.POST.get('delete'):
+            deleteAvailabilityOfInvitation(request.user, request.session['requestId'], request.POST.get('delete'))
         context = {}
         group = getUserGroup(request.user)
         context['group'] = group
@@ -462,9 +468,15 @@ def answerInvitation(request):
         timeSlots = getTimeSlots(request.session['requestId'], startDate.strftime("%m/%d/%Y"),
                                  endDate.strftime("%m/%d/%Y"))
         timeSlots = getWeekSlots(timeSlots, startDate.strftime("%m/%d/%Y"))
+        chosenTimeSlots = getRecentAvailabilities(request.user, request.session['requestId'], startDate.strftime("%m/%d/%Y"),
+                                 endDate.strftime("%m/%d/%Y"))
+        chosenTimeSlots = getWeekSlots(chosenTimeSlots, startDate.strftime("%m/%d/%Y"))
         for i in range(1, 6):
             for j in range(8, 17, 2):
-                if timeSlots[str(i)][str(j)] is not None:
+                if chosenTimeSlots[str(i)][str(j)] is not None:
+                    context['slot' + str(i) + str(j)] = '<button type="submit" name="delete" value="' \
+                                                        + str(timeSlots[str(i)][str(j)].id) + '">Entfernen</button>'
+                elif timeSlots[str(i)][str(j)] is not None:
                     context['slot' + str(i) + str(j)] = '<button type="submit" name="choose" value="' \
                                                         + str(timeSlots[str(i)][str(j)].id) + '">Wählen</button>'
                 else:

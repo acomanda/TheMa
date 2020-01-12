@@ -221,6 +221,8 @@ def homeExaminer(request):
         #Container 3
         container3 = ""
         container3Request = getRequestsOfExaminer(request.user, "Terminfindung", None, None, False)
+        container3Request = container3Request | getRequestsOfExaminer(request.user, "Terminfindung", None,
+                                                                      None, False, None, False)
         for elem in container3Request:
             container3 += '<p class="alignleft">' + elem.name + ' </p>'
             container3 += '<p class="alignright"><button type="submit" name="answer" value="' + str(elem.id) \
@@ -230,7 +232,8 @@ def homeExaminer(request):
         #Container 4
         container4 = ""
         container4Request = getRequestsOfExaminer(request.user, "Terminfindung", None, None, True)
-        names = []
+        container4Request = container4Request | getRequestsOfExaminer(request.user, "Terminfindung", None,
+                                                                      None, True, None, False)
         for elem in container4Request:
             container4 += '<p class="alignleft">' + elem.name + ' </p>'
             container4 += '<p class="alignright">Beantwortet</p><br/><br/>'

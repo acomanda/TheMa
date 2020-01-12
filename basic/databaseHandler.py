@@ -254,28 +254,33 @@ def getRequestsOfOffice(status, accepted=None, allAccepted=None, allRated=None, 
         return False
 
 
-def getRequestsOfExaminer(user, status, accepted=None, rated=None, answered=None, final=None):
+def getRequestsOfExaminer(user, status, accepted=None, rated=None, answered=None, final=None, supervisor=None):
     """The function returns the requests of the user group 'Examiner'.
     If a status is passed, all requests that have this status are returned.
     The other parameters can be used to receive more specific requests."""
     if status is not None:
         examinerId, intern = getExaminer(user)
-        requests = Student.objects.filter(
-            (Q(isSupervisor1Intern=intern, supervisor1=examinerId) |
-             Q(isSupervisor2Intern=intern, supervisor2=examinerId) |
-             Q(isSupervisor3Intern=intern, supervisor3=examinerId)), status=status
-        )
+        if supervisor == False:
+            requests = Student.objects.filter(status=status)
+        else:
+            requests = Student.objects.filter(
+                (Q(isSupervisor1Intern=intern, supervisor1=examinerId) |
+                 Q(isSupervisor2Intern=intern, supervisor2=examinerId) |
+                 Q(isSupervisor3Intern=intern, supervisor3=examinerId)), status=status
+            )
         if accepted is not None:
-            requests = requests.filter(
-                Q(isSupervisor1Intern=intern, supervisor1=examinerId, supervisor1Confirmed__isnull=not accepted) |
-                Q(isSupervisor2Intern=intern, supervisor2=examinerId, supervisor2Confirmed__isnull=not accepted)
-            )
+            if supervisor != False:
+                requests = requests.filter(
+                    Q(isSupervisor1Intern=intern, supervisor1=examinerId, supervisor1Confirmed__isnull=not accepted) |
+                    Q(isSupervisor2Intern=intern, supervisor2=examinerId, supervisor2Confirmed__isnull=not accepted)
+                )
         if rated is not None:
-            requests = requests.filter(
-                Q(isSupervisor1Intern=intern, supervisor1=examinerId, grade1__isnull=not rated) |
-                Q(isSupervisor2Intern=intern, supervisor2=examinerId, grade2__isnull=not rated) |
-                Q(isSupervisor3Intern=intern, supervisor3=examinerId, grade3__isnull=not rated)
-            )
+            if supervisor != False:
+                requests = requests.filter(
+                    Q(isSupervisor1Intern=intern, supervisor1=examinerId, grade1__isnull=not rated) |
+                    Q(isSupervisor2Intern=intern, supervisor2=examinerId, grade2__isnull=not rated) |
+                    Q(isSupervisor3Intern=intern, supervisor3=examinerId, grade3__isnull=not rated)
+                )
         if answered is not None:
             invitations = Invitation.objects.filter(
                 examiner=examinerId, isExaminerIntern=intern, accepted__isnull=answered

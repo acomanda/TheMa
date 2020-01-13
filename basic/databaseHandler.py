@@ -191,21 +191,31 @@ def confirmOrNotRequest(requestId, confirm, group, user=None):
     checkStatus(student)
 
 
-def getExaminer(user):
+def getExaminer(user, examinerId = None, intern=None):
     """Receives a Django user object that should correspond to an examiner.
     The function returns a tuple that stores the examiner id and the boolean that says,
     if the examiner is intern or not."""
-    if getUserGroup(user) == "Examiner":
-        intern = False
-        if InternExaminer.objects.filter(user=user).exists():
-            intern = True
-        if intern:
-            examiner = InternExaminer.objects.filter(user=user)[0]
+    if user is not None:
+        if getUserGroup(user) == "Examiner":
+            intern = False
+            if InternExaminer.objects.filter(user=user).exists():
+                intern = True
+            if intern:
+                examiner = InternExaminer.objects.filter(user=user)[0]
+            else:
+                examiner = ExternalExaminer.objects.filter(user=user)[0]
+            return examiner.id, intern
         else:
-            examiner = ExternalExaminer.objects.filter(user=user)[0]
-        return examiner.id, intern
+            return False
     else:
-        return False
+        if intern:
+            examiner = InternExaminer.objects.filter(id=examinerId)
+        else:
+            examiner = ExternalExaminer.objects.filter(id=examinerId)
+        if examiner.count() > 0:
+            return examiner[0]
+        else:
+            return False
 
 
 def getRequestsOfOffice(status, accepted=None, allAccepted=None, allRated=None, supervisor3Needed=None,
@@ -392,7 +402,8 @@ def answerInvitation(user, studentId, timeSlotIdsList):
             elem.save()
 
 
-def getExaminers(approvalToTest=None, subject=None, topic=None, title=None, excludedTopic=None, excludedExaminers=None):
+def getExaminers(approvalToTest=None, subject=None, topic=None, title=None, excludedTopic=None, excludedExaminers=None,
+                 maxInvitation=None):
     """Returns all examiners that correpsond to the given specifications"""
     qualifications = Qualification.objects.all()
     if approvalToTest is not None:
@@ -417,6 +428,11 @@ def getExaminers(approvalToTest=None, subject=None, topic=None, title=None, excl
             user_id__in=[o.user_id for o in excludedExaminers])
         internExaminers = internExaminers and InternExaminer.objects.exclude(
             user_id__in=[o.user_id for o in excludedExaminers])
+    if maxInvitation is not None:
+        invitationsExternal = Invitation.objects.filter(numberInvitations__gt=maxInvitation, isExaminerIntern=0)
+        invitationsIntern = Invitation.objects.filter(numberInvitations__gt=maxInvitation, isExaminerIntern=1)
+        externalExaminers = externalExaminers.exclude(id__in=[o.examiner for o in invitationsExternal])
+        internExaminers = internExaminers.exclude(id__in=[o.examiner for o in invitationsIntern])
     return externalExaminers, internExaminers
 
 
@@ -457,18 +473,31 @@ def getTopics(subject):
     return result
 
 
-def inviteExaminer(student, examiner, role, numberInvitation):
+def inviteExaminer(student, examiner, role):
     """Creates the invitation for one examiner for one request"""
     if isinstance(examiner, ExternalExaminer):
-        invitation = Invitation(numberInvitations=numberInvitation, examiner=examiner.id,
-                                isExaminerIntern=0, student=student, role=role)
+        intern = 0
+    elif isinstance(examiner, InternExaminer):
+        intern = 1
+    invitation = Invitation.objects.filter(examiner=examiner.id, isExaminerIntern=intern, student=student, role=role)
+    if invitation.count() == 1:
+        invitation = invitation[0]
+        invitation.accepted = None
+        invitation.numberInvitations += 1
+        invitation.save()
+    else:
+        invitation = Invitation(examiner=examiner.id, isExaminerIntern=intern, student=student, role=role,
+                                numberInvitations=1)
         invitation.save()
 
 
-def getStudent(user):
+def getStudent(user, studentId=None):
     """Receives a Django User object
     Returns the corresponding Student Object"""
-    student = Student.objects.filter(user=user)
+    if user is not None:
+        student = Student.objects.filter(user=user)
+    else:
+        student = Student.objects.filter(id=studentId)
     if student.exists():
         return student[0]
 
@@ -644,3 +673,75 @@ def getDaysPerYear(year):
     if (year % 4 == 0) and (year % 100 != 0) or (year % 400 == 0):
         return 366
     return 365
+
+
+def getRequestConstellation(studentId, accepted=None):
+    """
+
+    :param studentId:
+    :return:
+    """
+    if accepted:
+        invitations = Invitation.objects.filter(student_id=studentId, accepted=True)
+    else:
+        invitations = Invitation.objects.filter(Q(student_id=studentId, accepted=True) |
+                                                Q(student_id=studentId, accepted__isnull=True))
+    constellation = {}
+    for elem in invitations:
+        constellation[elem.role] = getExaminer(None, elem.examiner, elem.isExaminerIntern)
+    return constellation
+
+
+def setAppointmentEmerged(studentId):
+    """
+
+    :param studentId:
+    :return:
+    """
+    student = Student.objects.filter(id=studentId)[0]
+    student.appointmentEmerged = True
+    student.status = "Termin entstanden"
+    student.save()
+
+
+def getRole(examinerId, isExaminerIntern, studentId):
+    """
+
+    :param examinerId:
+    :param isExaminerIntern:
+    :param studentId:
+    :return:
+    """
+    invitation = Invitation.objects.filter(examiner=examinerId, isExaminerIntern=isExaminerIntern,
+                                           student_id=studentId)[0]
+    return invitation.role
+
+
+def getStudentUser(studentId):
+    """
+
+    :param studentId:
+    :return:
+    """
+    student = Student.objects.filter(id=studentId)[0]
+    return student.user
+
+
+def isSupervisor(studentId, examinerId, intern):
+    """
+
+    :param studentId:
+    :param examinerId:
+    :param intern:
+    :return:
+    """
+    student = Student.objects.filter(id=studentId)
+    if student.count() == 1:
+        student = student[0]
+        if student.supervisor1 == examinerId and student.isSupervisor1Intern == intern:
+            return True
+        if student.supervisor2 == examinerId and student.isSupervisor2Intern == intern:
+            return True
+        if student.supervisor3 == examinerId and student.isSupervisor3Intern == intern:
+            return True
+        return False

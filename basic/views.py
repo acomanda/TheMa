@@ -427,12 +427,14 @@ def answerInvitation(request):
                 if amountSlots > 0:
                     moveAvailabilitiesToRequest(request.user, request.session['requestId'])
                     acceptOrNotInvitation(request.user, request.session['requestId'], True)
+                    invitationAnswered(request.session['requestId'], getExaminer(request.user), True)
                     return redirect('/')
                 else:
                     context['error'] = 'Wähle erst Zeitslots aus, bevor du die Anfrage akzeptierst.'
             if request.POST.get('exit') == 'reject':
                 if amountSlots == 0:
                     acceptOrNotInvitation(request.user, request.session['requestId'], False)
+                    invitationAnswered(request.session['requestId'], getExaminer(request.user), False)
                     return redirect('/')
                 else:
                     context['error'] = 'Entferne erst alle Zeitslots, bevor du die Anfrage ablehnst.'

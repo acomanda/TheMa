@@ -521,6 +521,8 @@ def answerInvitation(request):
         context['type'] = content['type']
         context['status'] = content['status']
         context['subject'] = content['subject']
+        examinerId, intern = getExaminer(request.user)
+        context['role'] = getRole(examinerId, intern, request.session['requestId'])
         if content['grade1'] is None:
             context['grade1'] = "/"
         else:

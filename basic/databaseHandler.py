@@ -334,7 +334,6 @@ def getRequestsOfExaminer(user, status, accepted=None, rated=None, answered=None
                  Q(isSupervisor2Intern=intern, supervisor2=examinerId) |
                  Q(isSupervisor3Intern=intern, supervisor3=examinerId)), status=status
             )
-            print(requests)
         if accepted is not None:
             if supervisor != False:
                 requests = requests.filter(

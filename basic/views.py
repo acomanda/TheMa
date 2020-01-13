@@ -137,7 +137,6 @@ def homeOffice(request):
         # Container 5
         container5Request = getRequestsOfOffice("Termin entstanden", None, None, None, None, None, True)
         container5 = ""
-        print(container5Request)
         for elem in container5Request:
             container5 += '<p class="alignleft">' + elem.name + ' </p> \n'
             container5 += '<p class="alignright">' + str(elem.appointment)[:16] + '</p><br/><br/>'
@@ -409,14 +408,19 @@ def chairman(request):
     context = {}
     group = getUserGroup(request.user)
     context['group'] = group
+    student = getStudent(None, request.session['requestId'])
+    if student not in getRequestsOfOffice("Gutachteneingabe", None, None, None, True):
+        return redirect('/')
     if request.POST.get('confirm'):
-        #todo read from selection
-        if not createExaminerConstellation(Student.objects.filter(id=request.session['requestId'])[0].user,
-                                           {'chairman': ExternalExaminer.objects.filter(id=1)[0]}):
+        if len(request.POST['chairman']) > 1:
+            examiner = getExaminer(None, int(request.POST['chairman'][1:]), int(request.POST['chairman'][0]))
+            print(examiner)
+            if not createExaminerConstellation(Student.objects.filter(id=request.session['requestId'])[0].user,
+                                               {'chairman': examiner}):
 
-            context['error'] = 'Leider gibt es nicht genug Prüfer um eine Konstellation zu generieren.'
-        else:
-            changeStatus(request.session['requestId'], "Terminfindung")
+                context['error'] = 'Leider gibt es nicht genug Prüfer um eine Konstellation zu generieren.'
+            else:
+                changeStatus(request.session['requestId'], "Terminfindung")
             return redirect('/')
     content = getStudentRequest(None, request.session['requestId'])
     context['title'] = content['title']

@@ -12,5 +12,6 @@ urlpatterns = [
     path('grading', views.grading),
     path('supervisor3', views.supervisor3),
     path('chairman', views.chairman),
-    path('answerInvitation', views.answerInvitation)
+    path('answerInvitation', views.answerInvitation),
+    path('confirmAppointment', views.confirmAppointment),
 ]

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="../static/appointment.css">
+    <meta charset="UTF-8">
+    <title>
+        {% if group == "Student"%}
+            Student Home page
+        {% elif request.path == '/grading'%}
+            Benoten
+        {% elif request.path == '/supervisor3'%}
+            Drittgutachter
+        {% elif request.path == '/confirmAppointment' %}
+            Datum bestätigen
+        {% endif %}
+    </title>
+    {% include "navBar.html" %}
+</head>
+<body>
+    <form method="post">{% csrf_token %}
+    <div class = left></div>
+    <div class="main">
+        <div class="mainLeft">
+            Titel:<br><br>
+            Betreuer 1:<br><br>
+            Betreuer 2:<br><br>
+            Abgabetermin:<br><br>
+            Fach:<br><br>
+            Themengebiet:<br><br>
+            Art der Arbeit:<br><br>
+            Status:<br><br>
+            Note Betreuer 1:<br><br>
+            Note Betreuer 2:<br><br>
+            {{ drittgutachter }}
+            <select id = "slot" name="slot">
+                <option></option>
+                {{ appointments | safe }}
+            </select>
+        </div>
+        <div class="mainRight">
+            &nbsp; &nbsp; {{title}}<br><br>
+            &nbsp; &nbsp; {{supervisor1}}<br><br>
+            &nbsp; &nbsp; {{supervisor2}}<br><br>
+            &nbsp; &nbsp; {{deadline}}<br><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;{{subject}}<br><br>
+            &nbsp; &nbsp; {{topic}}<br><br>
+            &nbsp; &nbsp; {{type}}<br><br>
+            &nbsp; &nbsp; <u>{{status}}</u><br><br>
+            &nbsp; &nbsp; {{grade1}}<br><br>
+            &nbsp; &nbsp; {{grade2}}<br><br>
+                {{grade3}}
+
+                <button name="confirm" value="1">Bestätigen</button>
+        </div>
+    </div>
+    <div class="right"></div>
+    </form>
+</body>
+</html>

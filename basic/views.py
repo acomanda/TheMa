@@ -73,6 +73,9 @@ def homeOffice(request):
         if request.POST.get('supervisor3'):
             request.session['requestId'] = request.POST.get('supervisor3')
             return redirect('/supervisor3')
+        if request.POST.get('appointment'):
+            request.session['requestId'] = request.POST.get('appointment')
+            return redirect('/confirmAppointment')
         # Container 1
         container1Request = getRequestsOfOffice("Anfrage wird bestätigt", False)
         container1 = ""
@@ -134,9 +137,15 @@ def homeOffice(request):
         # Container 5
         container5Request = getRequestsOfOffice("Termin entstanden", None, None, None, None, None, True)
         container5 = ""
+        print(container5Request)
         for elem in container5Request:
             container5 += '<p class="alignleft">' + elem.name + ' </p> \n'
             container5 += '<p class="alignright">' + str(elem.appointment)[:16] + '</p><br/><br/>'
+        container5Request = getRequestsOfOffice("Termin entstanden", None, None, None, None, None, False)
+        for elem in container5Request:
+            container5 += '<p class="alignleft">' + elem.name + ' </p> \n'
+            container5 += '<p class="alignright"><button type="submit" name="appointment" value="' + str(elem.id) \
+                          + '">Details</button></p><br/><br/>'
         context['container5'] = container5
 
         return render(request, 'homePruefungsamt.html', context)
@@ -245,10 +254,15 @@ def homeExaminer(request):
 
         # Container 5
         container5 = ""
-        container5Request = getRequestsOfExaminer(request.user, "Termin enstanden", None, None, None, True)
+        examiner = getExaminer(request.user)
+        container5Request = getRequestsOfExaminer(request.user, "Termin entstanden", None, None, None, True, False)
         for elem in container5Request:
             container5 += '<p class="alignleft">' + elem.name + ' </p>'
-            container5 += '<p class="alignright">' + str(elem.verteidigungstermin)[:16] + '</p><br/><br/>'
+            container5 += '<p class="alignright">' + str(elem.appointment)[:16] + '</p><br/><br/>'
+        container5Request = getRequestsOfExaminer(request.user, "Termin entstanden", None, None, None, False, False)
+        for elem in container5Request:
+            container5 += '<p class="alignleft">' + elem.name + ' </p> \n'
+            container5 += '<p class="alignright">Office must confirm</p><br/><br/>'
         context['container5'] = container5
         return render(request, 'homePruefer.html', context)
     else:
@@ -396,12 +410,12 @@ def chairman(request):
     group = getUserGroup(request.user)
     context['group'] = group
     if request.POST.get('confirm'):
+        #todo read from selection
         if not createExaminerConstellation(Student.objects.filter(id=request.session['requestId'])[0].user,
                                            {'chairman': ExternalExaminer.objects.filter(id=1)[0]}):
 
             context['error'] = 'Leider gibt es nicht genug Prüfer um eine Konstellation zu generieren.'
         else:
-            print('hallo')
             changeStatus(request.session['requestId'], "Terminfindung")
             return redirect('/')
     content = getStudentRequest(None, request.session['requestId'])
@@ -546,5 +560,22 @@ def answerInvitation(request):
             context['grade3'] = 'Note Betreuer 3:<br><br>'
             context['grade3r'] = str(content['grade3']) + '<br><br>'
         return render(request, 'answerInvitation.html', context)
+    else:
+        return redirect('/')
+
+
+def confirmAppointment(request):
+    if request.user.is_authenticated:
+        context = {}
+        context['group'] = getUserGroup(request.user)
+        if request.POST.get('confirm'):
+            endRequest(request.session['requestId'], request.POST['slot'])
+            return redirect('/')
+        appointments = getRequestsAppointments(request.session['requestId'])
+        options = ''
+        for elem in appointments:
+            options += '<option value="' + str(elem.id) + '">' + elem.start.strftime("%m/%d/%Y") + '</option>'
+        context['appointments'] = options
+        return render(request, 'appointment.html', context)
     else:
         return redirect('/')

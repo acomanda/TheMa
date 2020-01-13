@@ -334,6 +334,7 @@ def getRequestsOfExaminer(user, status, accepted=None, rated=None, answered=None
                  Q(isSupervisor2Intern=intern, supervisor2=examinerId) |
                  Q(isSupervisor3Intern=intern, supervisor3=examinerId)), status=status
             )
+            print(requests)
         if accepted is not None:
             if supervisor != False:
                 requests = requests.filter(
@@ -801,3 +802,22 @@ def isSupervisor(studentId, examinerId, intern):
         if student.supervisor3 == examinerId and student.isSupervisor3Intern == intern:
             return True
         return False
+
+
+def getRequestsAppointments(studentId):
+    slotsId = AvailabilityRequest.objects.filter(student_id=studentId)
+    if slotsId.count() > 0:
+        slots = TimeSlot.objects.filter(id__in=[o.timeSlot_id for o in slotsId])
+        return slots
+    else:
+        return False
+
+
+def endRequest(studentId, slotId):
+    student = Student.objects.filter(id=studentId)
+    if student.count() > 0:
+        student = student[0]
+        timeSlot = TimeSlot.objects.filter(id=slotId)[0]
+        student.officeConfirmedAppointment = True
+        student.appointment = timeSlot.start
+        student.save()

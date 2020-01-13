@@ -9,7 +9,11 @@ from datetime import timedelta, datetime
 
 
 def randomString(length=20):
-    """Function generates a random string of numbers and letters that is 'length' long."""
+    """
+
+    :param length: Integer that tells how long the result should be.
+    :return: Random string that contains letters and digits and is of the given length.
+    """
     symbols = string.ascii_letters + string.digits
     result = ""
     for i in range(length):
@@ -33,8 +37,16 @@ class PasswordlessAuthBackend(ModelBackend):
 
 
 def getUser(email, zdvId, state, stateLength, name):
-    """Checks if user is already registered and if it is, it returns the user,
-    otherwise it creates the user and return it."""
+    """
+    Checks if user is already registered and if it is, it returns the user,
+    otherwise it creates the user and return it.
+    :param email: E-Mail of the user
+    :param zdvId: ZDV Id of the user
+    :param state: State that the ZDV server returns (randomString, User group)
+    :param stateLength: Length of the randomString in state
+    :param name: Name of the user
+    :return: The right Django user object
+    """
     group = state[stateLength:]
     if group == "student":
         results = Student.objects.filter(email=email)
@@ -70,7 +82,11 @@ def getUser(email, zdvId, state, stateLength, name):
 
 
 def getUserGroup(user):
-    """Receives a django user object and return the User Group of the user."""
+    """
+    Receives a django user object and return the User Group of the user.
+    :param user: Django user object
+    :return: String that tells which to which group the user belongs.
+    """
     results = Office.objects.filter(user=user)
     if results.exists():
         return "Office"
@@ -88,8 +104,12 @@ def getUserGroup(user):
 
 
 def haveRequest(user):
-    """Receives a django user object and returns True,
-    if the user is a student and the user has already make a request."""
+    """
+    Receives a django user object and returns True,
+    if the user is a student and the user has already make a request.
+    :param user: Django user object
+    :return: A boolean that tells if the user is a student and have made or not a request
+    """
     student = Student.objects.filter(user=user)
     if student.exists() and student[0].deadline is not None:
         return True
@@ -98,7 +118,20 @@ def haveRequest(user):
 
 def makeRequest(user, deadline, subject, supervisor1, supervisor2, topic, type, title, isSupervisor1Intern,
                 isSupervisor2Intern):
-    """Function initiates a students request."""
+    """
+    Function initiates a students request.
+    :param user: Django user object
+    :param deadline: Deadline date of submission of the thesis (Date)
+    :param subject: Subject of the thesis (String)
+    :param supervisor1: Id of the first supervisor of the request (Integer)
+    :param supervisor2: Id of the second supervisor of the request (Integer)
+    :param topic: Topic of the thesis (String)
+    :param type: One String of ('b.sc.', 'm.sc.', 'dr.')
+    :param title: Title opf the thesis (String)
+    :param isSupervisor1Intern: bool that tells if the first supervisor is an intern one (Boolean)
+    :param isSupervisor2Intern:bool that tells if the second supervisor is an intern one (Boolean)
+    :return:
+    """
     student = Student.objects.filter(user=user)[0]
     student.deadline = deadline
     student.subject = subject
@@ -114,8 +147,13 @@ def makeRequest(user, deadline, subject, supervisor1, supervisor2, topic, type, 
 
 
 def getStudentRequest(user, id=None):
-    """Receives a django user object or an student id and returns a
-    dictionary with the informations about the request."""
+    """
+    Receives a django user object or an student id and returns a
+    dictionary with the informations about the request.
+    :param user: Django user object
+    :param id: Id of the student
+    :return: Dictionary with the informations about the request
+    """
     if user is not None:
         student = Student.objects.filter(user=user)[0]
     else:
@@ -155,7 +193,13 @@ def getStudentRequest(user, id=None):
 
 
 def createExternalExaminer(name, email, password):
-    """Function creates a new External Examiner"""
+    """
+    Function creates a new External Examiner
+    :param name: Name of the new examiner (String)
+    :param email: E-Mail of the new examiner (String)
+    :param password: Password of the new examiner (String)
+    :return:
+    """
     user = User.objects.create_user(username=email, email=email, password=password)
     examiner = ExternalExaminer.objects.create(name=name, email=email, user=user)
     with transaction.atomic():
@@ -164,7 +208,12 @@ def createExternalExaminer(name, email, password):
 
 
 def createOfficeAccount(email, password):
-    """Function creates a new Office Account."""
+    """
+    Function creates a new Office Account.
+    :param email: E-Mail of the new office account (String)
+    :param password: Password of the new office account (String)
+    :return:
+    """
     user = User.objects.create_user(username=email, email=email, password=password)
     office = Office.objects.create(user=user)
     with transaction.atomic():
@@ -173,9 +222,16 @@ def createOfficeAccount(email, password):
 
 
 def confirmOrNotRequest(requestId, confirm, group, user=None):
-    """Receives a student object, the user Group and the bool, that tells if the request should be confirmed.
+    """
+    Receives a student object, the user Group and the bool, that tells if the request should be confirmed.
     If the user is an Examiner, the user object is also needed.
-    The function saves the confirmation in the database."""
+    The function saves the confirmation in the database.
+    :param requestId: Id of the student/request (Integer)
+    :param confirm: Tells, if the Request must be confirmed or not (Boolean)
+    :param group: Group of the user that is calling the function (String)
+    :param user: Django user object
+    :return:
+    """
     student = Student.objects.filter(id=requestId)[0]
     if group == "Office":
         student.officeConfirmed = confirm

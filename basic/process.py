@@ -92,10 +92,14 @@ def getConstellationValues(constellation):
 
 def invitationAnswered(studentId, examiner, answer):
     """
-
-    :param studentId:
-    :param answer:
-    :param examiner:
+    The function is mainly divided into two parts.
+    The first part is executed if answer is True otherwise part 2.
+    The first part checks if an appointment is emerged and if it is, the status of the request
+    is updated.
+    The second part handles the rejections of examiners and invites new examiners.
+    :param studentId: Id of the student/request
+    :param examiner: A tuple of the form (examinerId, isExaminerInter): (Int, Bool)
+    :param answer: Boolean that tells, if the examiner has accepted or not the request
     :return:
     """
     if answer:

@@ -7,6 +7,7 @@ from .process import *
 
 stateLength = 30
 
+
 def index(request):
     """This function controls the behavior of the start page."""
     # If user is already authenticated redirect him to the right home page
@@ -53,6 +54,7 @@ def index(request):
         else:
             return render(request, 'index.html', {'error': "Falsche Anmeldedaten <br> "})
     return render(request, 'index.html')
+
 
 def homeOffice(request):
     """This function controls the behavior of the home page of the user group 'Office'"""
@@ -141,6 +143,7 @@ def homeOffice(request):
     else:
         return redirect('/')
 
+
 def homeStudent(request):
     """This function controls the behavior of the home page of the user group 'Student'"""
     if request.user.is_authenticated:
@@ -169,6 +172,7 @@ def homeStudent(request):
         return render(request, 'requestDetails.html', context)
     else:
         return redirect('/')
+
 
 def homeExaminer(request):
     """This function controls the behavior of the home page of the user group 'Examiner'"""
@@ -250,6 +254,7 @@ def homeExaminer(request):
     else:
         return redirect('/')
 
+
 def confirmRequest(request):
     context = {}
     group = getUserGroup(request.user)
@@ -330,6 +335,7 @@ def anfrage(request):
         return redirect('/')
     else:
         return redirect('/')
+
 
 def logout(request):
     """This function is used to logout a user."""

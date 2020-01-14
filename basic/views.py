@@ -414,7 +414,6 @@ def chairman(request):
     if request.POST.get('confirm'):
         if len(request.POST['chairman']) > 1:
             examiner = getExaminer(None, int(request.POST['chairman'][1:]), int(request.POST['chairman'][0]))
-            print(examiner)
             if not createExaminerConstellation(Student.objects.filter(id=request.session['requestId'])[0].user,
                                                {'chairman': examiner}):
 
@@ -548,6 +547,12 @@ def answerInvitation(request):
         context['status'] = content['status']
         context['subject'] = content['subject']
         examinerId, intern = getExaminer(request.user)
+        if isSupervisor(request.session['requestId'], examinerId, intern):
+            context['confirmationText'] = 'Wollen Sie als Supervisor wirklich ablehnen? Dies würde verursachen, dass ' \
+                                          'alle Prüfer erneut eingeladen werden. Sie inklusive.'
+        else:
+            context['confirmationText'] = 'Wollen Sie wirklich ablehnen?'
+        print(context['confirmationText'])
         context['role'] = getRole(examinerId, intern, request.session['requestId'])
         if content['grade1'] is None:
             context['grade1'] = "/"

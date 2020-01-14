@@ -409,7 +409,7 @@ def chairman(request):
     group = getUserGroup(request.user)
     context['group'] = group
     student = getStudent(None, request.session['requestId'])
-    if student not in getRequestsOfOffice("Gutachteneingabe", None, None, None, True):
+    if not getRequestsOfOffice("Gutachteneingabe", None, None, True, None).filter(id=student.id).count() > 0:
         return redirect('/')
     if request.POST.get('confirm'):
         if len(request.POST['chairman']) > 1:

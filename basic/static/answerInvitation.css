@@ -1,0 +1,80 @@
+body {
+    overflow: scroll;
+    position: relative;
+    top: 0;
+    width: 100%;
+    text-align: center;
+    display: inline-block;
+}
+
+#request {
+    display: flex;
+    margin: 0 auto;
+    width: 80%;
+    height: 20%;
+    text-align: left;
+    border: 1px solid black;
+    margin-bottom: 10%;
+}
+
+#mainLeft {
+    float: left;
+    width: 50%;
+    display: flex;
+}
+
+#mainRight {
+    float: right;
+    width: 50%;
+    display: flex;
+}
+
+.main.left {
+    float: left;
+    width: 10%;
+    display: flex;
+    border: 1px solid black;
+}
+
+.main.main {
+    display: inline-block;
+    margin: 0 auto;
+    width: 80%;
+    height: 100%;
+    text-align: center;
+    justify-content: center;
+}
+
+table{
+    border: 1px solid black;
+    width: 100%;
+}
+
+th {
+    border: 1px solid black;
+}
+
+.right {
+    float: right;
+    width: 10%
+}
+
+.alignright{
+    float: right;
+    margin-top: 0;
+    margin-bottom: 0;
+    margin-left: 0;
+    margin-right: 0;
+}
+
+.alignleft{
+    float: left;
+    margin-top: 0;
+    margin-bottom: 0;
+    margin-left: 0;
+    margin-right: 0;
+}
+
+.rejectButton {
+    margin-top: 5%;
+}

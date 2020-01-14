@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="../static/answerInvitation.css">
+    <meta charset="UTF-8">
+    <title>Einladung</title>
+    {% include "navBar.html" %}
+</head>
+<body>
+    <div class = "left"></div>
+    <div class="main">
+        <div id="request">
+            <div id="mainLeft">
+                Student:<br><br>
+                Titel:<br><br>
+                Betreuer 1:<br><br>
+                Betreuer 2:<br><br>
+                Abgabetermin:<br><br>
+                Fach:<br><br>
+                Themengebiet:<br><br>
+                Art der Arbeit:<br><br>
+                Status:<br><br>
+                Note Betreuer 1:<br><br>
+                Note Betreuer 2:<br><br>
+                {{ supervisor3 | safe }}
+                {{ grade3 | safe }}
+
+            </div>
+            <div id="mainRight">
+                    &nbsp;&nbsp;&nbsp;&nbsp;{{student}}<br><br>
+                &nbsp; &nbsp; {{title}}<br><br>
+                &nbsp; &nbsp; {{supervisor1}}<br><br>
+                &nbsp; &nbsp; {{supervisor2}}<br><br>
+                &nbsp; &nbsp; {{deadline}}<br><br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;{{subject}}<br><br>
+                &nbsp; &nbsp; {{topic}}<br><br>
+                &nbsp; &nbsp; {{type}}<br><br>
+                &nbsp; &nbsp; {{status}}<br><br>
+                &nbsp; &nbsp; {{grade1}}<br><br>
+                &nbsp; &nbsp; {{grade2}}<br><br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;{{ supervisor3r | safe }}
+                    &nbsp;&nbsp;&nbsp;&nbsp{{ grade3r | safe }}
+            </div>
+        </div>
+
+        {{ error | safe }}
+        Rolle: {{ role | safe }}
+        <form method="post">{% csrf_token %}
+            <div class="alignleft"><button type="submit" name="weekNavigation" value="back">Woche zurück</button></div>
+            Kalenderwoche {{ week }}: {{ startDate }} - {{ endDate }}
+            <div class="alignright"><button type="submit" name="weekNavigation" value="forth">Woche vor</button></div>
+        </form>
+        <table>
+            <form method="post">{% csrf_token %}
+            <tr>
+                <th>Startuhrzeit</th>
+                <th>Montag {{ startDate }}</th>
+                <th>Dienstag {{ tuesday }}</th>
+                <th>Mittwoch {{ wednesday }}</th>
+                <th>Donnerstag {{ thursday }}</th>
+                <th>Freitag {{ endDate }}</th>
+            </tr>
+            <tr>
+                <th>8:00</th>
+                <th>{{ slot18 | safe }}</th>
+                <th>{{ slot28 | safe }}</th>
+                <th>{{ slot38 | safe }}</th>
+                <th>{{ slot48 | safe }}</th>
+                <th>{{ slot58 | safe }}</th>
+            </tr>
+            <tr>
+                <th>10:00</th>
+                <th>{{ slot110 | safe }}</th>
+                <th>{{ slot210 | safe }}</th>
+                <th>{{ slot310 | safe }}</th>
+                <th>{{ slot410 | safe }}</th>
+                <th>{{ slot510 | safe }}</th>
+            </tr>
+            <tr>
+                <th>12:00</th>
+                <th>{{ slot112 | safe }}</th>
+                <th>{{ slot212 | safe }}</th>
+                <th>{{ slot312 | safe }}</th>
+                <th>{{ slot412 | safe }}</th>
+                <th>{{ slot512 | safe }}</th>
+            </tr>
+            <tr>
+                <th>14:00</th>
+                <th>{{ slot114 | safe }}</th>
+                <th>{{ slot214 | safe }}</th>
+                <th>{{ slot314 | safe }}</th>
+                <th>{{ slot414 | safe }}</th>
+                <th>{{ slot514 | safe }}</th>
+            </tr>
+            <tr>
+                <th>16:00</th>
+                <th>{{ slot116 | safe }}</th>
+                <th>{{ slot216 | safe }}</th>
+                <th>{{ slot316 | safe }}</th>
+                <th>{{ slot416 | safe }}</th>
+                <th>{{ slot516 | safe }}</th>
+            </tr>
+            <tr>
+                <th><button type="submit" name="choose" value="week">Ganze Woche wählen</button></th>
+                <th><button type="submit" name="choose" value="day1">Ganzen Tag wählen</button></th>
+                <th><button type="submit" name="choose" value="day2">Ganzen Tag wählen</button></th>
+                <th><button type="submit" name="choose" value="day3">Ganzen Tag wählen</button></th>
+                <th><button type="submit" name="choose" value="day4">Ganzen Tag wählen</button></th>
+                <th><button type="submit" name="choose" value="day5">Ganzen Tag wählen</button></th>
+            </tr>
+            </form>
+        </table>
+        <form method="post">{% csrf_token %}
+            <button class="rejectButton" type="submit" name="exit" value="accept">Abschließen</button>
+            <button class="rejectButton" type="submit" name="exit" value="reject">Ablehnen</button>
+        </form>
+    </div>
+    <div class="right"></div>
+</body>
+</html>

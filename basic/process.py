@@ -8,7 +8,7 @@ def createExaminerConstellation(user, designations):
     At this moment this function allows only to designate a chairman.
     :param user: Django user object of the Student/Request
     :param designations: Dictionary that stores for the key 'chairman' an Examiner Object
-    :return: Returns the generated constellation of examiners for the oral exam
+ :return: Returns the generated constellation of examiners for the oral exam
     """
     studentData = getStudentRequest(user)
     if studentData['subject'] == 'Informatik':
@@ -74,7 +74,7 @@ def inviteAllExaminers(student, constellation):
     :return:
     """
     for key in constellation:
-        inviteExaminer(student, constellation[key], key, 1)
+        inviteExaminer(student, constellation[key], key)
 
 
 def getConstellationValues(constellation):
@@ -89,3 +89,42 @@ def getConstellationValues(constellation):
         for i in range(constellationValues.count(None)):
             constellationValues.remove(None)
     return constellationValues
+
+def invitationAnswered(studentId, examiner, answer):
+    """
+    The function is mainly divided into two parts.
+    The first part is executed if answer is True otherwise part 2.
+    The first part checks if an appointment is emerged and if it is, the status of the request
+    is updated.
+    The second part handles the rejections of examiners and invites new examiners.
+    :param studentId: Id of the student/request
+    :param examiner: A tuple of the form (examinerId, isExaminerInter): (Int, Bool)
+    :param answer: Boolean that tells, if the examiner has accepted or not the request
+    :return:
+    """
+    if answer:
+        constellation = getRequestConstellation(studentId, True)
+        if len(constellation) == 5:
+            setAppointmentEmerged(studentId)
+    else:
+        examinerId = examiner[0]
+        intern = examiner[1]
+        role = getRole(examinerId, intern, studentId)
+        constellation = getRequestConstellation(studentId)
+        studentData = getStudentRequest(getStudentUser(studentId))
+        if isSupervisor(studentId, examinerId, intern):
+            # todo Invite the supervisor again and remove some other examiner
+            pass
+        if role == 'externalExaminer':
+            externalExaminers = list(itertools.chain(*getExaminers(None, None, None, None, studentData['topic'],
+                                                                   getConstellationValues(constellation), 3)))
+            if len(externalExaminers) == 0:
+                # Not enough examiners can be found
+                return False
+            elif len(externalExaminers) > 1:
+                externalExaminers.remove(getExaminer(None, examinerId, intern))
+                inviteExaminer(getStudent(None, studentId), externalExaminers[0], role)
+            elif len(externalExaminers) == 1:
+                #todo remove two examiner and include two
+                pass
+

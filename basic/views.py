@@ -7,6 +7,7 @@ from .process import *
 
 stateLength = 30
 
+
 def index(request):
     """This function controls the behavior of the start page."""
     # If user is already authenticated redirect him to the right home page
@@ -54,6 +55,7 @@ def index(request):
             return render(request, 'index.html', {'error': "Falsche Anmeldedaten <br> "})
     return render(request, 'index.html')
 
+
 def homeOffice(request):
     """This function controls the behavior of the home page of the user group 'Office'"""
     if request.user.is_authenticated:
@@ -71,6 +73,9 @@ def homeOffice(request):
         if request.POST.get('supervisor3'):
             request.session['requestId'] = request.POST.get('supervisor3')
             return redirect('/supervisor3')
+        if request.POST.get('appointment'):
+            request.session['requestId'] = request.POST.get('appointment')
+            return redirect('/confirmAppointment')
         # Container 1
         container1Request = getRequestsOfOffice("Anfrage wird bestätigt", False)
         container1 = ""
@@ -135,11 +140,17 @@ def homeOffice(request):
         for elem in container5Request:
             container5 += '<p class="alignleft">' + elem.name + ' </p> \n'
             container5 += '<p class="alignright">' + str(elem.appointment)[:16] + '</p><br/><br/>'
+        container5Request = getRequestsOfOffice("Termin entstanden", None, None, None, None, None, False)
+        for elem in container5Request:
+            container5 += '<p class="alignleft">' + elem.name + ' </p> \n'
+            container5 += '<p class="alignright"><button type="submit" name="appointment" value="' + str(elem.id) \
+                          + '">Details</button></p><br/><br/>'
         context['container5'] = container5
 
         return render(request, 'homePruefungsamt.html', context)
     else:
         return redirect('/')
+
 
 def homeStudent(request):
     """This function controls the behavior of the home page of the user group 'Student'"""
@@ -170,6 +181,7 @@ def homeStudent(request):
     else:
         return redirect('/')
 
+
 def homeExaminer(request):
     """This function controls the behavior of the home page of the user group 'Examiner'"""
     if request.user.is_authenticated:
@@ -184,6 +196,10 @@ def homeExaminer(request):
         if request.POST.get('rate'):
             request.session['requestId'] = request.POST.get('rate')
             return redirect('/grading')
+        if request.POST.get('answer'):
+            request.session['requestId'] = request.POST.get('answer')
+            request.session['amountSlots'] = 0
+            return redirect('/answerInvitation')
         #Container 1
         container1 = ""
         container1Request = getRequestsOfExaminer(request.user, "Anfrage wird bestätigt", False)
@@ -217,16 +233,19 @@ def homeExaminer(request):
         #Container 3
         container3 = ""
         container3Request = getRequestsOfExaminer(request.user, "Terminfindung", None, None, False)
+        container3Request = container3Request | getRequestsOfExaminer(request.user, "Terminfindung", None,
+                                                                      None, False, None, False)
         for elem in container3Request:
             container3 += '<p class="alignleft">' + elem.name + ' </p>'
-            container3 += '<p class="alignright"><button type="submit" name="antworten" value="' + str(elem.id) \
+            container3 += '<p class="alignright"><button type="submit" name="answer" value="' + str(elem.id) \
                           + '">Antworten</button></p><br/><br/>'
         context['container3'] = container3
 
         #Container 4
         container4 = ""
         container4Request = getRequestsOfExaminer(request.user, "Terminfindung", None, None, True)
-        names = []
+        container4Request = container4Request | getRequestsOfExaminer(request.user, "Terminfindung", None,
+                                                                      None, True, None, False)
         for elem in container4Request:
             container4 += '<p class="alignleft">' + elem.name + ' </p>'
             container4 += '<p class="alignright">Beantwortet</p><br/><br/>'
@@ -234,14 +253,20 @@ def homeExaminer(request):
 
         # Container 5
         container5 = ""
-        container5Request = getRequestsOfExaminer(request.user, "Termin enstanden", None, None, None, True)
+        examiner = getExaminer(request.user)
+        container5Request = getRequestsOfExaminer(request.user, "Termin entstanden", None, None, None, True, False)
         for elem in container5Request:
             container5 += '<p class="alignleft">' + elem.name + ' </p>'
-            container5 += '<p class="alignright">' + str(elem.verteidigungstermin)[:16] + '</p><br/><br/>'
+            container5 += '<p class="alignright">' + str(elem.appointment)[:16] + '</p><br/><br/>'
+        container5Request = getRequestsOfExaminer(request.user, "Termin entstanden", None, None, None, False, False)
+        for elem in container5Request:
+            container5 += '<p class="alignleft">' + elem.name + ' </p> \n'
+            container5 += '<p class="alignright">Office must confirm</p><br/><br/>'
         context['container5'] = container5
         return render(request, 'homePruefer.html', context)
     else:
         return redirect('/')
+
 
 def confirmRequest(request):
     context = {}
@@ -324,6 +349,7 @@ def anfrage(request):
     else:
         return redirect('/')
 
+
 def logout(request):
     """This function is used to logout a user."""
     django_logout(request)
@@ -382,14 +408,19 @@ def chairman(request):
     context = {}
     group = getUserGroup(request.user)
     context['group'] = group
+    student = getStudent(None, request.session['requestId'])
+    if student not in getRequestsOfOffice("Gutachteneingabe", None, None, None, True):
+        return redirect('/')
     if request.POST.get('confirm'):
-        if not createExaminerConstellation(Student.objects.filter(id=request.session['requestId'])[0].user,
-                                           {'chairman': ExternalExaminer.objects.filter(id=1)[0]}):
+        if len(request.POST['chairman']) > 1:
+            examiner = getExaminer(None, int(request.POST['chairman'][1:]), int(request.POST['chairman'][0]))
+            print(examiner)
+            if not createExaminerConstellation(Student.objects.filter(id=request.session['requestId'])[0].user,
+                                               {'chairman': examiner}):
 
-            context['error'] = 'Leider gibt es nicht genug Prüfer um eine Konstellation zu generieren.'
-        else:
-            print('hallo')
-            changeStatus(request.session['requestId'], "Terminfindung")
+                context['error'] = 'Leider gibt es nicht genug Prüfer um eine Konstellation zu generieren.'
+            else:
+                changeStatus(request.session['requestId'], "Terminfindung")
             return redirect('/')
     content = getStudentRequest(None, request.session['requestId'])
     context['title'] = content['title']
@@ -408,3 +439,147 @@ def chairman(request):
         supervisors += '<option value="1' + str(elem.id) + '">' + elem.name + '</option>'
     context['supervisors'] = supervisors
     return render(request, 'requestDetails.html', context)
+
+
+def answerInvitation(request):
+    """This function controls the behavior of the page that is used to answer an invitation."""
+    if request.user.is_authenticated:
+        context = {}
+        amountSlots = getRecentAvailabilities(request.user, request.session['requestId'], None, None).count()
+        if request.POST.get('exit'):
+            if request.POST.get('exit') == 'accept':
+                if amountSlots > 0:
+                    moveAvailabilitiesToRequest(request.user, request.session['requestId'])
+                    acceptOrNotInvitation(request.user, request.session['requestId'], True)
+                    invitationAnswered(request.session['requestId'], getExaminer(request.user), True)
+                    return redirect('/')
+                else:
+                    context['error'] = 'Wähle erst Zeitslots aus, bevor du die Anfrage akzeptierst.'
+            if request.POST.get('exit') == 'reject':
+                if amountSlots == 0:
+                    acceptOrNotInvitation(request.user, request.session['requestId'], False)
+                    invitationAnswered(request.session['requestId'], getExaminer(request.user), False)
+                    return redirect('/')
+                else:
+                    context['error'] = 'Entferne erst alle Zeitslots, bevor du die Anfrage ablehnst.'
+        if request.POST.get('delete'):
+            deleteAvailabilityOfInvitation(request.user, request.session['requestId'], request.POST.get('delete'))
+        if not request.POST.get('weekNavigation'):
+            if 'stay' in request.session:
+                startDate = datetime.strptime(request.session['startDate'], "%m/%d/%Y")
+                endDate = datetime.strptime(request.session['endDate'], "%m/%d/%Y")
+                del request.session['stay']
+            else:
+                now = datetime.today().date()
+                weekday = now.weekday()
+                startDate = now + timedelta(days=7 - weekday)
+                endDate = startDate + timedelta(days=4)
+        else:
+            if request.POST.get('weekNavigation') == "forth":
+                sign = 1
+            else:
+                sign = -1
+            startDate = datetime.strptime(request.session['startDate'], "%m/%d/%Y") + sign * timedelta(days=7)
+            endDate = datetime.strptime(request.session['endDate'], "%m/%d/%Y") + sign * timedelta(days=7)
+        week = startDate.isocalendar()[1]
+        request.session['startDate'] = startDate.strftime("%m/%d/%Y")
+        request.session['endDate'] = endDate.strftime("%m/%d/%Y")
+        request.session['week'] = week
+        context['week'] = week
+        context['startDate'] = startDate.strftime("%d.%m")
+        context['tuesday'] = (startDate + timedelta(days=1)).strftime("%d.%m")
+        context['wednesday'] = (startDate + timedelta(days=2)).strftime("%d.%m")
+        context['thursday'] = (startDate + timedelta(days=3)).strftime("%d.%m")
+        context['endDate'] = endDate.strftime("%d.%m")
+
+        timeSlots = getTimeSlots(request.session['requestId'], startDate.strftime("%m/%d/%Y"),
+                                 endDate.strftime("%m/%d/%Y"))
+        timeSlots = getWeekSlots(timeSlots, startDate.strftime("%m/%d/%Y"))
+        chosenTimeSlots = getRecentAvailabilities(request.user, request.session['requestId'], startDate.strftime("%m/%d/%Y"),
+                                 endDate.strftime("%m/%d/%Y"))
+        chosenTimeSlots = getWeekSlots(chosenTimeSlots, startDate.strftime("%m/%d/%Y"))
+        if request.POST.get('choose'):
+            if request.POST.get('choose') == 'week':
+                for i in range(1, 6):
+                    for j in range(8, 17, 2):
+                        if chosenTimeSlots[str(i)][str(j)] is not None:
+                            pass
+                        elif timeSlots[str(i)][str(j)] is not None:
+                            addAvailabilityToInvitation(request.user, request.session['requestId'],
+                                                        timeSlots[str(i)][str(j)].id)
+                            request.session['stay'] = True
+            elif request.POST.get('choose')[:3] == 'day':
+                for j in range(8, 17, 2):
+                    if chosenTimeSlots[request.POST.get('choose')[3]][str(j)] is not None:
+                        pass
+                    elif timeSlots[request.POST.get('choose')[3]][str(j)] is not None:
+                        addAvailabilityToInvitation(request.user, request.session['requestId'],
+                                                    timeSlots[request.POST.get('choose')[3]][str(j)].id)
+                        request.session['stay'] = True
+            else:
+                addAvailabilityToInvitation(request.user, request.session['requestId'], request.POST.get('choose'))
+                request.session['stay'] = True
+            timeSlots = getTimeSlots(request.session['requestId'], startDate.strftime("%m/%d/%Y"),
+                                     endDate.strftime("%m/%d/%Y"))
+            timeSlots = getWeekSlots(timeSlots, startDate.strftime("%m/%d/%Y"))
+            chosenTimeSlots = getRecentAvailabilities(request.user, request.session['requestId'],
+                                                      startDate.strftime("%m/%d/%Y"),
+                                                      endDate.strftime("%m/%d/%Y"))
+            chosenTimeSlots = getWeekSlots(chosenTimeSlots, startDate.strftime("%m/%d/%Y"))
+        for i in range(1, 6):
+            for j in range(8, 17, 2):
+                if chosenTimeSlots[str(i)][str(j)] is not None:
+                    context['slot' + str(i) + str(j)] = '<button type="submit" name="delete" value="' \
+                                                        + str(timeSlots[str(i)][str(j)].id) + '">Entfernen</button>'
+                elif timeSlots[str(i)][str(j)] is not None:
+                    context['slot' + str(i) + str(j)] = '<button type="submit" name="choose" value="' \
+                                                        + str(timeSlots[str(i)][str(j)].id) + '">Wählen</button>'
+                else:
+                    context['slot' + str(i) + str(j)] = 'Nicht verfügbar'
+        # Pass request information
+        content = getStudentRequest(request.session['requestId'])
+        context['student'] = content['student']
+        context['title'] = content['title']
+        context['supervisor1'] = content['supervisor1'].name
+        context['supervisor2'] = content['supervisor2'].name
+        context['deadline'] = content['deadline']
+        context['topic'] = content['topic']
+        context['type'] = content['type']
+        context['status'] = content['status']
+        context['subject'] = content['subject']
+        examinerId, intern = getExaminer(request.user)
+        context['role'] = getRole(examinerId, intern, request.session['requestId'])
+        if content['grade1'] is None:
+            context['grade1'] = "/"
+        else:
+            context['grade1'] = content['grade1']
+        if content['grade2'] is None:
+            context['grade2'] = "/"
+        else:
+            context['grade2'] = content['grade2']
+        if content['supervisor3']:
+            context['supervisor3'] = 'Betreuer 3:<br><br>'
+            context['supervisor3r'] = content['supervisor3'].name + '<br><br>'
+        if content['grade3']:
+            context['grade3'] = 'Note Betreuer 3:<br><br>'
+            context['grade3r'] = str(content['grade3']) + '<br><br>'
+        return render(request, 'answerInvitation.html', context)
+    else:
+        return redirect('/')
+
+
+def confirmAppointment(request):
+    if request.user.is_authenticated:
+        context = {}
+        context['group'] = getUserGroup(request.user)
+        if request.POST.get('confirm'):
+            endRequest(request.session['requestId'], request.POST['slot'])
+            return redirect('/')
+        appointments = getRequestsAppointments(request.session['requestId'])
+        options = ''
+        for elem in appointments:
+            options += '<option value="' + str(elem.id) + '">' + elem.start.strftime("%m/%d/%Y") + '</option>'
+        context['appointments'] = options
+        return render(request, 'appointment.html', context)
+    else:
+        return redirect('/')

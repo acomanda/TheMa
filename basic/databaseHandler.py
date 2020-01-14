@@ -5,10 +5,15 @@ from django.contrib.auth.backends import ModelBackend
 from django.contrib.auth.models import User
 from django.db import transaction
 from django.db.models import Q
+from datetime import timedelta, datetime
 
 
 def randomString(length=20):
-    """Function generates a random string of numbers and letters that is 'length' long."""
+    """
+
+    :param length: Integer that tells how long the result should be.
+    :return: Random string that contains letters and digits and is of the given length.
+    """
     symbols = string.ascii_letters + string.digits
     result = ""
     for i in range(length):
@@ -32,8 +37,16 @@ class PasswordlessAuthBackend(ModelBackend):
 
 
 def getUser(email, zdvId, state, stateLength, name):
-    """Checks if user is already registered and if it is, it returns the user,
-    otherwise it creates the user and return it."""
+    """
+    Checks if user is already registered and if it is, it returns the user,
+    otherwise it creates the user and return it.
+    :param email: E-Mail of the user
+    :param zdvId: ZDV Id of the user
+    :param state: State that the ZDV server returns (randomString, User group)
+    :param stateLength: Length of the randomString in state
+    :param name: Name of the user
+    :return: The right Django user object
+    """
     group = state[stateLength:]
     if group == "student":
         results = Student.objects.filter(email=email)
@@ -69,7 +82,11 @@ def getUser(email, zdvId, state, stateLength, name):
 
 
 def getUserGroup(user):
-    """Receives a django user object and return the User Group of the user."""
+    """
+    Receives a django user object and return the User Group of the user.
+    :param user: Django user object
+    :return: String that tells which to which group the user belongs.
+    """
     results = Office.objects.filter(user=user)
     if results.exists():
         return "Office"
@@ -87,8 +104,12 @@ def getUserGroup(user):
 
 
 def haveRequest(user):
-    """Receives a django user object and returns True,
-    if the user is a student and the user has already make a request."""
+    """
+    Receives a django user object and returns True,
+    if the user is a student and the user has already make a request.
+    :param user: Django user object
+    :return: A boolean that tells if the user is a student and have made or not a request
+    """
     student = Student.objects.filter(user=user)
     if student.exists() and student[0].deadline is not None:
         return True
@@ -97,7 +118,20 @@ def haveRequest(user):
 
 def makeRequest(user, deadline, subject, supervisor1, supervisor2, topic, type, title, isSupervisor1Intern,
                 isSupervisor2Intern):
-    """Function initiates a students request."""
+    """
+    Function initiates a students request.
+    :param user: Django user object
+    :param deadline: Deadline date of submission of the thesis (Date)
+    :param subject: Subject of the thesis (String)
+    :param supervisor1: Id of the first supervisor of the request (Integer)
+    :param supervisor2: Id of the second supervisor of the request (Integer)
+    :param topic: Topic of the thesis (String)
+    :param type: One String of ('b.sc.', 'm.sc.', 'dr.')
+    :param title: Title opf the thesis (String)
+    :param isSupervisor1Intern: bool that tells if the first supervisor is an intern one (Boolean)
+    :param isSupervisor2Intern:bool that tells if the second supervisor is an intern one (Boolean)
+    :return:
+    """
     student = Student.objects.filter(user=user)[0]
     student.deadline = deadline
     student.subject = subject
@@ -113,8 +147,13 @@ def makeRequest(user, deadline, subject, supervisor1, supervisor2, topic, type, 
 
 
 def getStudentRequest(user, id=None):
-    """Receives a django user object or an student id and returns a
-    dictionary with the informations about the request."""
+    """
+    Receives a django user object or an student id and returns a
+    dictionary with the informations about the request.
+    :param user: Django user object
+    :param id: Id of the student
+    :return: Dictionary with the informations about the request
+    """
     if user is not None:
         student = Student.objects.filter(user=user)[0]
     else:
@@ -149,11 +188,18 @@ def getStudentRequest(user, id=None):
     result['grade2'] = student.grade2
     result['topic'] = student.topic
     result['subject'] = student.subject
+    result['student'] = student.name
     return result
 
 
 def createExternalExaminer(name, email, password):
-    """Function creates a new External Examiner"""
+    """
+    Function creates a new External Examiner
+    :param name: Name of the new examiner (String)
+    :param email: E-Mail of the new examiner (String)
+    :param password: Password of the new examiner (String)
+    :return:
+    """
     user = User.objects.create_user(username=email, email=email, password=password)
     examiner = ExternalExaminer.objects.create(name=name, email=email, user=user)
     with transaction.atomic():
@@ -162,7 +208,12 @@ def createExternalExaminer(name, email, password):
 
 
 def createOfficeAccount(email, password):
-    """Function creates a new Office Account."""
+    """
+    Function creates a new Office Account.
+    :param email: E-Mail of the new office account (String)
+    :param password: Password of the new office account (String)
+    :return:
+    """
     user = User.objects.create_user(username=email, email=email, password=password)
     office = Office.objects.create(user=user)
     with transaction.atomic():
@@ -171,9 +222,16 @@ def createOfficeAccount(email, password):
 
 
 def confirmOrNotRequest(requestId, confirm, group, user=None):
-    """Receives a student object, the user Group and the bool, that tells if the request should be confirmed.
+    """
+    Receives a student object, the user Group and the bool, that tells if the request should be confirmed.
     If the user is an Examiner, the user object is also needed.
-    The function saves the confirmation in the database."""
+    The function saves the confirmation in the database.
+    :param requestId: Id of the student/request (Integer)
+    :param confirm: Tells, if the Request must be confirmed or not (Boolean)
+    :param group: Group of the user that is calling the function (String)
+    :param user: Django user object
+    :return:
+    """
     student = Student.objects.filter(id=requestId)[0]
     if group == "Office":
         student.officeConfirmed = confirm
@@ -189,21 +247,31 @@ def confirmOrNotRequest(requestId, confirm, group, user=None):
     checkStatus(student)
 
 
-def getExaminer(user):
+def getExaminer(user, examinerId = None, intern=None):
     """Receives a Django user object that should correspond to an examiner.
     The function returns a tuple that stores the examiner id and the boolean that says,
     if the examiner is intern or not."""
-    if getUserGroup(user) == "Examiner":
-        intern = False
-        if InternExaminer.objects.filter(user=user).exists():
-            intern = True
-        if intern:
-            examiner = InternExaminer.objects.filter(user=user)[0]
+    if user is not None:
+        if getUserGroup(user) == "Examiner":
+            intern = False
+            if InternExaminer.objects.filter(user=user).exists():
+                intern = True
+            if intern:
+                examiner = InternExaminer.objects.filter(user=user)[0]
+            else:
+                examiner = ExternalExaminer.objects.filter(user=user)[0]
+            return examiner.id, intern
         else:
-            examiner = ExternalExaminer.objects.filter(user=user)[0]
-        return examiner.id, intern
+            return False
     else:
-        return False
+        if intern:
+            examiner = InternExaminer.objects.filter(id=examinerId)
+        else:
+            examiner = ExternalExaminer.objects.filter(id=examinerId)
+        if examiner.count() > 0:
+            return examiner[0]
+        else:
+            return False
 
 
 def getRequestsOfOffice(status, accepted=None, allAccepted=None, allRated=None, supervisor3Needed=None,
@@ -252,28 +320,33 @@ def getRequestsOfOffice(status, accepted=None, allAccepted=None, allRated=None, 
         return False
 
 
-def getRequestsOfExaminer(user, status, accepted=None, rated=None, answered=None, final=None):
+def getRequestsOfExaminer(user, status, accepted=None, rated=None, answered=None, final=None, supervisor=None):
     """The function returns the requests of the user group 'Examiner'.
     If a status is passed, all requests that have this status are returned.
     The other parameters can be used to receive more specific requests."""
     if status is not None:
         examinerId, intern = getExaminer(user)
-        requests = Student.objects.filter(
-            (Q(isSupervisor1Intern=intern, supervisor1=examinerId) |
-             Q(isSupervisor2Intern=intern, supervisor2=examinerId) |
-             Q(isSupervisor3Intern=intern, supervisor3=examinerId)), status=status
-        )
+        if supervisor == False:
+            requests = Student.objects.filter(status=status)
+        else:
+            requests = Student.objects.filter(
+                (Q(isSupervisor1Intern=intern, supervisor1=examinerId) |
+                 Q(isSupervisor2Intern=intern, supervisor2=examinerId) |
+                 Q(isSupervisor3Intern=intern, supervisor3=examinerId)), status=status
+            )
         if accepted is not None:
-            requests = requests.filter(
-                Q(isSupervisor1Intern=intern, supervisor1=examinerId, supervisor1Confirmed__isnull=not accepted) |
-                Q(isSupervisor2Intern=intern, supervisor2=examinerId, supervisor2Confirmed__isnull=not accepted)
-            )
+            if supervisor != False:
+                requests = requests.filter(
+                    Q(isSupervisor1Intern=intern, supervisor1=examinerId, supervisor1Confirmed__isnull=not accepted) |
+                    Q(isSupervisor2Intern=intern, supervisor2=examinerId, supervisor2Confirmed__isnull=not accepted)
+                )
         if rated is not None:
-            requests = requests.filter(
-                Q(isSupervisor1Intern=intern, supervisor1=examinerId, grade1__isnull=not rated) |
-                Q(isSupervisor2Intern=intern, supervisor2=examinerId, grade2__isnull=not rated) |
-                Q(isSupervisor3Intern=intern, supervisor3=examinerId, grade3__isnull=not rated)
-            )
+            if supervisor != False:
+                requests = requests.filter(
+                    Q(isSupervisor1Intern=intern, supervisor1=examinerId, grade1__isnull=not rated) |
+                    Q(isSupervisor2Intern=intern, supervisor2=examinerId, grade2__isnull=not rated) |
+                    Q(isSupervisor3Intern=intern, supervisor3=examinerId, grade3__isnull=not rated)
+                )
         if answered is not None:
             invitations = Invitation.objects.filter(
                 examiner=examinerId, isExaminerIntern=intern, accepted__isnull=answered
@@ -385,7 +458,8 @@ def answerInvitation(user, studentId, timeSlotIdsList):
             elem.save()
 
 
-def getExaminers(approvalToTest=None, subject=None, topic=None, title=None, excludedTopic=None, excludedExaminers=None):
+def getExaminers(approvalToTest=None, subject=None, topic=None, title=None, excludedTopic=None, excludedExaminers=None,
+                 maxInvitation=None):
     """Returns all examiners that correpsond to the given specifications"""
     qualifications = Qualification.objects.all()
     if approvalToTest is not None:
@@ -410,6 +484,11 @@ def getExaminers(approvalToTest=None, subject=None, topic=None, title=None, excl
             user_id__in=[o.user_id for o in excludedExaminers])
         internExaminers = internExaminers and InternExaminer.objects.exclude(
             user_id__in=[o.user_id for o in excludedExaminers])
+    if maxInvitation is not None:
+        invitationsExternal = Invitation.objects.filter(numberInvitations__gt=maxInvitation, isExaminerIntern=0)
+        invitationsIntern = Invitation.objects.filter(numberInvitations__gt=maxInvitation, isExaminerIntern=1)
+        externalExaminers = externalExaminers.exclude(id__in=[o.examiner for o in invitationsExternal])
+        internExaminers = internExaminers.exclude(id__in=[o.examiner for o in invitationsIntern])
     return externalExaminers, internExaminers
 
 
@@ -450,15 +529,294 @@ def getTopics(subject):
     return result
 
 
-def inviteExaminer(student, examiner, role, numberInvitation):
+def inviteExaminer(student, examiner, role):
     """Creates the invitation for one examiner for one request"""
     if isinstance(examiner, ExternalExaminer):
-        invitation = Invitation(numberInvitations=numberInvitation, examiner=examiner.id,
-                                isExaminerIntern=0, student=student, role=role)
+        intern = 0
+    elif isinstance(examiner, InternExaminer):
+        intern = 1
+    invitation = Invitation.objects.filter(examiner=examiner.id, isExaminerIntern=intern, student=student, role=role)
+    if invitation.count() == 1:
+        invitation = invitation[0]
+        invitation.accepted = None
+        invitation.numberInvitations += 1
+        invitation.save()
+    else:
+        invitation = Invitation(examiner=examiner.id, isExaminerIntern=intern, student=student, role=role,
+                                numberInvitations=1)
         invitation.save()
 
 
-def getStudent(user):
-    student = Student.objects.filter(user=user)
+def getStudent(user, studentId=None):
+    """Receives a Django User object
+    Returns the corresponding Student Object"""
+    if user is not None:
+        student = Student.objects.filter(user=user)
+    else:
+        student = Student.objects.filter(id=studentId)
     if student.exists():
         return student[0]
+
+
+def acceptOrRejectingInvitation(user, studentId, accept):
+    """
+    Function store in the database if an examiner accept or reject an invitation
+    :param user: Django user object of the examiner
+    :param studentId: Student id
+    :param accept: Boolean that tells if the examiner accept or reject the invitation
+    :return:
+    """
+    examinerId, intern = getExaminer(user)
+    invitation = Invitation.objects.filter(student_id=studentId, examiner=examinerId, isExaminerIntern=intern)[0]
+    invitation.accepted = accept
+    invitation.save()
+
+
+def addAvailabilityToInvitation(user, studentId, timeSlotId):
+    """
+    Function stores in the database the availability for the invitation
+    :param user: Django user object of the examiner
+    :param studentId: Student id
+    :param timeSlotId: Id of the timeSlot that should be set as availability
+    :return:
+    """
+    examinerId, intern = getExaminer(user)
+    invitation = Invitation.objects.filter(student_id=studentId, examiner=examinerId, isExaminerIntern=intern)[0]
+    timeSlot = TimeSlot.objects.filter(id=timeSlotId)[0]
+    if AvailabilityInvitation.objects.filter(invitation=invitation, timeSlot=timeSlot).count() == 0:
+        availability = AvailabilityInvitation(invitation=invitation, timeSlot=timeSlot)
+        availability.save()
+
+
+def deleteAvailabilityOfInvitation(user, studentId, timeSlotId):
+    """
+    Deletes the row of AvailabilityInvitation that correspond to the examiner, request and timeSlot
+    :param user: Django user object of the examiner
+    :param studentId: Id of the student/request
+    :param timeSlotId: Id of the timeSlot
+    :return:
+    """
+    examinerId, intern = getExaminer(user)
+    invitation = Invitation.objects.filter(student_id=studentId, examiner=examinerId, isExaminerIntern=intern)[0]
+    availability = AvailabilityInvitation.objects.filter(invitation=invitation, timeSlot_id=timeSlotId)
+    availability.delete()
+
+
+def getRecentAvailabilities(user, studentId, start, end):
+    """
+
+    :param user: Django user object of the examiner
+    :param studentId: Id of the student/request
+    :param start: First day of the week as a date
+    :param end: Last day of the week as a date
+    :return: The timeSlots, that were added recently and have not yet been moved to AvailabilityRequest
+    """
+    examinerId, intern = getExaminer(user)
+    invitation = Invitation.objects.filter(student_id=studentId, examiner=examinerId, isExaminerIntern=intern)[0]
+    if start is not None and end is not None:
+        start = datetime.strptime(start, "%m/%d/%Y")
+        end = datetime.strptime(end, "%m/%d/%Y") + timedelta(days=1)
+        availabilities = AvailabilityInvitation.objects.filter(timeSlot__start__gte=start, timeSlot__start__lte=end,
+                                                               invitation=invitation)
+    else:
+        availabilities = AvailabilityInvitation.objects.filter(invitation=invitation)
+
+    slots = TimeSlot.objects.filter(id__in=[o.timeSlot_id for o in availabilities],
+                                    availabilityinvitation__deleted__isnull=True)
+    return slots
+
+
+def moveAvailabilitiesToRequest(user, studentId):
+    """
+    Updates the time slots in AvailabilityRequest of the given examiner and request
+    :param user: Django user objectof the examiner
+    :param studentId: Id of the student/request
+    :return:
+    """
+    examinerId, intern = getExaminer(user)
+    invitation = Invitation.objects.filter(student_id=studentId, examiner=examinerId, isExaminerIntern=intern)[0]
+    invitationAvailabilities = AvailabilityInvitation.objects.filter(invitation=invitation)
+    requestAvailabilities = AvailabilityRequest.objects.filter(student_id=studentId)
+    if requestAvailabilities.count() == 0:
+        rows = []
+        for elem in invitationAvailabilities:
+            rows.append(AvailabilityRequest(student_id=studentId, timeSlot=elem.timeSlot))
+        with transaction.atomic():
+            invitationAvailabilities.update(deleted=False)
+            for elem in rows:
+                elem.save()
+    else:
+        AvailabilityRequest.objects.filter(student_id=studentId)\
+            .exclude(timeSlot__in=invitationAvailabilities.values('timeSlot')).delete()
+
+
+def generateTimeSlots(year):
+    """
+    Writes all possible time slots for the given year into the database
+    :param year: Year as an Integer
+    :return: Boolean that says whether the function was successful
+    """
+    daysPerYear = getDaysPerYear(year)
+    startDate = datetime(year, 1, 1, 8, 0)
+    for td in (startDate + timedelta(days=it + 1) for it in range(daysPerYear-1)):
+        if td.weekday() < 5:
+            for td2 in (td + timedelta(hours=2*it2) for it2 in range(5)):
+                TimeSlot(start=td2).save()
+    return True
+
+
+def deleteTimeSlots(year):
+    """
+    Deletes all time slots of the given year
+    :param year: Year as an Integer
+    :return: Boolean that says whether the function was successful
+    """
+    TimeSlot.objects.filter(start__year=year).delete()
+    return True
+
+
+def getTimeSlots(studentId, start, end):
+    """
+    Searches the available time slots for an invitation from one day to another day and returns them.
+    :param studentId: Id of the request/student
+    :param start: First day of the week as a date
+    :param end: Last day of the week as a date
+    :return: QuerySet with all availabilities
+    """
+    start = datetime.strptime(start, "%m/%d/%Y")
+    end = datetime.strptime(end, "%m/%d/%Y") + timedelta(days=1)
+    availabilities = AvailabilityRequest.objects.filter(student_id=studentId, timeSlot__start__gte=start,
+                                                        timeSlot__start__lte=end)
+    if AvailabilityRequest.objects.filter(student_id=studentId).count() == 0:
+        invitations = Invitation.objects.filter(student_id=studentId)
+        new = True
+        for invitation in invitations:
+            if invitation.accepted:
+                new = False
+        if new:
+            slots = TimeSlot.objects.filter(start__gte=start, start__lte=end)
+            return slots
+        else:
+            return TimeSlot.objects.none()
+    slots = TimeSlot.objects.filter(id__in=[o.timeSlot_id for o in availabilities])
+    return slots
+
+def getWeekSlots(timeSlots, start):
+    """
+
+    :param timeSlots: A Query Set of Time Slots
+    :return: A dictionary that divides the time slots into days and times of the week.
+    """
+    dict = {'1': {'8': None, '10': None, '12': None, '14': None, '16': None},
+            '2': {'8': None, '10': None, '12': None, '14': None, '16': None},
+            '3': {'8': None, '10': None, '12': None, '14': None, '16': None},
+            '4': {'8': None, '10': None, '12': None, '14': None, '16': None},
+            '5': {'8': None, '10': None, '12': None, '14': None, '16': None}}
+    for i in range(1, 6):
+        for j in range(8, 17, 2):
+            date = (datetime.strptime(start, "%m/%d/%Y") + timedelta(days=i-1))
+            slots = timeSlots.filter(start__day=date.day, start__month=date.month, start__year=date.year, start__hour=j)
+            if slots.count() > 0:
+                dict[str(i)][str(j)] = slots.first()
+    return dict
+
+
+def getDaysPerYear(year):
+    """
+    :param year: Year as an Integer
+    :return: Number of days in the year
+    """
+    if (year % 4 == 0) and (year % 100 != 0) or (year % 400 == 0):
+        return 366
+    return 365
+
+
+def getRequestConstellation(studentId, accepted=None):
+    """
+
+    :param studentId:
+    :return:
+    """
+    if accepted:
+        invitations = Invitation.objects.filter(student_id=studentId, accepted=True)
+    else:
+        invitations = Invitation.objects.filter(Q(student_id=studentId, accepted=True) |
+                                                Q(student_id=studentId, accepted__isnull=True))
+    constellation = {}
+    for elem in invitations:
+        constellation[elem.role] = getExaminer(None, elem.examiner, elem.isExaminerIntern)
+    return constellation
+
+
+def setAppointmentEmerged(studentId):
+    """
+
+    :param studentId:
+    :return:
+    """
+    student = Student.objects.filter(id=studentId)[0]
+    student.appointmentEmerged = True
+    student.status = "Termin entstanden"
+    student.save()
+
+
+def getRole(examinerId, isExaminerIntern, studentId):
+    """
+
+    :param examinerId:
+    :param isExaminerIntern:
+    :param studentId:
+    :return:
+    """
+    invitation = Invitation.objects.filter(examiner=examinerId, isExaminerIntern=isExaminerIntern,
+                                           student_id=studentId)[0]
+    return invitation.role
+
+
+def getStudentUser(studentId):
+    """
+
+    :param studentId:
+    :return:
+    """
+    student = Student.objects.filter(id=studentId)[0]
+    return student.user
+
+
+def isSupervisor(studentId, examinerId, intern):
+    """
+
+    :param studentId:
+    :param examinerId:
+    :param intern:
+    :return:
+    """
+    student = Student.objects.filter(id=studentId)
+    if student.count() == 1:
+        student = student[0]
+        if student.supervisor1 == examinerId and student.isSupervisor1Intern == intern:
+            return True
+        if student.supervisor2 == examinerId and student.isSupervisor2Intern == intern:
+            return True
+        if student.supervisor3 == examinerId and student.isSupervisor3Intern == intern:
+            return True
+        return False
+
+
+def getRequestsAppointments(studentId):
+    slotsId = AvailabilityRequest.objects.filter(student_id=studentId)
+    if slotsId.count() > 0:
+        slots = TimeSlot.objects.filter(id__in=[o.timeSlot_id for o in slotsId])
+        return slots
+    else:
+        return False
+
+
+def endRequest(studentId, slotId):
+    student = Student.objects.filter(id=studentId)
+    if student.count() > 0:
+        student = student[0]
+        timeSlot = TimeSlot.objects.filter(id=slotId)[0]
+        student.officeConfirmedAppointment = True
+        student.appointment = timeSlot.start
+        student.save()

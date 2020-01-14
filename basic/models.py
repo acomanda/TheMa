@@ -87,6 +87,7 @@ class AvailabilityInvitation(models.Model):
     # This table stores the time slots that an examiner selects when responding to an invitation
     invitation = models.ForeignKey(Invitation, on_delete=models.CASCADE)
     timeSlot = models.ForeignKey(TimeSlot, on_delete=models.CASCADE)
+    deleted = models.BooleanField(null=True)
 
 
 class AvailabilityRequest(models.Model):

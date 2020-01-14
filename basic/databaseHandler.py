@@ -462,6 +462,7 @@ def answerInvitation(user, studentId, timeSlotIdsList):
 def getExaminers(approvalToTest=None, subject=None, topic=None, title=None, excludedTopic=None, excludedExaminers=None,
                  maxInvitation=None):
     """Returns all examiners that correpsond to the given specifications"""
+    # todo if a user doesnt have a qualification it should not be included in topic excluded
     qualifications = Qualification.objects.all()
     if approvalToTest is not None:
         qualifications = qualifications.filter(approvalToTest=approvalToTest)
@@ -841,3 +842,25 @@ def restartScheduling(studentId, maxInvitation):
             elem.save()
             result.append((elem.examiner, elem.isExaminerIntern))
     return result
+
+
+def reInviteExaminer(studentId, examinerId, intern, maxInvitation):
+    invitation = Invitation.objects.filter(student_id=studentId, examiner=examinerId, isExaminerIntern=intern)
+    if invitation[0].numberInvitations >= maxInvitation:
+        return False
+    invitation.update(accepted=None, numberInvitations=F('numberInvitations')+1)
+    updateAvailabilities(studentId)
+    return True
+
+
+def updateAvailabilities(studentId):
+    invitations = Invitation.objects.filter(student_id=studentId, accepted=True)
+    timeSlots = []
+    for elem in invitations:
+        availabilities = AvailabilityInvitation.objects.filter(invitation=elem, deleted__isnull=True)
+        for elem in availabilities:
+            if elem.timeSlot not in timeSlots:
+                timeSlots.append(elem.timeSlot)
+    for elem in timeSlots:
+        if AvailabilityRequest.objects.filter(student_id=studentId, timeSlot=elem).count() == 0:
+            AvailabilityRequest(student_id=studentId, timeSlot=elem).save()

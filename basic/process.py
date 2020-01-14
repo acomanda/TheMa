@@ -2,6 +2,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 from .databaseHandler import *
 import itertools
+import random
 
 def createExaminerConstellation(user, designations):
     """
@@ -113,7 +114,6 @@ def invitationAnswered(studentId, examiner, answer):
         constellation = getRequestConstellation(studentId)
         studentData = getStudentRequest(getStudentUser(studentId))
         if isSupervisor(studentId, examinerId, intern):
-            # todo Invite the supervisor again and remove some other examiner
             deleteExaminers = restartScheduling(studentId, 3)
             for elem in deleteExaminers:
                 if isSupervisor(studentId, elem[0], elem[1]):
@@ -131,6 +131,25 @@ def invitationAnswered(studentId, examiner, answer):
                 externalExaminers.remove(getExaminer(None, examinerId, intern))
                 inviteExaminer(getStudent(None, studentId), externalExaminers[0], role)
             elif len(externalExaminers) == 1:
-                # todo remove two examiner and include two
-                pass
-
+                if not reInviteExaminer(studentId, examinerId, intern, 3):
+                    # Not enough examiners can be found
+                    # send email to office
+                    return False
+                # todo instead of doing a random shuffle, sort in a way, that the first examiner is
+                #  the examiner with the least availabilities
+                examiners = list(constellation.values())
+                random.shuffle(examiners)
+                found = False
+                for elem in examiners:
+                    if isinstance(elem, ExternalExaminer):
+                        intern2 = 0
+                    elif isinstance(elem, InternExaminer):
+                        intern2 = 1
+                    if not isSupervisor(studentId, elem.id, intern2):
+                        if not reInviteExaminer(studentId, elem.id, intern2, 3):
+                            found = True
+                            break
+                if not found:
+                    # Not enough examiners can be found
+                    # send email to office
+                    return False

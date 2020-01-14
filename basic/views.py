@@ -552,7 +552,6 @@ def answerInvitation(request):
                                           'alle Prüfer erneut eingeladen werden. Sie inklusive.'
         else:
             context['confirmationText'] = 'Wollen Sie wirklich ablehnen?'
-        print(context['confirmationText'])
         context['role'] = getRole(examinerId, intern, request.session['requestId'])
         if content['grade1'] is None:
             context['grade1'] = "/"

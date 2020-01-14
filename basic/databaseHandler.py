@@ -5,6 +5,7 @@ from django.contrib.auth.backends import ModelBackend
 from django.contrib.auth.models import User
 from django.db import transaction
 from django.db.models import Q
+from django.db.models import F
 from datetime import timedelta, datetime
 
 
@@ -820,3 +821,23 @@ def endRequest(studentId, slotId):
         student.officeConfirmedAppointment = True
         student.appointment = timeSlot.start
         student.save()
+
+
+def restartScheduling(studentId, maxInvitation):
+    """
+    The function deletes all availabilities of invitations and requests and re invite all examiners.
+    :param studentId: Id of the request/student
+    :return: An array that contains all examiners that must be removed of the request
+    """
+    result = []
+    invitations = Invitation.objects.filter(student_id=studentId)
+    with transaction.atomic():
+        invitations.filter(accepted__isnull=False).update(accepted=None, numberInvitations=F('numberInvitations')+1)
+        AvailabilityRequest.objects.filter(student_id=studentId).delete()
+        AvailabilityInvitation.objects.filter(invitation__in=[o for o in invitations]).delete()
+    for elem in invitations:
+        if elem.numberInvitations > maxInvitation:
+            elem.accepted = 0
+            elem.save()
+            result.append((elem.examiner, elem.isExaminerIntern))
+    return result

@@ -114,17 +114,23 @@ def invitationAnswered(studentId, examiner, answer):
         studentData = getStudentRequest(getStudentUser(studentId))
         if isSupervisor(studentId, examinerId, intern):
             # todo Invite the supervisor again and remove some other examiner
-            pass
+            deleteExaminers = restartScheduling(studentId, 3)
+            for elem in deleteExaminers:
+                if isSupervisor(studentId, elem[0], elem[1]):
+                    # send email to office
+                    return False
+                invitationAnswered(studentId, elem, 0)
         if role == 'externalExaminer':
             externalExaminers = list(itertools.chain(*getExaminers(None, None, None, None, studentData['topic'],
                                                                    getConstellationValues(constellation), 3)))
             if len(externalExaminers) == 0:
                 # Not enough examiners can be found
+                # send email to office
                 return False
             elif len(externalExaminers) > 1:
                 externalExaminers.remove(getExaminer(None, examinerId, intern))
                 inviteExaminer(getStudent(None, studentId), externalExaminers[0], role)
             elif len(externalExaminers) == 1:
-                #todo remove two examiner and include two
+                # todo remove two examiner and include two
                 pass
 

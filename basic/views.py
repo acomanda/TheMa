@@ -128,11 +128,11 @@ def homeOffice(request):
         context['container3'] = container3
 
         # Container 4
-        container4Request = getRequestsOfOffice("Terminfindung", None, None, None, None, True, False)
-        container4 = ""
+        container4 = ''
+        container4Request = getRequestsOfOffice("Termin entstanden", None, None, None, None, None, False)
         for elem in container4Request:
             container4 += '<p class="alignleft">' + elem.name + ' </p> \n'
-            container4 += '<p class="alignright"><button type="submit" name="supervisor3" value="' + str(elem.id) \
+            container4 += '<p class="alignright"><button type="submit" name="appointment" value="' + str(elem.id) \
                           + '">Details</button></p><br/><br/>'
         context['container4'] = container4
 
@@ -142,11 +142,6 @@ def homeOffice(request):
         for elem in container5Request:
             container5 += '<p class="alignleft">' + elem.name + ' </p> \n'
             container5 += '<p class="alignright">' + str(elem.appointment)[:16] + '</p><br/><br/>'
-        container5Request = getRequestsOfOffice("Termin entstanden", None, None, None, None, None, False)
-        for elem in container5Request:
-            container5 += '<p class="alignleft">' + elem.name + ' </p> \n'
-            container5 += '<p class="alignright"><button type="submit" name="appointment" value="' + str(elem.id) \
-                          + '">Details</button></p><br/><br/>'
         context['container5'] = container5
 
         return render(request, 'homePruefungsamt.html', context)
@@ -276,8 +271,8 @@ def confirmRequest(request):
     context['group'] = group
     content = getStudentRequest(None, request.session['requestId'])
     context['title'] = content['title']
-    context['supervisor1'] = content['supervisor1']
-    context['supervisor2'] = content['supervisor2']
+    context['supervisor1'] = content['supervisor1'].name
+    context['supervisor2'] = content['supervisor2'].name
     context['deadline'] = content['deadline']
     context['topic'] = content['topic']
     context['type'] = content['type']
@@ -397,7 +392,8 @@ def supervisor3(request):
     context['status'] = content['status']
     context['subject'] = content['subject']
     supervisors = ''
-    externalExaminers, internExaminers = getExaminers(True)
+    externalExaminers, internExaminers = getExaminers(True, None, None, None, None, [content['supervisor1'],
+                                                                                     content['supervisor2']])
     for elem in externalExaminers:
         supervisors += '<option value="0' + str(elem.id) + '">' + elem.name + '</option>'
     for elem in internExaminers:
@@ -452,14 +448,14 @@ def answerInvitation(request):
                 if amountSlots > 0:
                     moveAvailabilitiesToRequest(request.user, request.session['requestId'])
                     acceptOrNotInvitation(request.user, request.session['requestId'], True)
-                    invitationAnswered(request.session['requestId'], getExaminer(request.user), True, 3)
+                    invitationAnswered(request.session['requestId'], getExaminer(request.user), True)
                     return redirect('/')
                 else:
                     context['error'] = 'Wähle erst Zeitslots aus, bevor du die Anfrage akzeptierst.'
             if request.POST.get('exit') == 'reject':
                 if amountSlots == 0:
                     acceptOrNotInvitation(request.user, request.session['requestId'], False)
-                    invitationAnswered(request.session['requestId'], getExaminer(request.user), False, 3)
+                    invitationAnswered(request.session['requestId'], getExaminer(request.user), False)
                     return redirect('/')
                 else:
                     context['error'] = 'Entferne erst alle Zeitslots, bevor du die Anfrage ablehnst.'

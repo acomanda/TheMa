@@ -7,19 +7,33 @@ body {
     display: inline-block;
 }
 
-.left {
+.main.left {
     float: left;
     width: 30%;
     display: flex;
 }
 
-.main.main {
-    display: flex;
-    margin: 0 auto;
-    width: 40%;
-    height: 20%;
-    text-align: left;
-    border: 1px solid black;
+@media only screen and (max-width: 599px) {
+    .main.main {
+        display: flex;
+        margin: 0 auto;
+        width: 90%;
+        height: 20%;
+        text-align: left;
+        border: 1px solid black;
+    }
+
+}
+
+@media only screen and (min-width: 600px) {
+    .main.main {
+        display: flex;
+        margin: 0 auto;
+        width: 40%;
+        height: 20%;
+        text-align: left;
+        border: 1px solid black;
+    }
 }
 
 .main.mainLeft {
@@ -34,7 +48,7 @@ body {
     display: flex;
 }
 
-.right {
+.main.right {
     float: right;
     width: 15%
 }

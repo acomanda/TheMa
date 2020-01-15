@@ -23,6 +23,8 @@ def index(request):
         if request.session['state'] == request.GET['state']:
             claims = getClaims(request.GET['code'])
             user = getUser(claims['email'], claims['sub'], request.GET['state'], stateLength, claims['name'])
+            if not user:
+                return render(request, 'index.html', {'error2': "Bitte melden Sie sich beim Prüfungsamt <br> "})
             user.backend = 'basic.auth_backend.PasswordlessAuthBackend'
             authenticate(username=claims['email'])
             login(request, user)

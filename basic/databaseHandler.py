@@ -59,27 +59,42 @@ def getUser(email, zdvId, state, stateLength, name):
             else:
                 user = User.objects.create_user(username=email, email=email, password=randomString)
             student = Student.objects.create(zdvId=zdvId, name=name, email=email, user=user)
-            user.save()
-            student.save()
+            with transaction.atomic():
+                user.save()
+                student.save()
             return user
         user = User.objects.filter(email=email)
         return user[0]
 
     if group == "pruefer":
+        results = InternExaminer.objects.filter(email=email, zdvId__isnull=True)
+        if results.exists():
+            user = results[0].user
+            setZdvId(user, zdvId)
+            return user
         results = InternExaminer.objects.filter(email=email)
         if results.exists():
-            user = User.objects.filter(email=email)
-            return user[0]
-        temp = User.objects.filter(email=email)
-        if temp.exists():
-            user = temp[0]
-        else:
-            user = User.objects.create_user(username=email, email=email, password=randomString)
-        student = InternExaminer.objects.create(zdvId=zdvId, name=name, email=email, user=user)
-        with transaction.atomic():
-            user.save()
-            student.save()
-        return user
+            user = results[0].user
+            return user
+        return False
+
+
+def createInternExaminer(email, name):
+    password = randomString()
+    user = User.objects.create_user(username=email, email=email, password=password)
+    examiner = InternExaminer.objects.create(name=name, email=email, user=user)
+    with transaction.atomic():
+        user.save()
+        examiner.save()
+
+
+def setZdvId(user, zdvId):
+    examiner = InternExaminer.objects.filter(user=user)
+    if examiner.count() == 0:
+        return False
+    examiner = examiner[0]
+    examiner.zdvId = zdvId
+    examiner.save()
 
 
 def getUserGroup(user):

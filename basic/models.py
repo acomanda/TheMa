@@ -47,7 +47,7 @@ class InternExaminer(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, default=0)
     name = models.CharField(max_length=50)
     email = models.EmailField()
-    zdvId = models.CharField(max_length=50)
+    zdvId = models.CharField(max_length=50, null=True)
 
 
 class ExternalExaminer(models.Model):

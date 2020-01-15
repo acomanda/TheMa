@@ -9,6 +9,7 @@
 <body>
     <div class="internAnmeldung">
         <h2>Mit dem ZDV Account anmelden</h2>
+        {{ error2 |safe}}
         <form method="post">{% csrf_token %}
             <button type="submit" name="loginAs" value="student" class="button">Als Student anmelden</button>
             <button type="submit" name="loginAs" value="pruefer" class="button">Als internen Prüfer anmelden</button>

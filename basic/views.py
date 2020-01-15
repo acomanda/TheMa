@@ -174,6 +174,12 @@ def homeStudent(request):
             context['grade2'] = "/"
         else:
             context['grade2'] = content['grade2']
+        if content['supervisor3']:
+            context['supervisor3'] = 'Betreuer 3:<br><br>'
+            context['supervisor3r'] = content['supervisor3'].name + '<br><br>'
+        if content['grade3']:
+            context['grade3'] = 'Note Betreuer 3:<br><br>'
+            context['grade3r'] = str(content['grade3']) + '<br><br>'
         return render(request, 'requestDetails.html', context)
     else:
         return redirect('/')
@@ -428,6 +434,12 @@ def chairman(request):
     context['type'] = content['type']
     context['status'] = content['status']
     context['subject'] = content['subject']
+    if content['supervisor3']:
+        context['supervisor3'] = 'Betreuer 3:<br><br>'
+        context['supervisor3r'] = content['supervisor3'].name + '<br><br>'
+    if content['grade3']:
+        context['grade3'] = 'Note Betreuer 3:<br><br>'
+        context['grade3r'] = str(content['grade3']) + '<br><br>'
     supervisors = ''
     externalExaminers, internExaminers = getExaminers(True)
     for elem in externalExaminers:

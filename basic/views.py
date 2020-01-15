@@ -592,8 +592,33 @@ def confirmAppointment(request):
         appointments = getRequestsAppointments(request.session['requestId'])
         options = ''
         for elem in appointments:
-            options += '<option value="' + str(elem.id) + '">' + elem.start.strftime("%m/%d/%Y") + '</option>'
+            options += '<option value="' + str(elem.id) + '">' + elem.start.strftime("%m/%d/%Y %H/%M") + '</option>'
         context['appointments'] = options
+
+        content = getStudentRequest(request.session['requestId'])
+        context['student'] = content['student']
+        context['title'] = content['title']
+        context['supervisor1'] = content['supervisor1'].name
+        context['supervisor2'] = content['supervisor2'].name
+        context['deadline'] = content['deadline']
+        context['topic'] = content['topic']
+        context['type'] = content['type']
+        context['status'] = content['status']
+        context['subject'] = content['subject']
+        if content['grade1'] is None:
+            context['grade1'] = "/"
+        else:
+            context['grade1'] = content['grade1']
+        if content['grade2'] is None:
+            context['grade2'] = "/"
+        else:
+            context['grade2'] = content['grade2']
+        if content['supervisor3']:
+            context['supervisor3'] = 'Betreuer 3:<br><br>'
+            context['supervisor3r'] = content['supervisor3'].name + '<br><br>'
+        if content['grade3']:
+            context['grade3'] = 'Note Betreuer 3:<br><br>'
+            context['grade3r'] = str(content['grade3']) + '<br><br>'
         return render(request, 'appointment.html', context)
     else:
         return redirect('/')

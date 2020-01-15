@@ -194,6 +194,10 @@ def getStudentRequest(user, id=None):
     else:
         betreuer3 = None
         grade3 = None
+    if student.appointment is not None:
+        appointment = student.appointment.strftime("%m/%d/%Y %H/%M")
+    else:
+        appointment = None
     result['grade3'] = grade3
     result['supervisor3'] = betreuer3
     result['supervisor2'] = betreuer2
@@ -205,6 +209,7 @@ def getStudentRequest(user, id=None):
     result['topic'] = student.topic
     result['subject'] = student.subject
     result['student'] = student.name
+    result['appointment'] = appointment
     return result
 
 

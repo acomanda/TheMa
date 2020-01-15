@@ -180,6 +180,9 @@ def homeStudent(request):
         if content['grade3']:
             context['grade3'] = 'Note Betreuer 3:<br><br>'
             context['grade3r'] = str(content['grade3']) + '<br><br>'
+        if content['appointment']:
+            context['appointment'] = 'Verteidigung:<br><br>'
+            context['appointmentr'] = content['appointment']
         return render(request, 'requestDetails.html', context)
     else:
         return redirect('/')

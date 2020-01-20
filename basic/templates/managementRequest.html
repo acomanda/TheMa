@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="../static/managementRequest.css">
+    <meta charset="UTF-8">
+    <title>
+        Verwaltung
+    </title>
+    {% include "navBar.html" %}
+</head>
+<body>
+    <div class="main">
+        <div class="mainCenter">
+            <form method="post">{% csrf_token %}
+                E-Mail:
+                <input type="email" name="email">
+                <button type="submit" class="button" name="send" value="email">Suchen</button>
+                <!--
+                Oder:
+                <br>
+                Name:
+                <input type="text" name="name">
+                <button type="submit" class="button" name="send" value="name">Suchen</button>
+                -->
+            </form>
+            {% if found %}
+                <p> Achtung: Bei jedem Klick auf "Anwenden" aktualisiert sich nur das eine jeweilige Feld. </p>
+                <div class="request">
+                    <p></p>
+                    <form method="post">{% csrf_token %}
+                    Abgabetermin: {{ deadline | safe }} <br>
+                    <input type="date" name="deadline">
+                    <button type="submit" name="change" value="deadline">Anwenden</button><br><br>
+
+                    Titel: {{ title | safe }} <br>
+                    <input type="text">
+                    <button type="submit" name="change" value="title">Anwenden</button><br><br>
+
+                    Fach: {{ subject | safe }} <br>
+                    <select id = "fach" name="fach">
+                        <option></option>
+                        {{ subjects | safe }}
+                    </select>
+                    <button type="submit" name="change" value="subject">Anwenden</button><br><br>
+
+                    Themengebiet: {{ topic | safe }} <br>
+                    <select id = "themengebiet" name="themengebiet">
+                        <option></option>
+                        {{ topics | safe }}
+                    </select>
+                    <button type="submit" name="change" value="topic">Anwenden</button><br><br>
+
+                    Art der Arbeit: {{ type | safe }} <br>
+                    <select id = "art" name="art">
+                        <option></option>
+                        <option value="b.sc.">B.Sc.</option>
+                        <option value="m.sc.">M.Sc.</option>
+                        <option value="dr.">Dr.</option>
+                    </select>
+                    <button type="submit" name="change" value="type">Anwenden</button><br><br>
+
+                    Betreuer 1: {{ supervisor1 | safe }} <br>
+                    <select id = "betreuer1" name="betreuer1">
+                        <option></option>
+                        {{ supervisors | safe }}
+                    </select>
+                    <button type="submit" name="change" value="supervisor1">Anwenden</button><br><br>
+
+                    Betreuer 2: {{ supervisor2 | safe }} <br>
+                    <select id = "betreuer2" name="betreuer2">
+                        <option></option>
+                        {{ supervisors | safe }}
+                    </select>
+                    <button type="submit" name="change" value="supervisor2">Anwenden</button><br><br>
+
+                    {% if supervisor3Set %}
+                        Betreuer 3: {{ supervisor3r | safe }} <br>
+                        <select id = "betreuer3" name="betreuer3">
+                        <option></option>
+                        {{ supervisors | safe }}
+                    </select>
+                        <button type="submit" name="change" value="supervisor3">Anwenden</button><br><br>
+                    {% endif %}
+
+                    Note 1: {{ grade1 | safe }} <br>
+                    <select name="grade1">
+                        <option value="1.0">1.0</option>
+                        <option value="1.3">1.3</option>
+                        <option value="1.7">1.7</option>
+                        <option value="2.0">2.0</option>
+                        <option value="2.3">2.3</option>
+                        <option value="2.7">2.7</option>
+                        <option value="3.0">3.0</option>
+                        <option value="3.3">3.3</option>
+                        <option value="3.7">3.7</option>
+                        <option value="4.0">4.0</option>
+                        <option value="5.0">5.0</option>
+                    </select>
+                    <button type="submit" name="change" value="grade1">Anwenden</button><br><br>
+
+                    Note 2: {{ grade2 | safe }} <br>
+                    <select name="grade2">
+                        <option value="1.0">1.0</option>
+                        <option value="1.3">1.3</option>
+                        <option value="1.7">1.7</option>
+                        <option value="2.0">2.0</option>
+                        <option value="2.3">2.3</option>
+                        <option value="2.7">2.7</option>
+                        <option value="3.0">3.0</option>
+                        <option value="3.3">3.3</option>
+                        <option value="3.7">3.7</option>
+                        <option value="4.0">4.0</option>
+                        <option value="5.0">5.0</option>
+                    </select>
+                    <button type="submit" name="change" value="grade2">Anwenden</button><br><br>
+
+                    {% if grade3Set %}
+                        Note 3: {{ grade3r | safe }} <br>
+                        <input type="text">
+                        <button type="submit" name="change" value="grade3">Anwenden</button><br><br>
+                    {% endif %}
+
+                    Verteidigungstermin: {{ appointmentr | safe }} <br>
+                    <input type="date" name="appointment">
+                    <button type="submit" name="change" value="appointment">Anwenden</button><br><br>
+
+                    </form>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

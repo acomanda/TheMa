@@ -162,7 +162,7 @@ def makeRequest(user, deadline, subject, supervisor1, supervisor2, topic, type, 
     student.save()
 
 
-def getStudentRequest(user, id=None):
+def getStudentRequest(user, id=None, email=None):
     """
     Receives a django user object or an student id and returns a
     dictionary with the informations about the request.
@@ -172,8 +172,12 @@ def getStudentRequest(user, id=None):
     """
     if user is not None:
         student = Student.objects.filter(user=user)[0]
-    else:
+    elif id is not None:
         student = Student.objects.filter(id=id)[0]
+    elif email is not None:
+        student = Student.objects.filter(email=email)[0]
+    if student is None:
+        return None
     result = {}
     result['title'] = student.title
     if student.isSupervisor1Intern:
@@ -569,13 +573,15 @@ def inviteExaminer(student, examiner, role):
         invitation.save()
 
 
-def getStudent(user, studentId=None):
+def getStudent(user, studentId=None, email=None):
     """Receives a Django User object
     Returns the corresponding Student Object"""
     if user is not None:
         student = Student.objects.filter(user=user)
-    else:
+    elif studentId is not None:
         student = Student.objects.filter(id=studentId)
+    elif email is not None:
+        student = Student.objects.filter(email=email)
     if student.exists():
         return student[0]
 

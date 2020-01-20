@@ -625,3 +625,100 @@ def confirmAppointment(request):
         return render(request, 'appointment.html', context)
     else:
         return redirect('/')
+
+
+def management(request):
+    context = {}
+    context['group'] = getUserGroup(request.user)
+    if context['group'] != "Office":
+        return redirect('/')
+    if request.POST.get('send') == 'request':
+        return redirect('/managementRequest')
+    if request.POST.get('send') == 'intern':
+        return redirect('/managementIntern')
+    if request.POST.get('send') == 'extern':
+        return redirect('/managementExtern')
+    return render(request, 'management.html', context)
+
+
+def managementIntern(request):
+    context = {}
+    context['group'] = getUserGroup(request.user)
+    if context['group'] != "Office":
+        return redirect('/')
+    return render(request, 'managementExaminer.html', context)
+
+
+def managementExtern(request):
+    context = {}
+    context['group'] = getUserGroup(request.user)
+    if context['group'] != "Office":
+        return redirect('/')
+    return render(request, 'managementExaminer.html', context)
+
+
+def managementRequest(request):
+    context = {}
+    context['group'] = getUserGroup(request.user)
+    if context['group'] != "Office":
+        return redirect('/')
+    if request.POST.get('send') == 'email' or request.POST.get('change'):
+        if request.POST.get('send') == 'email':
+            email = request.POST.get('email')
+            request.session['email'] = email
+        else:
+            email = request.session['email']
+        content = getStudentRequest(None, None, email)
+        if content is not None:
+            context['found'] = True
+            context['title'] = content['title']
+            context['supervisor1'] = content['supervisor1'].name
+            context['supervisor2'] = content['supervisor2'].name
+            context['deadline'] = content['deadline']
+            context['topic'] = content['topic']
+            context['type'] = content['type']
+            context['status'] = content['status']
+            context['subject'] = content['subject']
+            if content['grade1'] is None:
+                context['grade1'] = "/"
+            else:
+                context['grade1'] = content['grade1']
+            if content['grade2'] is None:
+                context['grade2'] = "/"
+            else:
+                context['grade2'] = content['grade2']
+            if content['supervisor3']:
+                context['supervisor3Set'] = True
+                context['supervisor3'] = 'Betreuer 3:'
+                context['supervisor3r'] = content['supervisor3'].name
+            if content['grade3']:
+                context['grade3Set'] = True
+                context['grade3'] = 'Note Betreuer 3:'
+                context['grade3r'] = str(content['grade3'])
+            if content['appointment']:
+                context['appointment'] = 'Verteidigung:'
+                context['appointmentr'] = content['appointment']
+            else:
+                context['appointmentr'] = '/'
+            supervisors = getExaminers()
+            supervisorSelections = ''
+            for elem in supervisors[1]:
+                supervisorSelections += '<option value="1' + str(elem.id) + '">' + elem.name + '</option>'
+            for elem in supervisors[0]:
+                supervisorSelections += '<option value="0' + str(elem.id) + '">' + elem.name + '</option>'
+            context['supervisors'] = supervisorSelections
+            # Fill subjects selection with data of database
+            subjectsList = getSubjects()
+            subjects = ''
+            for elem in subjectsList:
+                subjects = '<option value="' + elem + '">' + elem + '</option>'
+            context['subjects'] = subjects
+            # Fill topics selection with data of database
+            topicsList = getTopics('Informatik')
+            topics = ''
+            for elem in topicsList:
+                topics += '<option value="' + elem + '">' + elem + '</option>'
+            context['topics'] = topics
+    if request.POST.get('change') == 'status':
+        pass
+    return render(request, 'managementRequest.html', context)

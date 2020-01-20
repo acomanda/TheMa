@@ -28,7 +28,7 @@ def createExaminerConstellation(user, designations):
                     if item == studentData['supervisor' + str(i)]:
                         if i in supervisors:
                             supervisors.remove(i)
-            constellation['chairman'] = designations['chairman']
+            constellation['chairman'] = ör['chairman']
             if len(supervisors) > 0:
                 constellation['examiner'] = studentData['supervisor' + str(supervisors[0])]
             if len(supervisors) > 1:

@@ -175,7 +175,11 @@ def getStudentRequest(user, id=None, email=None):
     elif id is not None:
         student = Student.objects.filter(id=id)[0]
     elif email is not None:
-        student = Student.objects.filter(email=email)[0]
+        student = Student.objects.filter(email=email)
+        if student.count() > 0:
+            student = student[0]
+        else:
+            return None
     if student is None:
         return None
     result = {}
@@ -215,6 +219,42 @@ def getStudentRequest(user, id=None, email=None):
     result['student'] = student.name
     result['appointment'] = appointment
     return result
+
+def updateRequest(variable, value, studentEmail):
+    student = getStudent(None, None, studentEmail)
+    if student is None:
+        return False
+    if variable == 'deadline':
+        student.deadline = value
+    elif variable == 'title':
+        student.title = value
+    elif variable == 'subject':
+        student.subject = value
+    elif variable == 'topic':
+        student.topic = value
+    elif variable == 'type':
+        student.type = value
+    elif variable == 'supervisor1':
+        student.isSupervisor1Intern = value[0]
+        student.supervisor1 = value[1:]
+        student.grade1 = None
+    elif variable == 'supervisor2':
+        student.isSupervisor2Intern = value[0]
+        student.supervisor2 = value[1:]
+        student.grade2 = None
+    elif variable == 'supervisor3':
+        student.isSupervisor3Intern = value[0]
+        student.supervisor3 = value[1:]
+        student.grade3 = None
+    elif variable == 'grade1':
+        student.grade1 = value
+    elif variable == 'grade2':
+        student.grade2 = value
+    elif variable == 'grade3':
+        student.grade3 = value
+    elif variable == 'appointment':
+        student.appointment = value
+    student.save()
 
 
 def createExternalExaminer(name, email, password):

@@ -668,6 +668,12 @@ def managementRequest(request):
             request.session['email'] = email
         else:
             email = request.session['email']
+        if request.POST.get('change'):
+            if request.POST.get('change') == 'appointment':
+                updateRequest('appointment', request.POST.get('appointment1') + ' '
+                              + request.POST.get('appointment2'), email)
+            else:
+                updateRequest(request.POST.get('change'), request.POST.get(request.POST.get('change')), email)
         content = getStudentRequest(None, None, email)
         if content is not None:
             context['found'] = True
@@ -719,6 +725,4 @@ def managementRequest(request):
             for elem in topicsList:
                 topics += '<option value="' + elem + '">' + elem + '</option>'
             context['topics'] = topics
-    if request.POST.get('change') == 'status':
-        pass
     return render(request, 'managementRequest.html', context)

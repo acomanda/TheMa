@@ -20,6 +20,16 @@ body {
         text-align: left;
 }
 
+@media only screen and (max-width: 599px) {
+    .main {
+        width: 100%;
+    }
+
+    .titleInput {
+        width: 60%;
+    }
+}
+
 .right {
         float: right;
         width: 15%

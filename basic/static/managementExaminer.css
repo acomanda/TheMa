@@ -8,9 +8,9 @@ body {
     overflow: scroll;
 }
 
-.button {
-    display: inline-block;
-    margin-top: 10%;
+.add {
+    border: 1px solid black;
+    margin-bottom: 7%;
 }
 
 @media only screen and (max-width: 599px) {

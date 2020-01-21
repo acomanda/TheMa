@@ -44,7 +44,7 @@
                     <button name="change" value="subject">Anwenden</button><br><br>
 
                     Themengebiet: {{ topic | safe }} <br>
-                    <select id = name="topic">
+                    <select name="topic">
                         <option></option>
                         {{ topics | safe }}
                     </select>
@@ -145,7 +145,7 @@
                         </select>
                         <button name="change" value="appointment">Anwenden</button><br><br>
 
-                        Vorsitzender: <br>
+                        Vorsitzender: {{ chairman | safe }}<br>
                         <select name="supervisor1">
                             <option></option>
                             {{ supervisors | safe }}

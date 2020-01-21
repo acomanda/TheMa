@@ -646,6 +646,27 @@ def managementIntern(request):
     context['group'] = getUserGroup(request.user)
     if context['group'] != "Office":
         return redirect('/')
+    if request.POST.get('send') == 'intern':
+        if request.POST.get('type') and request.POST.get('subject') and request.POST.get('topic') \
+                and request.POST.get('approval') and request.POST.get('email') \
+                and request.POST.get('name'):
+            examinerId = createInternExaminer(request.POST.get('email'), request.POST.get('name'))
+            addQualification(examinerId, True, request.POST.get('type'), request.POST.get('subject'),
+                             request.POST.get('topic'), request.POST.get('approval'))
+            context['error1'] = 'Prüfer hinzugefügt'
+        else:
+            context['error1'] = 'Füllen Sie bitte alles aus'
+    subjectsList = getSubjects()
+    subjects = ''
+    for elem in subjectsList:
+        subjects = '<option value="' + elem + '">' + elem + '</option>'
+    context['subjects'] = subjects
+    # Fill topics selection with data of database
+    topicsList = getTopics('Informatik')
+    topics = ''
+    for elem in topicsList:
+        topics += '<option value="' + elem + '">' + elem + '</option>'
+    context['topics'] = topics
     return render(request, 'managementExaminer.html', context)
 
 
@@ -654,6 +675,28 @@ def managementExtern(request):
     context['group'] = getUserGroup(request.user)
     if context['group'] != "Office":
         return redirect('/')
+    if request.POST.get('send') == 'extern':
+        if request.POST.get('type') and request.POST.get('subject') and request.POST.get('topic') \
+                and request.POST.get('approval') and request.POST.get('password') and request.POST.get('email') \
+                and request.POST.get('name'):
+            examinerId = createExternalExaminer(request.POST.get('name'), request.POST.get('email'),
+                                                request.POST.get('password'))
+            addQualification(examinerId, False, request.POST.get('type'), request.POST.get('subject'),
+                             request.POST.get('topic'), request.POST.get('approval'))
+            context['error1'] = 'Prüfer hinzugefügt'
+        else:
+            context['error1'] = 'Füllen Sie bitte alles aus'
+    subjectsList = getSubjects()
+    subjects = ''
+    for elem in subjectsList:
+        subjects = '<option value="' + elem + '">' + elem + '</option>'
+    context['subjects'] = subjects
+    # Fill topics selection with data of database
+    topicsList = getTopics('Informatik')
+    topics = ''
+    for elem in topicsList:
+        topics += '<option value="' + elem + '">' + elem + '</option>'
+    context['topics'] = topics
     return render(request, 'managementExaminer.html', context)
 
 
@@ -725,4 +768,5 @@ def managementRequest(request):
             for elem in topicsList:
                 topics += '<option value="' + elem + '">' + elem + '</option>'
             context['topics'] = topics
+            constellation = getRequestConstellation()
     return render(request, 'managementRequest.html', context)

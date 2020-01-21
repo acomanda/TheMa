@@ -86,6 +86,7 @@ def createInternExaminer(email, name):
     with transaction.atomic():
         user.save()
         examiner.save()
+    return examiner.id
 
 
 def setZdvId(user, zdvId):
@@ -270,6 +271,7 @@ def createExternalExaminer(name, email, password):
     with transaction.atomic():
         user.save()
         examiner.save()
+    return examiner.id
 
 
 def createOfficeAccount(email, password):
@@ -930,3 +932,9 @@ def updateAvailabilities(studentId):
     for elem in timeSlots:
         if AvailabilityRequest.objects.filter(student_id=studentId, timeSlot=elem).count() == 0:
             AvailabilityRequest(student_id=studentId, timeSlot=elem).save()
+
+
+def addQualification(examinerId, isExaminerIntern, title, subject, topic, approval):
+    qualification = Qualification(title=title, subject=subject, topic=topic, approvalToTest=approval,
+                                  examiner=examinerId, isExaminerIntern=isExaminerIntern)
+    qualification.save()

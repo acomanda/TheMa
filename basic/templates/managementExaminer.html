@@ -11,11 +11,54 @@
 <body>
     <div class="main">
         <div class="mainCenter">
-            <form method="post">{% csrf_token %}
-                <button type="submit" class="button" name="send" value="request">Anfrage suchen <br> und bearbeiten</button> <br>
-                <button type="submit" class="button" name="send" value="intern">Externen Prüfer <br> hinzufügen/ <br> bearbeiten</button>
-                <button type="submit" class="button" name="send" value="extern">Internen Prüfer <br> hinzufügen/ <br> bearbeiten</button>
-            </form>
+            Prüfer hinzufügen: <br><br>
+            {{ error1 }}
+            <div class="add">
+                <form method="post">{% csrf_token %}
+                    Name:
+                    <input type="text" name="name" class=""> <br> <br>
+                    E-Mail:
+                    <input type="email" name="email"> <br> <br>
+                    {% if request.path == '/managementExtern'%}
+                    Passwort:
+                    <input type="password" name="password"> <br> <br>
+                    {% endif %}
+                    Title:
+                    <select name="type">
+                        <option value=""></option>
+                        <option value="m.sc.">M.Sc.</option>
+                        <option value="dr.">Dr.</option>
+                        <option value="prof.">Prof.</option>
+                    </select> <br><br>
+                    Fach:
+                    <select name="subject">
+                        <option></option>
+                        {{ subjects | safe }}
+                    </select> <br><br>
+                    Themengebiet:
+                    <select name="topic">
+                        <option></option>
+                        {{ topics | safe }}
+                    </select> <br><br>
+                    Prüferzulassung:
+                    <select name="approval">
+                        <option></option>
+                        <option value="1">Ja</option>
+                        <option value="0">Nein</option>
+                    </select> <br><br>
+                    <button type="submit" class="button" name="send"
+                    {% if request.path == '/managementIntern'%}
+                    value="intern"
+                    {% else %}
+                    value="extern"
+                    {% endif %}
+                    >Hinzufügen</button>
+                </form>
+            </div>
+            Prüfer suchen: <br><br>
+            <div class="search">
+
+            </div>
         </div>
     </div>
 </body>

@@ -8,7 +8,7 @@ body {
     display: inline-block;
 }
 
-.left {
+.main.left {
     float: left;
     width: 10%;
     display: flex;
@@ -173,7 +173,7 @@ body {
     }
 }
 
-.right {
+.main.right {
     float: right;
     width: 10%
 }

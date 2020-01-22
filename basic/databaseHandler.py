@@ -421,7 +421,7 @@ def getRequestsOfExaminer(user, status, accepted=None, rated=None, answered=None
             requests = requests.exclude(id__in=invitations.values('student'))
         if final is not None:
             requests = requests.filter(
-                appointment__isnull=not final
+                officeConfirmedAppointment__isnull=not final
             )
         return requests
     else:

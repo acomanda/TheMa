@@ -133,7 +133,7 @@
                     {% endif %}
 
                     <div class="appointment">
-                        Verteidigung festlegen: <br>
+                        Verteidigung festlegen: <br> <br>
                         Verteidigungstermin: {{ appointmentr | safe }} <br>
                         <input type="date" name="appointment1">
                         <select name="appointment2">
@@ -142,14 +142,39 @@
                             <option value="12:00">12:00</option>
                             <option value="14:00">14:00</option>
                             <option value="16:00">16:00</option>
-                        </select>
-                        <button name="change" value="appointment">Anwenden</button><br><br>
+                        </select> <br><br>
 
                         Vorsitzender: {{ chairman | safe }}<br>
-                        <select name="supervisor1">
+                        <select name="chairman">
                             <option></option>
                             {{ supervisors | safe }}
-                        </select>
+                        </select> <br><br>
+
+                        1. Protokollant: {{ reporter1 | safe }}<br>
+                        <select name="reporter1">
+                            <option></option>
+                            {{ supervisors | safe }}
+                        </select><br><br>
+
+                        2. Protokollant: {{ reporter2 | safe }}<br>
+                        <select name="reporter2">
+                            <option></option>
+                            {{ supervisors | safe }}
+                        </select><br><br>
+
+                        Prüfer: {{ examiner | safe }}<br>
+                        <select name="examiner">
+                            <option></option>
+                            {{ supervisors | safe }}
+                        </select><br><br>
+
+                        Externer Prüfer: {{ externalExaminer | safe }}<br>
+                        <select name="externalExaminer">
+                            <option></option>
+                            {{ supervisors | safe }}
+                        </select><br><br>
+                        <button name="change" value="oral">Verteidigung festlegen</button><br><br>
+
                     </div>
                     </form>
                 </div>

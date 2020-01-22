@@ -818,6 +818,12 @@ def getRequestConstellation(studentId, accepted=None):
     return constellation
 
 
+def getStudentId(email):
+    student = Student.objects.filter(email=email)
+    if student.count() > 0:
+        return student[0].id
+
+
 def setAppointmentEmerged(studentId):
     """
 
@@ -938,3 +944,7 @@ def addQualification(examinerId, isExaminerIntern, title, subject, topic, approv
     qualification = Qualification(title=title, subject=subject, topic=topic, approvalToTest=approval,
                                   examiner=examinerId, isExaminerIntern=isExaminerIntern)
     qualification.save()
+
+
+def setExam(studentId, timeSlot, constellation):
+    pass

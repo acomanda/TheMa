@@ -711,8 +711,12 @@ def managementRequest(request):
             request.session['email'] = email
         else:
             email = request.session['email']
-        if request.POST.get('change'):
-            if request.POST.get('change') == 'appointment':
+        if request.POST.get('change') == 'appointment':
+            if request.POST.get('change') == 'oral':
+                if request.POST.get('date') and request.POST.get('chairman') and request.POST.get('reporter1') \
+                        and request.POST.get('reporter2') and request.POST.get('examiner') and request.POST.get(''):
+                    pass
+            elif request.POST.get('change') == 'appointment':
                 updateRequest('appointment', request.POST.get('appointment1') + ' '
                               + request.POST.get('appointment2'), email)
             else:
@@ -768,5 +772,12 @@ def managementRequest(request):
             for elem in topicsList:
                 topics += '<option value="' + elem + '">' + elem + '</option>'
             context['topics'] = topics
-            constellation = getRequestConstellation()
+            constellation = getRequestConstellation(getStudentId(request.session['email']))
+            context.update(constellation)
+            roles = ['chairman', 'reporter1', 'reporter2', 'examiner', 'externalExaminer']
+            for role in roles:
+                if not role in context:
+                    context[role] = '/'
+
+            #checkConstellation
     return render(request, 'managementRequest.html', context)

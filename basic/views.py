@@ -309,11 +309,14 @@ def anfrage(request):
     """This function controls the behavior of the page that is used to make a new request."""
     if request.user.is_authenticated:
         context = {}
+        context['error'] = ''
         group = getUserGroup(request.user)
         context['group'] = group
         if request.POST.get('anfrage') == "anfrage":
             form = Anfrage(request.POST)
-            if (form.is_valid() and form.cleaned_data['betreuer1'] != form.cleaned_data['betreuer2']):
+            if request.POST.get('abgabtermin') and request.POST.get('fach') and request.POST.get('betreuer1')\
+                and request.POST.get('betreuer2') and request.POST.get('themengebiet') and request.POST.get('art')\
+                and request.POST.get('titel'):
                 abgabetermin = form.cleaned_data['abgabetermin']
                 fach = form.cleaned_data['fach']
                 betreuer1 = form.cleaned_data['betreuer1'][1:]
@@ -325,12 +328,12 @@ def anfrage(request):
                 titel = form.cleaned_data['titel']
                 makeRequest(request.user, abgabetermin, fach, betreuer1, betreuer2, themengebiet, art, titel, betreuer1Intern, betreuer2Intern)
                 return redirect('/')
-            else:
-                context = {}
+            elif request.POST.get('betreuer2') and request.POST.get('betreuer1') \
+                    and request.POST.get('betreuer2') == request.POST.get('betreuer1'):
+                context['errorSupervisor'] = '<ul class="errorlist"><li>Betreuer<ul class="errorlist">' \
+                                             '<li>Wähle verschiedene Betreuer aus.</li></ul></li></ul>'
+            if not form.is_valid():
                 context['error'] = form.errors
-                if form.cleaned_data['betreuer1'] == form.cleaned_data['betreuer2']:
-                    context['errorSupervisor'] = '<ul class="errorlist"><li>Betreuer<ul class="errorlist">' \
-                                                 '<li>Wähle verschiedene Betreuer aus.</li></ul></li></ul>'
         if getUserGroup(request.user) == "Student" and not haveRequest(request.user):
             # Fill supervisor selections with data of database
             supervisors = getExaminers()

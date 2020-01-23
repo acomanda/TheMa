@@ -153,7 +153,3 @@ def invitationAnswered(studentId, examiner, answer):
                     # Not enough examiners can be found
                     # send email to office
                     return False
-
-
-def checkConstellation(constellation, student):
-    pass

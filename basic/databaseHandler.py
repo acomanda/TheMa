@@ -947,4 +947,52 @@ def addQualification(examinerId, isExaminerIntern, title, subject, topic, approv
 
 
 def setExam(studentId, timeSlot, constellation):
-    pass
+    # set all invitations to rejected
+    Invitation.objects.filter(student_id=studentId).update(accepted=False)
+    for role, examiner in constellation.items():
+        examinerData = getExaminerInformations(examiner)
+        invitation = Invitation.objects.filter(examiner=examinerData['id'], isExaminerIntern=examinerData['isIntern'],
+                                  student_id=studentId)
+        if invitation.count() > 0:
+            invitation.update(accepted=True)
+        else:
+            Invitation(accepted=True, numberInvitations=1, examiner=examinerData['id'],
+                       isExaminerIntern=examinerData['isIntern'], student_id=studentId, role=role).save()
+    Student.objects.filter(id=studentId).update(officeConfirmedAppointment=True, appointmentEmerged=True,
+                                                appointment=timeSlot)
+    return True
+
+
+
+def checkConstellation(studentId, constellation):
+    result = True
+    # check that there are not the same examiner twice in the constellation
+    if not len(list(constellation.values())) == len(set(list(constellation.values()))):
+        result = False
+    requestData = getStudentRequest(None, studentId)
+    # Check that the supervisors are in the constellation
+    if requestData['supervisor1'] not in list(constellation.values()):
+        result = False
+    if requestData['supervisor2'] not in list(constellation.values()):
+        result = False
+    # check that the external examiner is external
+    externalExaminerData = getExaminerInformations(constellation['externalExaminer'])
+    if requestData['topic'] in externalExaminerData['topic']:
+        result = False
+    # check if every examiner has the approval to test in this topic
+    return result
+
+
+def getExaminerInformations(examiner):
+    result = {}
+    if isinstance(examiner, ExternalExaminer):
+        intern = 0
+    elif isinstance(examiner, InternExaminer):
+        intern = 1
+    result['topic'] = []
+    result['isIntern'] = intern
+    result['id'] = examiner.id
+    qualification = Qualification.objects.filter(isExaminerIntern=intern, examiner=examiner.id)
+    for elem in qualification:
+        result['topic'].append(elem.topic)
+    return result

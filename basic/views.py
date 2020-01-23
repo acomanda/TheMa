@@ -703,6 +703,7 @@ def managementExtern(request):
 def managementRequest(request):
     context = {}
     context['group'] = getUserGroup(request.user)
+    roles = ['chairman', 'reporter1', 'reporter2', 'examiner', 'externalExaminer']
     if context['group'] != "Office":
         return redirect('/')
     if request.POST.get('send') == 'email' or request.POST.get('change'):
@@ -711,11 +712,24 @@ def managementRequest(request):
             request.session['email'] = email
         else:
             email = request.session['email']
-        if request.POST.get('change') == 'appointment':
+        if request.POST.get('change'):
             if request.POST.get('change') == 'oral':
-                if request.POST.get('date') and request.POST.get('chairman') and request.POST.get('reporter1') \
-                        and request.POST.get('reporter2') and request.POST.get('examiner') and request.POST.get(''):
-                    pass
+                if request.POST.get('appointment1') and request.POST.get('chairman') and request.POST.get('reporter1') \
+                        and request.POST.get('reporter2') and request.POST.get('examiner') \
+                        and request.POST.get('externalExaminer'):
+                    constellation = {}
+                    for role in roles:
+                        constellation[role] = getExaminer(None, request.POST.get(role)[1:],
+                                                          int(request.POST.get(role)[0]))
+                    if checkConstellation(getStudentId(request.session['email']), constellation):
+                        if setExam(getStudentId(request.session['email']),
+                                   request.POST.get('appointment1') + ' ' + request.POST.get('appointment2'),
+                                   constellation):
+                            context['error1'] = 'Verteidigung erstellt<br><br>'
+                        else:
+                            context['error1'] = 'Konstellation oder Zeitslot nicht erlaubt<br><br>'
+                    else:
+                        context['error1'] = 'Konstellation nicht erlaubt <br><br>'
             elif request.POST.get('change') == 'appointment':
                 updateRequest('appointment', request.POST.get('appointment1') + ' '
                               + request.POST.get('appointment2'), email)
@@ -773,11 +787,10 @@ def managementRequest(request):
                 topics += '<option value="' + elem + '">' + elem + '</option>'
             context['topics'] = topics
             constellation = getRequestConstellation(getStudentId(request.session['email']))
+            for key in constellation:
+                constellation[key] = constellation[key].name
             context.update(constellation)
-            roles = ['chairman', 'reporter1', 'reporter2', 'examiner', 'externalExaminer']
             for role in roles:
                 if not role in context:
                     context[role] = '/'
-
-            #checkConstellation
     return render(request, 'managementRequest.html', context)

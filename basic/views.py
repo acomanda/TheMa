@@ -314,18 +314,18 @@ def anfrage(request):
         context['group'] = group
         if request.POST.get('anfrage') == "anfrage":
             form = Anfrage(request.POST)
-            if request.POST.get('abgabtermin') and request.POST.get('fach') and request.POST.get('betreuer1')\
+            if request.POST.get('abgabetermin') and request.POST.get('fach') and request.POST.get('betreuer1')\
                 and request.POST.get('betreuer2') and request.POST.get('themengebiet') and request.POST.get('art')\
                 and request.POST.get('titel'):
-                abgabetermin = form.cleaned_data['abgabetermin']
-                fach = form.cleaned_data['fach']
-                betreuer1 = form.cleaned_data['betreuer1'][1:]
-                betreuer1Intern = form.cleaned_data['betreuer1'][0] == "1"
-                betreuer2 = form.cleaned_data['betreuer2'][1:]
-                betreuer2Intern = form.cleaned_data['betreuer2'][0] == "1"
-                themengebiet = form.cleaned_data['themengebiet']
-                art = form.cleaned_data['art']
-                titel = form.cleaned_data['titel']
+                abgabetermin = request.POST.get('abgabetermin')
+                fach = request.POST.get('fach')
+                betreuer1 = request.POST.get('betreuer1')[1:]
+                betreuer1Intern = request.POST.get('betreuer1')[0] == "1"
+                betreuer2 = request.POST.get('betreuer2')[1:]
+                betreuer2Intern = request.POST.get('betreuer2')[0] == "1"
+                themengebiet = request.POST.get('themengebiet')
+                art = request.POST.get('art')
+                titel = request.POST.get('titel')
                 makeRequest(request.user, abgabetermin, fach, betreuer1, betreuer2, themengebiet, art, titel, betreuer1Intern, betreuer2Intern)
                 return redirect('/')
             elif request.POST.get('betreuer2') and request.POST.get('betreuer1') \

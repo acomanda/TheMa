@@ -309,6 +309,8 @@ def anfrage(request):
     """This function controls the behavior of the page that is used to make a new request."""
     if request.user.is_authenticated:
         context = {}
+        group = getUserGroup(request.user)
+        context['group'] = group
         if request.POST.get('anfrage') == "anfrage":
             form = Anfrage(request.POST)
             if (form.is_valid() and form.cleaned_data['betreuer1'] != form.cleaned_data['betreuer2']):

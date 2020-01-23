@@ -93,7 +93,7 @@ def homeOffice(request):
         for elem in container1Request:
             container1 += '<p class="alignleft">' + elem.name + ' </p> \n'
             container1 += '<p class="alignright"><button type="submit" name="rating" value="' + str(elem.id) \
-                          + '">Gutachteineingabe frei geben</button></p><br/><br/>'
+                          + '">Gutachteneingabe frei geben</button></p><br/><br/>'
         container1Request = getRequestsOfOffice("Schreibphase").exclude(id__in=container1Request.values('id'))
         for elem in container1Request:
             container1 += '<p class="alignleft">' + elem.name + ' </p> \n'
@@ -376,8 +376,8 @@ def grading(request):
         return redirect('/')
     content = getStudentRequest(None, request.session['requestId'])
     context['title'] = content['title']
-    context['supervisor1'] = content['supervisor1']
-    context['supervisor2'] = content['supervisor2']
+    context['supervisor1'] = content['supervisor1'].name
+    context['supervisor2'] = content['supervisor2'].name
     context['deadline'] = content['deadline']
     context['topic'] = content['topic']
     context['type'] = content['type']

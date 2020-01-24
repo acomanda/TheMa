@@ -120,36 +120,40 @@ def invitationAnswered(studentId, examiner, answer):
                     # send email to office
                     return False
                 invitationAnswered(studentId, elem, 0)
+            return
         if role == 'externalExaminer':
-            externalExaminers = list(itertools.chain(*getExaminers(None, None, None, None, studentData['topic'],
+            newExaminers = list(itertools.chain(*getExaminers(None, None, studentData['topic'], None, None,
                                                                    getConstellationValues(constellation), 3)))
-            if len(externalExaminers) == 0:
+        else:
+            newExaminers = list(itertools.chain(*getExaminers(None, None, None, None, studentData['topic'],
+                                                                 getConstellationValues(constellation), 3)))
+        if len(newExaminers) == 0:
+            # Not enough examiners can be found
+            # send email to office
+            return False
+        elif len(newExaminers) > 1:
+            newExaminers.remove(getExaminer(None, examinerId, intern))
+            inviteExaminer(getStudent(None, studentId), newExaminers[0], role)
+        elif len(newExaminers) == 1:
+            if not reInviteExaminer(studentId, examinerId, intern, 3):
+                # Not enough examiners can be found
+                # todo send email to office
+                return False
+            # todo instead of doing a random shuffle, sort in a way, that the first examiner is
+            #  the examiner with the least availabilities
+            examiners = list(constellation.values())
+            random.shuffle(examiners)
+            found = False
+            for elem in examiners:
+                if isinstance(elem, ExternalExaminer):
+                    intern2 = 0
+                elif isinstance(elem, InternExaminer):
+                    intern2 = 1
+                if not isSupervisor(studentId, elem.id, intern2):
+                    if not reInviteExaminer(studentId, elem.id, intern2, 3):
+                        found = True
+                        break
+            if not found:
                 # Not enough examiners can be found
                 # send email to office
                 return False
-            elif len(externalExaminers) > 1:
-                externalExaminers.remove(getExaminer(None, examinerId, intern))
-                inviteExaminer(getStudent(None, studentId), externalExaminers[0], role)
-            elif len(externalExaminers) == 1:
-                if not reInviteExaminer(studentId, examinerId, intern, 3):
-                    # Not enough examiners can be found
-                    # send email to office
-                    return False
-                # todo instead of doing a random shuffle, sort in a way, that the first examiner is
-                #  the examiner with the least availabilities
-                examiners = list(constellation.values())
-                random.shuffle(examiners)
-                found = False
-                for elem in examiners:
-                    if isinstance(elem, ExternalExaminer):
-                        intern2 = 0
-                    elif isinstance(elem, InternExaminer):
-                        intern2 = 1
-                    if not isSupervisor(studentId, elem.id, intern2):
-                        if not reInviteExaminer(studentId, elem.id, intern2, 3):
-                            found = True
-                            break
-                if not found:
-                    # Not enough examiners can be found
-                    # send email to office
-                    return False

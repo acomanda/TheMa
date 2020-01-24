@@ -603,11 +603,12 @@ def inviteExaminer(student, examiner, role):
         intern = 0
     elif isinstance(examiner, InternExaminer):
         intern = 1
-    invitation = Invitation.objects.filter(examiner=examiner.id, isExaminerIntern=intern, student=student, role=role)
+    invitation = Invitation.objects.filter(examiner=examiner.id, isExaminerIntern=intern, student=student)
     if invitation.count() == 1:
         invitation = invitation[0]
         invitation.accepted = None
         invitation.numberInvitations += 1
+        invitation.role = role
         invitation.save()
     else:
         invitation = Invitation(examiner=examiner.id, isExaminerIntern=intern, student=student, role=role,
@@ -918,11 +919,14 @@ def restartScheduling(studentId, maxInvitation):
     return result
 
 
-def reInviteExaminer(studentId, examinerId, intern, maxInvitation):
+def reInviteExaminer(studentId, examinerId, intern, maxInvitation, role):
     invitation = Invitation.objects.filter(student_id=studentId, examiner=examinerId, isExaminerIntern=intern)
     if invitation[0].numberInvitations >= maxInvitation:
         return False
-    invitation.update(accepted=None, numberInvitations=F('numberInvitations')+1)
+    if invitation.count() == 0:
+        inviteExaminer(getStudent(None, studentId), getExaminer(None, examinerId, intern), role)
+        return True
+    invitation.update(accepted=None, numberInvitations=F('numberInvitations')+1, role=role)
     updateAvailabilities(studentId)
     return True
 

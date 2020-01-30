@@ -28,33 +28,58 @@ def createExaminerConstellation(user, designations):
                     if item == studentData['supervisor' + str(i)]:
                         if i in supervisors:
                             supervisors.remove(i)
+
+            # Fill the constellation with the chairman and all supervisors
             constellation['chairman'] = designations['chairman']
+            roles = ['examiner', 'reporter2', 'reporter1']
             if len(supervisors) > 0:
-                constellation['examiner'] = studentData['supervisor' + str(supervisors[0])]
+                if not studentData['topic'] in getExaminerInformations(studentData['supervisor'
+                                                                               + str(supervisors[0])])['topic']:
+                    constellation['externalExaminer'] = studentData['supervisor' + str(supervisors[0])]
+                else:
+                    for elem in roles:
+                        if constellation[elem] is None:
+                            constellation[elem] = studentData['supervisor' + str(supervisors[0])]
+                            break
             if len(supervisors) > 1:
-                constellation['reporter2'] = studentData['supervisor' + str(supervisors[1])]
-            else:
-                constellationValues = getConstellationValues(constellation)
-                reporter2 = list(itertools.chain(*getExaminers(None, studentData['subject'], studentData['topic'], None,
-                                                               None, constellationValues)))
-                constellation['reporter2'] = reporter2[0]
+                if studentData['supervisor' + str(supervisors[1])] is not None \
+                        and not studentData['topic'] in getExaminerInformations(
+                        studentData['supervisor' + str(supervisors[1])])['topic'] and \
+                        not constellation['externalExaminer'] is None:
+                    constellation['externalExaminer'] = studentData['supervisor' + str(supervisors[1])]
+                else:
+                    for elem in roles:
+                        if constellation[elem] is None:
+                            constellation[elem] = studentData['supervisor' + str(supervisors[1])]
+                            break
             if len(supervisors) > 2:
-                constellation['reporter1'] = studentData['supervisor' + str(supervisors[2])]
-            else:
+                if studentData['supervisor' + str(supervisors[2])] is not None \
+                        and not studentData['topic'] in getExaminerInformations(
+                        studentData['supervisor' + str(supervisors[2])])['topic'] and \
+                        not constellation['externalExaminer'] is None:
+                    constellation['externalExaminer'] = studentData['supervisor' + str(supervisors[2])]
+                else:
+                    for elem in roles:
+                        if constellation[elem] is None:
+                            constellation[elem] = studentData['supervisor' + str(supervisors[2])]
+                            break
+
+            # Fill the role of an external Examiner, if it is not yet set
+            if constellation['externalExaminer'] is None:
                 constellationValues = getConstellationValues(constellation)
-                reporter1 = list(itertools.chain(*getExaminers(None, studentData['subject'], studentData['topic'], None,
-                                                               None, constellationValues)))
-                constellation['reporter1'] = reporter1[0]
-            constellationValues = getConstellationValues(constellation)
-            externalExaminers = list(itertools.chain(*getExaminers(None, None, None, None, studentData['topic'],
-                                                                   constellationValues)))
-            if len(externalExaminers) == 0:
-                # Not enough examiners can be found
-                return False
-            constellation['externalExaminer'] = externalExaminers[0]
+                externalExaminers = list(itertools.chain(*getExaminers(None, None, None, None, studentData['topic'],
+                                                                       constellationValues)))
+                if len(externalExaminers) == 0:
+                    # Not enough examiners can be found
+                    return False
+                constellation['externalExaminer'] = externalExaminers[0]
+
+            # Fill the remaining roles
             constellationValues = getConstellationValues(constellation)
             examiners = list(itertools.chain(*getExaminers(None, studentData['subject'], studentData['topic'], None,
-                                                           None, constellationValues)))
+                                                           None, constellationValues, 3)))
+            examiners.append(list(itertools.chain(*getExaminers(None, studentData['subject'], None, None,
+                                                                studentData['topic'], constellationValues, 3))))
             for key in constellation:
                 if constellation[key] is None:
                     if len(examiners) == 0:
@@ -122,14 +147,15 @@ def invitationAnswered(studentId, examiner, answer):
                 invitationAnswered(studentId, elem, 0)
             return
         if role == 'externalExaminer':
-            newExaminers = list(itertools.chain(*getExaminers(None, studentData['subject'], studentData['topic'],
-                                                              None, None, getConstellationValues(constellation), 3)))
-        else:
             newExaminers = list(itertools.chain(*getExaminers(None, studentData['subject'], None, None,
                                                               studentData['topic'],
                                                               getConstellationValues(constellation), 3)))
+        else:
+            newExaminers = list(itertools.chain(*getExaminers(None, studentData['subject'], studentData['topic'], None,
+                                                              None,
+                                                              getConstellationValues(constellation), 3)))
             newExaminers.append(list(itertools.chain(*getExaminers(None, studentData['subject'], None,
-                                                                   None, None,
+                                                                   None, studentData['topic'],
                                                                    getConstellationValues(constellation), 3))))
         examiners = list(constellation.values())
         random.shuffle(examiners)
@@ -139,11 +165,16 @@ def invitationAnswered(studentId, examiner, answer):
             return False
         elif len(newExaminers) > 1:
             newExaminers.remove(getExaminer(None, examinerId, intern))
-            if isinstance(newExaminers[0], ExternalExaminer):
-                intern2 = 0
-            elif isinstance(newExaminers[0], InternExaminer):
-                intern2 = 1
-            if not reInviteExaminer(studentId, newExaminers[0].id, intern2, 3, role):
+            found = False
+            for i in range(len(newExaminers)):
+                if isinstance(newExaminers[i], ExternalExaminer):
+                    intern2 = 0
+                elif isinstance(newExaminers[i], InternExaminer):
+                    intern2 = 1
+                if reInviteExaminer(studentId, newExaminers[i].id, intern2, 3, role):
+                    found = True
+                    break
+            if not found:
                 # Not enough examiners can be found
                 # send email to office
                 return False
@@ -152,9 +183,8 @@ def invitationAnswered(studentId, examiner, answer):
                 # Not enough examiners can be found
                 # todo send email to office
                 return False
-            # todo instead of doing a random shuffle, sort in a way, that the first examiner is
-            #  the examiner with the least availabilities
             found = False
+            examiners = orderByAvailabilities(constellation)
             for elem in examiners:
                 if isinstance(elem, ExternalExaminer):
                     intern2 = 0
@@ -168,3 +198,20 @@ def invitationAnswered(studentId, examiner, answer):
                 # Not enough examiners can be found
                 # send email to office
                 return False
+
+
+def orderByAvailabilities(constellation):
+    examiners = list(constellation.values())
+    availabilities = {}
+    for elem in examiners:
+        if isinstance(elem, ExternalExaminer):
+            intern = 0
+        elif isinstance(elem, InternExaminer):
+            intern = 1
+        invitation = Invitation.objects.filter(isExaminerIntern=intern, examiner=elem.id)[0]
+        availabilities[elem] = AvailabilityInvitation.objects.filter(invitation=invitation).count()
+    a = sorted(availabilities.items(), key=lambda x: x[1])
+    result = []
+    for elem in a:
+        result.append(elem[0])
+    return result

@@ -554,7 +554,7 @@ def answerInvitation(request):
                 else:
                     context['slot' + str(i) + str(j)] = 'Nicht verfügbar'
         # Pass request information
-        content = getStudentRequest(request.session['requestId'])
+        content = getStudentRequest(None, request.session['requestId'])
         context['student'] = content['student']
         context['title'] = content['title']
         context['supervisor1'] = content['supervisor1'].name

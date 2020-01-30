@@ -531,27 +531,28 @@ def getExaminers(approvalToTest=None, subject=None, topic=None, title=None, excl
     # todo if a user doesnt have a qualification it should not be included in topic excluded
     qualifications = Qualification.objects.all()
     if approvalToTest is not None:
-        qualifications = qualifications.filter(approvalToTest=approvalToTest)
+        qualifications = qualifications.intersection(Qualification.objects.filter(approvalToTest=approvalToTest))
     if subject is not None:
-        qualifications = qualifications.filter(subject=subject)
+        qualifications = qualifications.intersection(Qualification.objects.filter(subject=subject))
     if topic is not None:
-        qualifications = qualifications.filter(topic=topic)
+        qualifications = qualifications.intersection(Qualification.objects.filter(topic=topic))
     if title is not None:
-        qualifications = qualifications.filter(title=title)
+        qualifications = qualifications.intersection(Qualification.objects.filter(title=title))
     if excludedTopic is not None:
-        qualifications = qualifications.exclude(topic=excludedTopic)
-    externalExaminers = ExternalExaminer.objects.none()
-    internExaminers = InternExaminer.objects.none()
-    for elem in qualifications:
-        if elem.isExaminerIntern == False:
-            externalExaminers = externalExaminers | ExternalExaminer.objects.filter(id=elem.examiner)
-        if elem.isExaminerIntern == True:
-            internExaminers = internExaminers | InternExaminer.objects.filter(id=elem.examiner)
+        qualifications = qualifications.intersection(Qualification.objects.exclude(topic=excludedTopic))
+    externalExaminers = ExternalExaminer.objects.all()
+    internExaminers = InternExaminer.objects.all()
+    externalQualifications = qualifications.filter(isExaminerIntern=False)
+    internalQualifications = qualifications.filter(isExaminerIntern=True)
+    externalExaminers = externalExaminers and ExternalExaminer.objects.filter(
+        id__in=[o.examiner for o in externalQualifications])
+    internExaminers = internExaminers and InternExaminer.objects.filter(
+        id__in=[o.examiner for o in internalQualifications])
     if excludedExaminers is not None:
-        externalExaminers = externalExaminers and ExternalExaminer.objects.exclude(
-            user_id__in=[o.user_id for o in excludedExaminers])
-        internExaminers = internExaminers and InternExaminer.objects.exclude(
-            user_id__in=[o.user_id for o in excludedExaminers])
+        externalExaminers = externalExaminers.intersection(ExternalExaminer.objects.filter(
+            ~Q(user_id__in=[o.user_id for o in excludedExaminers])))
+        internExaminers = internExaminers.intersection(InternExaminer.objects.exclude(
+            ~Q(user_id__in=[o.user_id for o in excludedExaminers])))
     if maxInvitation is not None:
         invitationsExternal = Invitation.objects.filter(numberInvitations__gt=maxInvitation, isExaminerIntern=0)
         invitationsIntern = Invitation.objects.filter(numberInvitations__gt=maxInvitation, isExaminerIntern=1)
@@ -921,11 +922,11 @@ def restartScheduling(studentId, maxInvitation):
 
 def reInviteExaminer(studentId, examinerId, intern, maxInvitation, role):
     invitation = Invitation.objects.filter(student_id=studentId, examiner=examinerId, isExaminerIntern=intern)
-    if invitation[0].numberInvitations >= maxInvitation:
-        return False
     if invitation.count() == 0:
         inviteExaminer(getStudent(None, studentId), getExaminer(None, examinerId, intern), role)
         return True
+    if invitation[0].numberInvitations >= maxInvitation:
+        return False
     invitation.update(accepted=None, numberInvitations=F('numberInvitations')+1, role=role)
     updateAvailabilities(studentId)
     return True

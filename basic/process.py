@@ -215,3 +215,152 @@ def orderByAvailabilities(constellation):
     for elem in a:
         result.append(elem[0])
     return result
+
+
+systemEmail = 'placeholder@thema.de'
+
+
+# Functions for sending E-Mails
+# todo Implement the use of URL's to redirect the user to the right place by including some Id's in the URL
+def examinerSupervisorNotification(examiner, student):
+    subject = 'Betreueranfrage von ' + student.name
+    to = examiner.user.email
+    link = 'https://thema.uni-mainz.de/homeexaminer'
+    message = 'Sehr geehrter Herr ' + examiner.name + ',\n' \
+              + 'hiermit wird Ihnen mitgeteilt, dass der Student ' + student.name \
+              + ' sie als Betreuer festgelegt hat.\n' \
+              + 'Besuchen sie folgenden Link um die Anfrage einzusehen und zu beantowrten:\n' \
+              + link
+    return send_mail(subject, message, systemEmail, [to])
+
+
+def examinerSchedulingNotification(examiner, student):
+    subject = 'Verteidigungseinladung von ' + student.name
+    to = examiner.user.email
+    link = 'https://thema.uni-mainz.de/homeexaminer'
+    message = 'Sehr geehrter Herr ' + examiner.name + ',\n' \
+              + 'hiermit wird Ihnen mitgeteilt, dass Sie zur Verteidigung von ' + student.name \
+              + ' eingeladen wurden.\n' \
+              + 'Besuchen sie folgenden Link um die Einladung einzusehen und zu beantworten:\n' \
+              + link
+    return send_mail(subject, message, systemEmail, [to])
+
+
+def examinerRatingNotification(examiner, student):
+    subject = 'Gutachteneingabe von ' + student.name
+    to = examiner.user.email
+    link = 'https://thema.uni-mainz.de/homeexaminer'
+    message = 'Sehr geehrter Herr ' + examiner.name + ',\n' \
+              + 'hiermit wird Ihnen mitgeteilt, dass die Gutachteneingabefür die Thesis von ' + student.name \
+              + ' freigegeben wurde.\n' \
+              + 'Besuchen sie folgenden Link um die Arbeit zu benoten:\n' \
+              + link
+    return send_mail(subject, message, systemEmail, [to])
+
+
+def examinerAppointmentNotification(examiner, student):
+    subject = 'Verteidigunstermin von ' + student.name
+    to = examiner.user.email
+    link = 'https://thema.uni-mainz.de/homeexaminer'
+    message = 'Sehr geehrter Herr ' + examiner.name + ',\n' \
+              + 'hiermit wird Ihnen mitgeteilt, dass ein Termin für die Verteidigungvon ' + student.name \
+              + ' gefunden wurde. Nun muss das Prüfungsamt dem noch zustimmen.\n' \
+              + 'Besuchen sie folgenden Link um weitere Informationen einzusehen:\n' \
+              + link
+    return send_mail(subject, message, systemEmail, [to])
+
+
+def examinerFinalAppointmentNotification(examiner, student):
+    subject = 'Verteidigunstermin von ' + student.name
+    to = examiner.user.email
+    link = 'https://thema.uni-mainz.de/homeexaminer'
+    message = 'Sehr geehrter Herr ' + examiner.name + ',\n' \
+              + 'hiermit wird Ihnen mitgeteilt, dass der Termin für die Verteidigung von ' + student.name \
+              + ' bestätigt wurde.\n' \
+              + 'Besuchen sie folgenden Link um weitere Informationen einzusehen:\n' \
+              + link
+    return send_mail(subject, message, systemEmail, [to])
+
+
+def examinerDeletedInvitationNotification(examiner, student):
+    subject = 'Verteidigungseinladung von ' + student.name + ' entfernt'
+    to = examiner.user.email
+    link = 'https://thema.uni-mainz.de/homeexaminer'
+    message = 'Sehr geehrter Herr ' + examiner.name + ',\n' \
+              + 'hiermit wird Ihnen mitgeteilt, dass die Einladung zur Verteidigung von ' + student.name \
+              + ' entfernt wurde.\n' \
+              + 'Besuchen sie folgenden Link um weitere Informationen einzusehen:\n' \
+              + link
+    return send_mail(subject, message, systemEmail, [to])
+
+
+def studentStatusUpdateNotification(student):
+    subject = 'Der Status ihrer Anfrage hat sich geändert'
+    to = student.user.email
+    link = 'https://thema.uni-mainz.de/homestudent'
+    message = 'Sehr geehrter Herr ' + student.name + ',\n' \
+              + 'hiermit wird Ihnen mitgeteilt, dass sich der Status ihrer Anfrage geändert hat.\n' \
+              + 'Neuer Status: ' + student.status \
+              + 'Besuchen sie folgenden Link um weitere Informationen einzusehen:\n' \
+              + link
+    return send_mail(subject, message, systemEmail, [to])
+
+
+def officeRequestNotification(student, office):
+    subject = 'Anfrage von ' + student.name
+    to = office.user.email
+    link = 'https://thema.uni-mainz.de/homeoffice'
+    message = 'Sehr geehrtes Prüfungsamt' \
+              + 'hiermit wird Ihnen mitgeteilt, dass der Student ' + student.name \
+              + ' eine Anfrage eingesendet hat.\n' \
+              + 'Besuchen sie folgenden Link um die Anfrage zu beantworten:\n' \
+              + link
+    return send_mail(subject, message, systemEmail, [to])
+
+
+def officeWaitForRatingNotification(student, office):
+    subject = 'Anfrage von ' + student.name
+    to = office.user.email
+    link = 'https://thema.uni-mainz.de/homeoffice'
+    message = 'Sehr geehrtes Prüfungsamt' \
+              + 'hiermit wird Ihnen mitgeteilt, dass die Anfrage von ' + student.name \
+              + ' zur Gutachteneingabe freigegeben werden kann.\n' \
+              + 'Besuchen sie folgenden Link um weitere Informationen einzusehen:\n' \
+              + link
+    return send_mail(subject, message, systemEmail, [to])
+
+
+def officeWaitForSchedulingNotification(student, office):
+    subject = 'Anfrage von ' + student.name
+    to = office.user.email
+    link = 'https://thema.uni-mainz.de/homeoffice'
+    message = 'Sehr geehrtes Prüfungsamt' \
+              + 'hiermit wird Ihnen mitgeteilt, dass die Anfrage von ' + student.name \
+              + ' zur Terminfindung freigegeben werden kann.\n' \
+              + 'Besuchen sie folgenden Link um weitere Informationen einzusehen:\n' \
+              + link
+    return send_mail(subject, message, systemEmail, [to])
+
+
+def officeRequestRejectedNotification(student, office):
+    subject = 'Anfrage von ' + student.name
+    to = office.user.email
+    link = 'https://thema.uni-mainz.de/management'
+    message = 'Sehr geehrtes Prüfungsamt' \
+              + 'hiermit wird Ihnen mitgeteilt, dass die Anfrage von ' + student.name \
+              + ' seitens eines Betreuers abgelehnt wurde.\n' \
+              + 'Besuchen sie folgenden Link um die Anfrage zu bearbeiten:\n' \
+              + link
+    return send_mail(subject, message, systemEmail, [to])
+
+
+def officeWaitForConfirmation(student, office):
+    subject = 'Anfrage von ' + student.name
+    to = office.user.email
+    link = 'https://thema.uni-mainz.de/management'
+    message = 'Sehr geehrtes Prüfungsamt' \
+              + 'hiermit wird Ihnen mitgeteilt, dass die Anfrage von ' + student.name \
+              + ' nun mögliche Verteidigungstermine besitzt, aus denen eines gewählt werden muss.\n' \
+              + 'Besuchen sie folgenden Link um dies zu tun:\n' \
+              + link
+    return send_mail(subject, message, systemEmail, [to])

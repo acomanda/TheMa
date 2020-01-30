@@ -311,7 +311,7 @@ def confirmOrNotRequest(requestId, confirm, group, user=None):
         elif student.supervisor2 == examinerId and student.isSupervisor2Intern == intern:
             student.supervisor2Confirmed = confirm
             student.save()
-    checkStatus(student)
+    return checkStatus(student)
 
 
 def getExaminer(user, examinerId = None, intern=None):
@@ -435,10 +435,13 @@ def checkStatus(student):
         if student.officeConfirmed and student.supervisor1Confirmed and student.supervisor2Confirmed:
             student.status = "Schreibphase"
             student.save()
+            return True
     if student.status == "Terminfindung":
         if student.appointmentEmerged is not None and student.officeConfirmedAppointment is not None:
             student.status = "Termin entstanden"
             student.save()
+            return True
+    return False
 
 
 def changeStatus(studentId, status):
@@ -481,7 +484,7 @@ def gradeRequest(user, studentId, note):
         elif student.supervisor3 == examinerId and student.isSupervisor3Intern == intern:
             student.grade3 = note
             student.save()
-        checkStatus(student)
+        return checkStatus(student)
     else:
         return False
 
@@ -1001,3 +1004,7 @@ def getExaminerInformations(examiner):
     for elem in qualification:
         result['topic'].append(elem.topic)
     return result
+
+
+def getOffice():
+    return Office.objects.filter(id=1)[0]

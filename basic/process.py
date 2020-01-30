@@ -101,6 +101,7 @@ def inviteAllExaminers(student, constellation):
     """
     for key in constellation:
         inviteExaminer(student, constellation[key], key)
+        examinerSchedulingNotification(constellation[key], student)
 
 
 def getConstellationValues(constellation):
@@ -132,6 +133,9 @@ def invitationAnswered(studentId, examiner, answer):
         constellation = getRequestConstellation(studentId, True)
         if len(constellation) == 5:
             setAppointmentEmerged(studentId)
+            officeWaitForConfirmation(getStudent(None, studentId), getOffice())
+            for key in constellation:
+                examinerAppointmentNotification(constellation[key], getStudent(None, studentId))
     else:
         examinerId = examiner[0]
         intern = examiner[1]
@@ -143,6 +147,7 @@ def invitationAnswered(studentId, examiner, answer):
             for elem in deleteExaminers:
                 if isSupervisor(studentId, elem[0], elem[1]):
                     # send email to office
+                    officeNoExaminersNotification(getStudent(None, studentId), getOffice())
                     return False
                 invitationAnswered(studentId, elem, 0)
             return
@@ -162,6 +167,7 @@ def invitationAnswered(studentId, examiner, answer):
         if len(newExaminers) == 0:
             # Not enough examiners can be found
             # send email to office
+            officeNoExaminersNotification(getStudent(None, studentId), getOffice())
             return False
         elif len(newExaminers) > 1:
             newExaminers.remove(getExaminer(None, examinerId, intern))
@@ -172,17 +178,23 @@ def invitationAnswered(studentId, examiner, answer):
                 elif isinstance(newExaminers[i], InternExaminer):
                     intern2 = 1
                 if reInviteExaminer(studentId, newExaminers[i].id, intern2, 3, role):
+                    examinerSchedulingNotification(getExaminer(None, newExaminers[i].id, intern2),
+                                                   getStudent(None, studentId))
                     found = True
                     break
             if not found:
                 # Not enough examiners can be found
                 # send email to office
+                officeNoExaminersNotification(getStudent(None, studentId), getOffice())
                 return False
         elif len(newExaminers) == 1:
             if not reInviteExaminer(studentId, examinerId, intern, 3, role):
                 # Not enough examiners can be found
-                # todo send email to office
+                # send email to office
+                officeNoExaminersNotification(getStudent(None, studentId), getOffice())
                 return False
+            examinerSchedulingNotification(getExaminer(None, examinerId, intern),
+                                           getStudent(None, studentId))
             found = False
             examiners = orderByAvailabilities(constellation)
             for elem in examiners:
@@ -191,12 +203,17 @@ def invitationAnswered(studentId, examiner, answer):
                 elif isinstance(elem, InternExaminer):
                     intern2 = 1
                 if not isSupervisor(studentId, elem.id, intern2):
-                    if not reInviteExaminer(studentId, elem.id, intern2, 3, role):
+                    if reInviteExaminer(studentId, elem.id, intern2, 3, role):
+                        examinerDeletedInvitationNotification(getExaminer(None, elem.id, intern2),
+                                                              getStudent(None, studentId))
+                        examinerSchedulingNotification(getExaminer(None, elem.id, intern2),
+                                                       getStudent(None, studentId))
                         found = True
                         break
             if not found:
                 # Not enough examiners can be found
                 # send email to office
+                officeNoExaminersNotification(getStudent(None, studentId), getOffice())
                 return False
 
 
@@ -281,7 +298,7 @@ def examinerFinalAppointmentNotification(examiner, student):
               + link
     return send_mail(subject, message, systemEmail, [to])
 
-
+# Not used yet
 def examinerDeletedInvitationNotification(examiner, student):
     subject = 'Verteidigungseinladung von ' + student.name + ' entfernt'
     to = examiner.user.email
@@ -341,7 +358,7 @@ def officeWaitForSchedulingNotification(student, office):
               + link
     return send_mail(subject, message, systemEmail, [to])
 
-
+# Not used yet
 def officeRequestRejectedNotification(student, office):
     subject = 'Anfrage von ' + student.name
     to = office.user.email
@@ -362,5 +379,17 @@ def officeWaitForConfirmation(student, office):
               + 'hiermit wird Ihnen mitgeteilt, dass die Anfrage von ' + student.name \
               + ' nun mögliche Verteidigungstermine besitzt, aus denen eines gewählt werden muss.\n' \
               + 'Besuchen sie folgenden Link um dies zu tun:\n' \
+              + link
+    return send_mail(subject, message, systemEmail, [to])
+
+
+def officeNoExaminersNotification(student, office):
+    subject = 'Anfrage von ' + student.name
+    to = office.user.email
+    link = 'https://thema.uni-mainz.de/management'
+    message = 'Sehr geehrtes Prüfungsamt' \
+              + 'hiermit wird Ihnen mitgeteilt, dass die Anfrage von ' + student.name \
+              + ' nicht zu einem Verteidigungstermin führen kann, da es nicht genügend Prüfer gibt.\n' \
+              + 'Besuchen sie folgenden Link um die Verteidigung manuell einzutragen:\n' \
               + link
     return send_mail(subject, message, systemEmail, [to])

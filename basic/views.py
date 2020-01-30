@@ -68,6 +68,9 @@ def homeOffice(request):
             request.session['requestId'] = request.POST.get('details')
             return redirect('/confirmrequest')
         if request.POST.get('rating'):
+            student = getStudent(None, request.POST.get('rating'))
+            examinerRatingNotification(getExaminer(None, student.supervisor1, student.isSupervisor1Intern), student)
+            examinerRatingNotification(getExaminer(None, student.supervisor2, student.isSupervisor2Intern), student)
             changeStatus(request.POST.get('rating'), "Gutachteneingabe")
         if request.POST.get('scheduling'):
             request.session['requestId'] = request.POST.get('scheduling')
@@ -290,10 +293,22 @@ def confirmRequest(request):
     if request.POST.get('answerRequest'):
         if request.POST.get('answerRequest') == "accept":
             if group == "Examiner":
-                confirmOrNotRequest(request.session['requestId'], True, "Examiner", request.user)
+                # notify the users
+                student = getStudent(None, request.session['requestId'])
+                if confirmOrNotRequest(request.session['requestId'], True, "Examiner", request.user):
+                    studentStatusUpdateNotification(student)
+                if student.supervisor1Confirmed and student.supervisor2Confirmed and student.officeConfirmed:
+                    officeWaitForRatingNotification(student, getOffice())
+
                 return redirect('/')
             else:
-                confirmOrNotRequest(request.session['requestId'], True, "Office", request.user)
+                # notify the users
+                student = getStudent(None, request.session['requestId'])
+                if confirmOrNotRequest(request.session['requestId'], True, "Office", request.user):
+                    studentStatusUpdateNotification(student)
+                if student.supervisor1Confirmed and student.supervisor2Confirmed and student.officeConfirmed:
+                    officeWaitForRatingNotification(student, getOffice())
+
                 return redirect('/')
         elif request.POST.get('answerRequest') == "reject":
             if group == "Examiner":
@@ -326,7 +341,13 @@ def anfrage(request):
                 themengebiet = request.POST.get('themengebiet')
                 art = request.POST.get('art')
                 titel = request.POST.get('titel')
-                makeRequest(request.user, abgabetermin, fach, betreuer1, betreuer2, themengebiet, art, titel, betreuer1Intern, betreuer2Intern)
+                makeRequest(request.user, abgabetermin, fach, betreuer1, betreuer2, themengebiet, art, titel,
+                            betreuer1Intern, betreuer2Intern)
+                #notify the users
+                examinerSupervisorNotification(getExaminer(None, betreuer1, betreuer1Intern), getStudent(request.user))
+                examinerSupervisorNotification(getExaminer(None, betreuer2, betreuer2Intern), getStudent(request.user))
+                officeRequestNotification(getStudent(request.user), getOffice())
+
                 return redirect('/')
             elif request.POST.get('betreuer2') and request.POST.get('betreuer1') \
                     and request.POST.get('betreuer2') == request.POST.get('betreuer1'):
@@ -372,7 +393,8 @@ def grading(request):
     group = getUserGroup(request.user)
     context['group'] = group
     if request.POST.get('confirm'):
-        gradeRequest(request.user, request.session['requestId'], float(request.POST.get('grade')))
+        if gradeRequest(request.user, request.session['requestId'], float(request.POST.get('grade'))):
+            officeWaitForSchedulingNotification(getStudent(None, request.session['requestId']), getOffice())
         return redirect('/')
     content = getStudentRequest(None, request.session['requestId'])
     context['title'] = content['title']
@@ -392,9 +414,12 @@ def supervisor3(request):
     context['group'] = group
     if request.POST.get('confirm'):
         if not setSupervisor3(request.session['requestId'], request.POST.get('supervisor3')[1],
-                       request.POST.get('supervisor3')[0]):
+                              request.POST.get('supervisor3')[0]):
             context['error'] = 'Wähle einen Drittprüfer, der nicht bereits ein Prüfer ist.'
         else:
+            examinerSupervisorNotification(getExaminer(None, request.POST.get('supervisor3')[1],
+                                                       request.POST.get('supervisor3')[0]),
+                                           getStudent(None, request.session['requestId']))
             return redirect('/')
     content = getStudentRequest(None, request.session['requestId'])
     context['title'] = content['title']
@@ -469,6 +494,7 @@ def answerInvitation(request):
                     moveAvailabilitiesToRequest(request.user, request.session['requestId'])
                     acceptOrNotInvitation(request.user, request.session['requestId'], True)
                     invitationAnswered(request.session['requestId'], getExaminer(request.user), True)
+
                     return redirect('/')
                 else:
                     context['error'] = 'Wähle erst Zeitslots aus, bevor du die Anfrage akzeptierst.'
@@ -596,6 +622,10 @@ def confirmAppointment(request):
         context['group'] = getUserGroup(request.user)
         if request.POST.get('confirm'):
             endRequest(request.session['requestId'], request.POST['slot'])
+            constellation = getRequestConstellation(request.session['requestId'], True)
+            student = getStudent(None, request.session['requestId'])
+            for key in constellation:
+                examinerFinalAppointmentNotification(constellation[key], student)
             return redirect('/')
         appointments = getRequestsAppointments(request.session['requestId'])
         options = ''

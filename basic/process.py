@@ -248,7 +248,7 @@ def examinerSupervisorNotification(examiner, student):
               + ' sie als Betreuer festgelegt hat.\n' \
               + 'Besuchen sie folgenden Link um die Anfrage einzusehen und zu beantowrten:\n' \
               + link
-    return send_mail(subject, message, systemEmail, [to])
+    return send_mail(subject, message, systemEmail, [to], fail_silently=True)
 
 
 def examinerSchedulingNotification(examiner, student):
@@ -260,7 +260,7 @@ def examinerSchedulingNotification(examiner, student):
               + ' eingeladen wurden.\n' \
               + 'Besuchen sie folgenden Link um die Einladung einzusehen und zu beantworten:\n' \
               + link
-    return send_mail(subject, message, systemEmail, [to])
+    return send_mail(subject, message, systemEmail, [to], fail_silently=True)
 
 
 def examinerRatingNotification(examiner, student):
@@ -272,7 +272,7 @@ def examinerRatingNotification(examiner, student):
               + ' freigegeben wurde.\n' \
               + 'Besuchen sie folgenden Link um die Arbeit zu benoten:\n' \
               + link
-    return send_mail(subject, message, systemEmail, [to])
+    return send_mail(subject, message, systemEmail, [to], fail_silently=True)
 
 
 def examinerAppointmentNotification(examiner, student):
@@ -284,7 +284,7 @@ def examinerAppointmentNotification(examiner, student):
               + ' gefunden wurde. Nun muss das Prüfungsamt dem noch zustimmen.\n' \
               + 'Besuchen sie folgenden Link um weitere Informationen einzusehen:\n' \
               + link
-    return send_mail(subject, message, systemEmail, [to])
+    return send_mail(subject, message, systemEmail, [to], fail_silently=True)
 
 
 def examinerFinalAppointmentNotification(examiner, student):
@@ -296,7 +296,7 @@ def examinerFinalAppointmentNotification(examiner, student):
               + ' bestätigt wurde.\n' \
               + 'Besuchen sie folgenden Link um weitere Informationen einzusehen:\n' \
               + link
-    return send_mail(subject, message, systemEmail, [to])
+    return send_mail(subject, message, systemEmail, [to], fail_silently=True)
 
 # Not used yet
 def examinerDeletedInvitationNotification(examiner, student):
@@ -308,7 +308,7 @@ def examinerDeletedInvitationNotification(examiner, student):
               + ' entfernt wurde.\n' \
               + 'Besuchen sie folgenden Link um weitere Informationen einzusehen:\n' \
               + link
-    return send_mail(subject, message, systemEmail, [to])
+    return send_mail(subject, message, systemEmail, [to], fail_silently=True)
 
 
 def studentStatusUpdateNotification(student):
@@ -320,7 +320,7 @@ def studentStatusUpdateNotification(student):
               + 'Neuer Status: ' + student.status \
               + 'Besuchen sie folgenden Link um weitere Informationen einzusehen:\n' \
               + link
-    return send_mail(subject, message, systemEmail, [to])
+    return send_mail(subject, message, systemEmail, [to], fail_silently=True)
 
 
 def officeRequestNotification(student, office):
@@ -332,7 +332,7 @@ def officeRequestNotification(student, office):
               + ' eine Anfrage eingesendet hat.\n' \
               + 'Besuchen sie folgenden Link um die Anfrage zu beantworten:\n' \
               + link
-    return send_mail(subject, message, systemEmail, [to])
+    return send_mail(subject, message, systemEmail, [to], fail_silently=True)
 
 
 def officeWaitForRatingNotification(student, office):
@@ -344,7 +344,7 @@ def officeWaitForRatingNotification(student, office):
               + ' zur Gutachteneingabe freigegeben werden kann.\n' \
               + 'Besuchen sie folgenden Link um weitere Informationen einzusehen:\n' \
               + link
-    return send_mail(subject, message, systemEmail, [to])
+    return send_mail(subject, message, systemEmail, [to], fail_silently=True)
 
 
 def officeWaitForSchedulingNotification(student, office):
@@ -356,7 +356,7 @@ def officeWaitForSchedulingNotification(student, office):
               + ' zur Terminfindung freigegeben werden kann.\n' \
               + 'Besuchen sie folgenden Link um weitere Informationen einzusehen:\n' \
               + link
-    return send_mail(subject, message, systemEmail, [to])
+    return send_mail(subject, message, systemEmail, [to], fail_silently=True)
 
 # Not used yet
 def officeRequestRejectedNotification(student, office):
@@ -368,7 +368,7 @@ def officeRequestRejectedNotification(student, office):
               + ' seitens eines Betreuers abgelehnt wurde.\n' \
               + 'Besuchen sie folgenden Link um die Anfrage zu bearbeiten:\n' \
               + link
-    return send_mail(subject, message, systemEmail, [to])
+    return send_mail(subject, message, systemEmail, [to], fail_silently=True)
 
 
 def officeWaitForConfirmation(student, office):
@@ -380,7 +380,7 @@ def officeWaitForConfirmation(student, office):
               + ' nun mögliche Verteidigungstermine besitzt, aus denen eines gewählt werden muss.\n' \
               + 'Besuchen sie folgenden Link um dies zu tun:\n' \
               + link
-    return send_mail(subject, message, systemEmail, [to])
+    return send_mail(subject, message, systemEmail, [to], fail_silently=True)
 
 
 def officeNoExaminersNotification(student, office):
@@ -392,4 +392,4 @@ def officeNoExaminersNotification(student, office):
               + ' nicht zu einem Verteidigungstermin führen kann, da es nicht genügend Prüfer gibt.\n' \
               + 'Besuchen sie folgenden Link um die Verteidigung manuell einzutragen:\n' \
               + link
-    return send_mail(subject, message, systemEmail, [to])
+    return send_mail(subject, message, systemEmail, [to], fail_silently=True)

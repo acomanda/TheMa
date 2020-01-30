@@ -633,7 +633,7 @@ def confirmAppointment(request):
             options += '<option value="' + str(elem.id) + '">' + elem.start.strftime("%m/%d/%Y %H/%M") + '</option>'
         context['appointments'] = options
 
-        content = getStudentRequest(request.session['requestId'])
+        content = getStudentRequest(None, request.session['requestId'])
         context['student'] = content['student']
         context['title'] = content['title']
         context['supervisor1'] = content['supervisor1'].name

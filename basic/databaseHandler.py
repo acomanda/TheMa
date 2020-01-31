@@ -5,6 +5,7 @@ from django.contrib.auth.backends import ModelBackend
 from django.contrib.auth.models import User
 from django.db import transaction
 from django.db.models import Q
+from django.db.models import F
 from datetime import timedelta, datetime
 
 
@@ -58,27 +59,43 @@ def getUser(email, zdvId, state, stateLength, name):
             else:
                 user = User.objects.create_user(username=email, email=email, password=randomString)
             student = Student.objects.create(zdvId=zdvId, name=name, email=email, user=user)
-            user.save()
-            student.save()
+            with transaction.atomic():
+                user.save()
+                student.save()
             return user
         user = User.objects.filter(email=email)
         return user[0]
 
     if group == "pruefer":
+        results = InternExaminer.objects.filter(email=email, zdvId__isnull=True)
+        if results.exists():
+            user = results[0].user
+            setZdvId(user, zdvId)
+            return user
         results = InternExaminer.objects.filter(email=email)
         if results.exists():
-            user = User.objects.filter(email=email)
-            return user[0]
-        temp = User.objects.filter(email=email)
-        if temp.exists():
-            user = temp[0]
-        else:
-            user = User.objects.create_user(username=email, email=email, password=randomString)
-        student = InternExaminer.objects.create(zdvId=zdvId, name=name, email=email, user=user)
-        with transaction.atomic():
-            user.save()
-            student.save()
-        return user
+            user = results[0].user
+            return user
+        return False
+
+
+def createInternExaminer(email, name):
+    password = randomString()
+    user = User.objects.create_user(username=email, email=email, password=password)
+    examiner = InternExaminer.objects.create(name=name, email=email, user=user)
+    with transaction.atomic():
+        user.save()
+        examiner.save()
+    return examiner.id
+
+
+def setZdvId(user, zdvId):
+    examiner = InternExaminer.objects.filter(user=user)
+    if examiner.count() == 0:
+        return False
+    examiner = examiner[0]
+    examiner.zdvId = zdvId
+    examiner.save()
 
 
 def getUserGroup(user):
@@ -146,7 +163,7 @@ def makeRequest(user, deadline, subject, supervisor1, supervisor2, topic, type, 
     student.save()
 
 
-def getStudentRequest(user, id=None):
+def getStudentRequest(user, id=None, email=None):
     """
     Receives a django user object or an student id and returns a
     dictionary with the informations about the request.
@@ -156,8 +173,16 @@ def getStudentRequest(user, id=None):
     """
     if user is not None:
         student = Student.objects.filter(user=user)[0]
-    else:
+    elif id is not None:
         student = Student.objects.filter(id=id)[0]
+    elif email is not None:
+        student = Student.objects.filter(email=email)
+        if student.count() > 0:
+            student = student[0]
+        else:
+            return None
+    if student is None:
+        return None
     result = {}
     result['title'] = student.title
     if student.isSupervisor1Intern:
@@ -178,6 +203,10 @@ def getStudentRequest(user, id=None):
     else:
         betreuer3 = None
         grade3 = None
+    if student.appointment is not None:
+        appointment = student.appointment.strftime("%m/%d/%Y %H/%M")
+    else:
+        appointment = None
     result['grade3'] = grade3
     result['supervisor3'] = betreuer3
     result['supervisor2'] = betreuer2
@@ -189,7 +218,44 @@ def getStudentRequest(user, id=None):
     result['topic'] = student.topic
     result['subject'] = student.subject
     result['student'] = student.name
+    result['appointment'] = appointment
     return result
+
+def updateRequest(variable, value, studentEmail):
+    student = getStudent(None, None, studentEmail)
+    if student is None:
+        return False
+    if variable == 'deadline':
+        student.deadline = value
+    elif variable == 'title':
+        student.title = value
+    elif variable == 'subject':
+        student.subject = value
+    elif variable == 'topic':
+        student.topic = value
+    elif variable == 'type':
+        student.type = value
+    elif variable == 'supervisor1':
+        student.isSupervisor1Intern = value[0]
+        student.supervisor1 = value[1:]
+        student.grade1 = None
+    elif variable == 'supervisor2':
+        student.isSupervisor2Intern = value[0]
+        student.supervisor2 = value[1:]
+        student.grade2 = None
+    elif variable == 'supervisor3':
+        student.isSupervisor3Intern = value[0]
+        student.supervisor3 = value[1:]
+        student.grade3 = None
+    elif variable == 'grade1':
+        student.grade1 = value
+    elif variable == 'grade2':
+        student.grade2 = value
+    elif variable == 'grade3':
+        student.grade3 = value
+    elif variable == 'appointment':
+        student.appointment = value
+    student.save()
 
 
 def createExternalExaminer(name, email, password):
@@ -205,6 +271,7 @@ def createExternalExaminer(name, email, password):
     with transaction.atomic():
         user.save()
         examiner.save()
+    return examiner.id
 
 
 def createOfficeAccount(email, password):
@@ -244,7 +311,7 @@ def confirmOrNotRequest(requestId, confirm, group, user=None):
         elif student.supervisor2 == examinerId and student.isSupervisor2Intern == intern:
             student.supervisor2Confirmed = confirm
             student.save()
-    checkStatus(student)
+    return checkStatus(student)
 
 
 def getExaminer(user, examinerId = None, intern=None):
@@ -354,7 +421,7 @@ def getRequestsOfExaminer(user, status, accepted=None, rated=None, answered=None
             requests = requests.exclude(id__in=invitations.values('student'))
         if final is not None:
             requests = requests.filter(
-                appointment__isnull=not final
+                officeConfirmedAppointment__isnull=not final
             )
         return requests
     else:
@@ -368,10 +435,13 @@ def checkStatus(student):
         if student.officeConfirmed and student.supervisor1Confirmed and student.supervisor2Confirmed:
             student.status = "Schreibphase"
             student.save()
+            return True
     if student.status == "Terminfindung":
         if student.appointmentEmerged is not None and student.officeConfirmedAppointment is not None:
             student.status = "Termin entstanden"
             student.save()
+            return True
+    return False
 
 
 def changeStatus(studentId, status):
@@ -414,7 +484,7 @@ def gradeRequest(user, studentId, note):
         elif student.supervisor3 == examinerId and student.isSupervisor3Intern == intern:
             student.grade3 = note
             student.save()
-        checkStatus(student)
+        return checkStatus(student)
     else:
         return False
 
@@ -461,29 +531,31 @@ def answerInvitation(user, studentId, timeSlotIdsList):
 def getExaminers(approvalToTest=None, subject=None, topic=None, title=None, excludedTopic=None, excludedExaminers=None,
                  maxInvitation=None):
     """Returns all examiners that correpsond to the given specifications"""
+    # todo if a user doesnt have a qualification it should not be included in topic excluded
     qualifications = Qualification.objects.all()
     if approvalToTest is not None:
-        qualifications = qualifications.filter(approvalToTest=approvalToTest)
+        qualifications = qualifications.intersection(Qualification.objects.filter(approvalToTest=approvalToTest))
     if subject is not None:
-        qualifications = qualifications.filter(subject=subject)
+        qualifications = qualifications.intersection(Qualification.objects.filter(subject=subject))
     if topic is not None:
-        qualifications = qualifications.filter(topic=topic)
+        qualifications = qualifications.intersection(Qualification.objects.filter(topic=topic))
     if title is not None:
-        qualifications = qualifications.filter(title=title)
+        qualifications = qualifications.intersection(Qualification.objects.filter(title=title))
     if excludedTopic is not None:
-        qualifications = qualifications.exclude(topic=excludedTopic)
-    externalExaminers = ExternalExaminer.objects.none()
-    internExaminers = InternExaminer.objects.none()
-    for elem in qualifications:
-        if elem.isExaminerIntern == False:
-            externalExaminers = externalExaminers | ExternalExaminer.objects.filter(id=elem.examiner)
-        if elem.isExaminerIntern == True:
-            internExaminers = internExaminers | InternExaminer.objects.filter(id=elem.examiner)
+        qualifications = qualifications.intersection(Qualification.objects.exclude(topic=excludedTopic))
+    externalExaminers = ExternalExaminer.objects.all()
+    internExaminers = InternExaminer.objects.all()
+    externalQualifications = qualifications.filter(isExaminerIntern=False)
+    internalQualifications = qualifications.filter(isExaminerIntern=True)
+    externalExaminers = externalExaminers and ExternalExaminer.objects.filter(
+        id__in=[o.examiner for o in externalQualifications])
+    internExaminers = internExaminers and InternExaminer.objects.filter(
+        id__in=[o.examiner for o in internalQualifications])
     if excludedExaminers is not None:
-        externalExaminers = externalExaminers and ExternalExaminer.objects.exclude(
-            user_id__in=[o.user_id for o in excludedExaminers])
-        internExaminers = internExaminers and InternExaminer.objects.exclude(
-            user_id__in=[o.user_id for o in excludedExaminers])
+        externalExaminers = externalExaminers.intersection(ExternalExaminer.objects.filter(
+            ~Q(user_id__in=[o.user_id for o in excludedExaminers])))
+        internExaminers = internExaminers.intersection(InternExaminer.objects.exclude(
+            ~Q(user_id__in=[o.user_id for o in excludedExaminers])))
     if maxInvitation is not None:
         invitationsExternal = Invitation.objects.filter(numberInvitations__gt=maxInvitation, isExaminerIntern=0)
         invitationsIntern = Invitation.objects.filter(numberInvitations__gt=maxInvitation, isExaminerIntern=1)
@@ -535,11 +607,12 @@ def inviteExaminer(student, examiner, role):
         intern = 0
     elif isinstance(examiner, InternExaminer):
         intern = 1
-    invitation = Invitation.objects.filter(examiner=examiner.id, isExaminerIntern=intern, student=student, role=role)
+    invitation = Invitation.objects.filter(examiner=examiner.id, isExaminerIntern=intern, student=student)
     if invitation.count() == 1:
         invitation = invitation[0]
         invitation.accepted = None
         invitation.numberInvitations += 1
+        invitation.role = role
         invitation.save()
     else:
         invitation = Invitation(examiner=examiner.id, isExaminerIntern=intern, student=student, role=role,
@@ -547,13 +620,15 @@ def inviteExaminer(student, examiner, role):
         invitation.save()
 
 
-def getStudent(user, studentId=None):
+def getStudent(user, studentId=None, email=None):
     """Receives a Django User object
     Returns the corresponding Student Object"""
     if user is not None:
         student = Student.objects.filter(user=user)
-    else:
+    elif studentId is not None:
         student = Student.objects.filter(id=studentId)
+    elif email is not None:
+        student = Student.objects.filter(email=email)
     if student.exists():
         return student[0]
 
@@ -748,6 +823,12 @@ def getRequestConstellation(studentId, accepted=None):
     return constellation
 
 
+def getStudentId(email):
+    student = Student.objects.filter(email=email)
+    if student.count() > 0:
+        return student[0].id
+
+
 def setAppointmentEmerged(studentId):
     """
 
@@ -820,3 +901,110 @@ def endRequest(studentId, slotId):
         student.officeConfirmedAppointment = True
         student.appointment = timeSlot.start
         student.save()
+
+
+def restartScheduling(studentId, maxInvitation):
+    """
+    The function deletes all availabilities of invitations and requests and re invite all examiners.
+    :param studentId: Id of the request/student
+    :return: An array that contains all examiners that must be removed of the request
+    """
+    result = []
+    invitations = Invitation.objects.filter(student_id=studentId)
+    with transaction.atomic():
+        invitations.filter(accepted__isnull=False).update(accepted=None, numberInvitations=F('numberInvitations')+1)
+        AvailabilityRequest.objects.filter(student_id=studentId).delete()
+        AvailabilityInvitation.objects.filter(invitation__in=[o for o in invitations]).delete()
+    for elem in invitations:
+        if elem.numberInvitations > maxInvitation:
+            elem.accepted = 0
+            elem.save()
+            result.append((elem.examiner, elem.isExaminerIntern))
+    return result
+
+
+def reInviteExaminer(studentId, examinerId, intern, maxInvitation, role):
+    invitation = Invitation.objects.filter(student_id=studentId, examiner=examinerId, isExaminerIntern=intern)
+    if invitation.count() == 0:
+        inviteExaminer(getStudent(None, studentId), getExaminer(None, examinerId, intern), role)
+        return True
+    if invitation[0].numberInvitations >= maxInvitation:
+        return False
+    invitation.update(accepted=None, numberInvitations=F('numberInvitations')+1, role=role)
+    updateAvailabilities(studentId)
+    return True
+
+
+def updateAvailabilities(studentId):
+    invitations = Invitation.objects.filter(student_id=studentId, accepted=True)
+    timeSlots = []
+    for elem in invitations:
+        availabilities = AvailabilityInvitation.objects.filter(invitation=elem, deleted__isnull=True)
+        for elem in availabilities:
+            if elem.timeSlot not in timeSlots:
+                timeSlots.append(elem.timeSlot)
+    for elem in timeSlots:
+        if AvailabilityRequest.objects.filter(student_id=studentId, timeSlot=elem).count() == 0:
+            AvailabilityRequest(student_id=studentId, timeSlot=elem).save()
+
+
+def addQualification(examinerId, isExaminerIntern, title, subject, topic, approval):
+    qualification = Qualification(title=title, subject=subject, topic=topic, approvalToTest=approval,
+                                  examiner=examinerId, isExaminerIntern=isExaminerIntern)
+    qualification.save()
+
+
+def setExam(studentId, timeSlot, constellation):
+    # set all invitations to rejected
+    Invitation.objects.filter(student_id=studentId).update(accepted=False)
+    for role, examiner in constellation.items():
+        examinerData = getExaminerInformations(examiner)
+        invitation = Invitation.objects.filter(examiner=examinerData['id'], isExaminerIntern=examinerData['isIntern'],
+                                  student_id=studentId)
+        if invitation.count() > 0:
+            invitation.update(accepted=True)
+        else:
+            Invitation(accepted=True, numberInvitations=1, examiner=examinerData['id'],
+                       isExaminerIntern=examinerData['isIntern'], student_id=studentId, role=role).save()
+    Student.objects.filter(id=studentId).update(officeConfirmedAppointment=True, appointmentEmerged=True,
+                                                appointment=timeSlot)
+    return True
+
+
+
+def checkConstellation(studentId, constellation):
+    result = True
+    # check that there are not the same examiner twice in the constellation
+    if not len(list(constellation.values())) == len(set(list(constellation.values()))):
+        result = False
+    requestData = getStudentRequest(None, studentId)
+    # Check that the supervisors are in the constellation
+    if requestData['supervisor1'] not in list(constellation.values()):
+        result = False
+    if requestData['supervisor2'] not in list(constellation.values()):
+        result = False
+    # check that the external examiner is external
+    externalExaminerData = getExaminerInformations(constellation['externalExaminer'])
+    if requestData['topic'] in externalExaminerData['topic']:
+        result = False
+    # check if every examiner has the approval to test in this topic
+    return result
+
+
+def getExaminerInformations(examiner):
+    result = {}
+    if isinstance(examiner, ExternalExaminer):
+        intern = 0
+    elif isinstance(examiner, InternExaminer):
+        intern = 1
+    result['topic'] = []
+    result['isIntern'] = intern
+    result['id'] = examiner.id
+    qualification = Qualification.objects.filter(isExaminerIntern=intern, examiner=examiner.id)
+    for elem in qualification:
+        result['topic'].append(elem.topic)
+    return result
+
+
+def getOffice():
+    return Office.objects.filter(id=1)[0]

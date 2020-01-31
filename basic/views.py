@@ -23,6 +23,8 @@ def index(request):
         if request.session['state'] == request.GET['state']:
             claims = getClaims(request.GET['code'])
             user = getUser(claims['email'], claims['sub'], request.GET['state'], stateLength, claims['name'])
+            if not user:
+                return render(request, 'index.html', {'error2': "Bitte melden Sie sich beim Prüfungsamt <br> "})
             user.backend = 'basic.auth_backend.PasswordlessAuthBackend'
             authenticate(username=claims['email'])
             login(request, user)
@@ -66,6 +68,9 @@ def homeOffice(request):
             request.session['requestId'] = request.POST.get('details')
             return redirect('/confirmrequest')
         if request.POST.get('rating'):
+            student = getStudent(None, request.POST.get('rating'))
+            examinerRatingNotification(getExaminer(None, student.supervisor1, student.isSupervisor1Intern), student)
+            examinerRatingNotification(getExaminer(None, student.supervisor2, student.isSupervisor2Intern), student)
             changeStatus(request.POST.get('rating'), "Gutachteneingabe")
         if request.POST.get('scheduling'):
             request.session['requestId'] = request.POST.get('scheduling')
@@ -91,7 +96,7 @@ def homeOffice(request):
         for elem in container1Request:
             container1 += '<p class="alignleft">' + elem.name + ' </p> \n'
             container1 += '<p class="alignright"><button type="submit" name="rating" value="' + str(elem.id) \
-                          + '">Gutachteineingabe frei geben</button></p><br/><br/>'
+                          + '">Gutachteneingabe frei geben</button></p><br/><br/>'
         container1Request = getRequestsOfOffice("Schreibphase").exclude(id__in=container1Request.values('id'))
         for elem in container1Request:
             container1 += '<p class="alignleft">' + elem.name + ' </p> \n'
@@ -126,11 +131,11 @@ def homeOffice(request):
         context['container3'] = container3
 
         # Container 4
-        container4Request = getRequestsOfOffice("Terminfindung", None, None, None, None, True, False)
-        container4 = ""
+        container4 = ''
+        container4Request = getRequestsOfOffice("Termin entstanden", None, None, None, None, None, False)
         for elem in container4Request:
             container4 += '<p class="alignleft">' + elem.name + ' </p> \n'
-            container4 += '<p class="alignright"><button type="submit" name="supervisor3" value="' + str(elem.id) \
+            container4 += '<p class="alignright"><button type="submit" name="appointment" value="' + str(elem.id) \
                           + '">Details</button></p><br/><br/>'
         context['container4'] = container4
 
@@ -140,11 +145,6 @@ def homeOffice(request):
         for elem in container5Request:
             container5 += '<p class="alignleft">' + elem.name + ' </p> \n'
             container5 += '<p class="alignright">' + str(elem.appointment)[:16] + '</p><br/><br/>'
-        container5Request = getRequestsOfOffice("Termin entstanden", None, None, None, None, None, False)
-        for elem in container5Request:
-            container5 += '<p class="alignleft">' + elem.name + ' </p> \n'
-            container5 += '<p class="alignright"><button type="submit" name="appointment" value="' + str(elem.id) \
-                          + '">Details</button></p><br/><br/>'
         context['container5'] = container5
 
         return render(request, 'homePruefungsamt.html', context)
@@ -177,6 +177,15 @@ def homeStudent(request):
             context['grade2'] = "/"
         else:
             context['grade2'] = content['grade2']
+        if content['supervisor3']:
+            context['supervisor3'] = 'Betreuer 3:<br><br>'
+            context['supervisor3r'] = content['supervisor3'].name + '<br><br>'
+        if content['grade3']:
+            context['grade3'] = 'Note Betreuer 3:<br><br>'
+            context['grade3r'] = str(content['grade3']) + '<br><br>'
+        if content['appointment']:
+            context['appointment'] = 'Verteidigung:<br><br>'
+            context['appointmentr'] = content['appointment']
         return render(request, 'requestDetails.html', context)
     else:
         return redirect('/')
@@ -274,8 +283,8 @@ def confirmRequest(request):
     context['group'] = group
     content = getStudentRequest(None, request.session['requestId'])
     context['title'] = content['title']
-    context['supervisor1'] = content['supervisor1']
-    context['supervisor2'] = content['supervisor2']
+    context['supervisor1'] = content['supervisor1'].name
+    context['supervisor2'] = content['supervisor2'].name
     context['deadline'] = content['deadline']
     context['topic'] = content['topic']
     context['type'] = content['type']
@@ -284,10 +293,22 @@ def confirmRequest(request):
     if request.POST.get('answerRequest'):
         if request.POST.get('answerRequest') == "accept":
             if group == "Examiner":
-                confirmOrNotRequest(request.session['requestId'], True, "Examiner", request.user)
+                # notify the users
+                student = getStudent(None, request.session['requestId'])
+                if confirmOrNotRequest(request.session['requestId'], True, "Examiner", request.user):
+                    studentStatusUpdateNotification(student)
+                if student.supervisor1Confirmed and student.supervisor2Confirmed and student.officeConfirmed:
+                    officeWaitForRatingNotification(student, getOffice())
+
                 return redirect('/')
             else:
-                confirmOrNotRequest(request.session['requestId'], True, "Office", request.user)
+                # notify the users
+                student = getStudent(None, request.session['requestId'])
+                if confirmOrNotRequest(request.session['requestId'], True, "Office", request.user):
+                    studentStatusUpdateNotification(student)
+                if student.supervisor1Confirmed and student.supervisor2Confirmed and student.officeConfirmed:
+                    officeWaitForRatingNotification(student, getOffice())
+
                 return redirect('/')
         elif request.POST.get('answerRequest') == "reject":
             if group == "Examiner":
@@ -303,26 +324,37 @@ def anfrage(request):
     """This function controls the behavior of the page that is used to make a new request."""
     if request.user.is_authenticated:
         context = {}
+        context['error'] = ''
+        group = getUserGroup(request.user)
+        context['group'] = group
         if request.POST.get('anfrage') == "anfrage":
             form = Anfrage(request.POST)
-            if (form.is_valid() and form.cleaned_data['betreuer1'] != form.cleaned_data['betreuer2']):
-                abgabetermin = form.cleaned_data['abgabetermin']
-                fach = form.cleaned_data['fach']
-                betreuer1 = form.cleaned_data['betreuer1'][1:]
-                betreuer1Intern = form.cleaned_data['betreuer1'][0] == "1"
-                betreuer2 = form.cleaned_data['betreuer2'][1:]
-                betreuer2Intern = form.cleaned_data['betreuer2'][0] == "1"
-                themengebiet = form.cleaned_data['themengebiet']
-                art = form.cleaned_data['art']
-                titel = form.cleaned_data['titel']
-                makeRequest(request.user, abgabetermin, fach, betreuer1, betreuer2, themengebiet, art, titel, betreuer1Intern, betreuer2Intern)
+            if request.POST.get('abgabetermin') and request.POST.get('fach') and request.POST.get('betreuer1')\
+                and request.POST.get('betreuer2') and request.POST.get('themengebiet') and request.POST.get('art')\
+                and request.POST.get('titel'):
+                abgabetermin = request.POST.get('abgabetermin')
+                fach = request.POST.get('fach')
+                betreuer1 = request.POST.get('betreuer1')[1:]
+                betreuer1Intern = request.POST.get('betreuer1')[0] == "1"
+                betreuer2 = request.POST.get('betreuer2')[1:]
+                betreuer2Intern = request.POST.get('betreuer2')[0] == "1"
+                themengebiet = request.POST.get('themengebiet')
+                art = request.POST.get('art')
+                titel = request.POST.get('titel')
+                makeRequest(request.user, abgabetermin, fach, betreuer1, betreuer2, themengebiet, art, titel,
+                            betreuer1Intern, betreuer2Intern)
+                #notify the users
+                examinerSupervisorNotification(getExaminer(None, betreuer1, betreuer1Intern), getStudent(request.user))
+                examinerSupervisorNotification(getExaminer(None, betreuer2, betreuer2Intern), getStudent(request.user))
+                officeRequestNotification(getStudent(request.user), getOffice())
+
                 return redirect('/')
-            else:
-                context = {}
+            elif request.POST.get('betreuer2') and request.POST.get('betreuer1') \
+                    and request.POST.get('betreuer2') == request.POST.get('betreuer1'):
+                context['errorSupervisor'] = '<ul class="errorlist"><li>Betreuer<ul class="errorlist">' \
+                                             '<li>Wähle verschiedene Betreuer aus.</li></ul></li></ul>'
+            if not form.is_valid():
                 context['error'] = form.errors
-                if form.cleaned_data['betreuer1'] == form.cleaned_data['betreuer2']:
-                    context['errorSupervisor'] = '<ul class="errorlist"><li>Betreuer<ul class="errorlist">' \
-                                                 '<li>Wähle verschiedene Betreuer aus.</li></ul></li></ul>'
         if getUserGroup(request.user) == "Student" and not haveRequest(request.user):
             # Fill supervisor selections with data of database
             supervisors = getExaminers()
@@ -361,12 +393,13 @@ def grading(request):
     group = getUserGroup(request.user)
     context['group'] = group
     if request.POST.get('confirm'):
-        gradeRequest(request.user, request.session['requestId'], float(request.POST.get('grade')))
+        if gradeRequest(request.user, request.session['requestId'], float(request.POST.get('grade'))):
+            officeWaitForSchedulingNotification(getStudent(None, request.session['requestId']), getOffice())
         return redirect('/')
     content = getStudentRequest(None, request.session['requestId'])
     context['title'] = content['title']
-    context['supervisor1'] = content['supervisor1']
-    context['supervisor2'] = content['supervisor2']
+    context['supervisor1'] = content['supervisor1'].name
+    context['supervisor2'] = content['supervisor2'].name
     context['deadline'] = content['deadline']
     context['topic'] = content['topic']
     context['type'] = content['type']
@@ -381,9 +414,12 @@ def supervisor3(request):
     context['group'] = group
     if request.POST.get('confirm'):
         if not setSupervisor3(request.session['requestId'], request.POST.get('supervisor3')[1],
-                       request.POST.get('supervisor3')[0]):
+                              request.POST.get('supervisor3')[0]):
             context['error'] = 'Wähle einen Drittprüfer, der nicht bereits ein Prüfer ist.'
         else:
+            examinerSupervisorNotification(getExaminer(None, request.POST.get('supervisor3')[1],
+                                                       request.POST.get('supervisor3')[0]),
+                                           getStudent(None, request.session['requestId']))
             return redirect('/')
     content = getStudentRequest(None, request.session['requestId'])
     context['title'] = content['title']
@@ -395,7 +431,8 @@ def supervisor3(request):
     context['status'] = content['status']
     context['subject'] = content['subject']
     supervisors = ''
-    externalExaminers, internExaminers = getExaminers(True)
+    externalExaminers, internExaminers = getExaminers(True, None, None, None, None, [content['supervisor1'],
+                                                                                     content['supervisor2']])
     for elem in externalExaminers:
         supervisors += '<option value="0' + str(elem.id) + '">' + elem.name + '</option>'
     for elem in internExaminers:
@@ -409,12 +446,11 @@ def chairman(request):
     group = getUserGroup(request.user)
     context['group'] = group
     student = getStudent(None, request.session['requestId'])
-    if student not in getRequestsOfOffice("Gutachteneingabe", None, None, None, True):
+    if not getRequestsOfOffice("Gutachteneingabe", None, None, True, None).filter(id=student.id).count() > 0:
         return redirect('/')
     if request.POST.get('confirm'):
         if len(request.POST['chairman']) > 1:
             examiner = getExaminer(None, int(request.POST['chairman'][1:]), int(request.POST['chairman'][0]))
-            print(examiner)
             if not createExaminerConstellation(Student.objects.filter(id=request.session['requestId'])[0].user,
                                                {'chairman': examiner}):
 
@@ -431,6 +467,12 @@ def chairman(request):
     context['type'] = content['type']
     context['status'] = content['status']
     context['subject'] = content['subject']
+    if content['supervisor3']:
+        context['supervisor3'] = 'Betreuer 3:<br><br>'
+        context['supervisor3r'] = content['supervisor3'].name + '<br><br>'
+    if content['grade3']:
+        context['grade3'] = 'Note Betreuer 3:<br><br>'
+        context['grade3r'] = str(content['grade3']) + '<br><br>'
     supervisors = ''
     externalExaminers, internExaminers = getExaminers(True)
     for elem in externalExaminers:
@@ -452,6 +494,7 @@ def answerInvitation(request):
                     moveAvailabilitiesToRequest(request.user, request.session['requestId'])
                     acceptOrNotInvitation(request.user, request.session['requestId'], True)
                     invitationAnswered(request.session['requestId'], getExaminer(request.user), True)
+
                     return redirect('/')
                 else:
                     context['error'] = 'Wähle erst Zeitslots aus, bevor du die Anfrage akzeptierst.'
@@ -537,7 +580,7 @@ def answerInvitation(request):
                 else:
                     context['slot' + str(i) + str(j)] = 'Nicht verfügbar'
         # Pass request information
-        content = getStudentRequest(request.session['requestId'])
+        content = getStudentRequest(None, request.session['requestId'])
         context['student'] = content['student']
         context['title'] = content['title']
         context['supervisor1'] = content['supervisor1'].name
@@ -548,6 +591,11 @@ def answerInvitation(request):
         context['status'] = content['status']
         context['subject'] = content['subject']
         examinerId, intern = getExaminer(request.user)
+        if isSupervisor(request.session['requestId'], examinerId, intern):
+            context['confirmationText'] = 'Wollen Sie als Supervisor wirklich ablehnen? Dies würde verursachen, dass ' \
+                                          'alle Prüfer erneut eingeladen werden. Sie inklusive.'
+        else:
+            context['confirmationText'] = 'Wollen Sie wirklich ablehnen?'
         context['role'] = getRole(examinerId, intern, request.session['requestId'])
         if content['grade1'] is None:
             context['grade1'] = "/"
@@ -574,12 +622,210 @@ def confirmAppointment(request):
         context['group'] = getUserGroup(request.user)
         if request.POST.get('confirm'):
             endRequest(request.session['requestId'], request.POST['slot'])
+            constellation = getRequestConstellation(request.session['requestId'], True)
+            student = getStudent(None, request.session['requestId'])
+            for key in constellation:
+                examinerFinalAppointmentNotification(constellation[key], student)
             return redirect('/')
         appointments = getRequestsAppointments(request.session['requestId'])
         options = ''
         for elem in appointments:
-            options += '<option value="' + str(elem.id) + '">' + elem.start.strftime("%m/%d/%Y") + '</option>'
+            options += '<option value="' + str(elem.id) + '">' + elem.start.strftime("%m/%d/%Y %H/%M") + '</option>'
         context['appointments'] = options
+
+        content = getStudentRequest(None, request.session['requestId'])
+        context['student'] = content['student']
+        context['title'] = content['title']
+        context['supervisor1'] = content['supervisor1'].name
+        context['supervisor2'] = content['supervisor2'].name
+        context['deadline'] = content['deadline']
+        context['topic'] = content['topic']
+        context['type'] = content['type']
+        context['status'] = content['status']
+        context['subject'] = content['subject']
+        if content['grade1'] is None:
+            context['grade1'] = "/"
+        else:
+            context['grade1'] = content['grade1']
+        if content['grade2'] is None:
+            context['grade2'] = "/"
+        else:
+            context['grade2'] = content['grade2']
+        if content['supervisor3']:
+            context['supervisor3'] = 'Betreuer 3:<br><br>'
+            context['supervisor3r'] = content['supervisor3'].name + '<br><br>'
+        if content['grade3']:
+            context['grade3'] = 'Note Betreuer 3:<br><br>'
+            context['grade3r'] = str(content['grade3']) + '<br><br>'
         return render(request, 'appointment.html', context)
     else:
         return redirect('/')
+
+
+def management(request):
+    context = {}
+    context['group'] = getUserGroup(request.user)
+    if context['group'] != "Office":
+        return redirect('/')
+    if request.POST.get('send') == 'request':
+        return redirect('/managementRequest')
+    if request.POST.get('send') == 'intern':
+        return redirect('/managementIntern')
+    if request.POST.get('send') == 'extern':
+        return redirect('/managementExtern')
+    return render(request, 'management.html', context)
+
+
+def managementIntern(request):
+    context = {}
+    context['group'] = getUserGroup(request.user)
+    if context['group'] != "Office":
+        return redirect('/')
+    if request.POST.get('send') == 'intern':
+        if request.POST.get('type') and request.POST.get('subject') and request.POST.get('topic') \
+                and request.POST.get('approval') and request.POST.get('email') \
+                and request.POST.get('name'):
+            examinerId = createInternExaminer(request.POST.get('email'), request.POST.get('name'))
+            addQualification(examinerId, True, request.POST.get('type'), request.POST.get('subject'),
+                             request.POST.get('topic'), request.POST.get('approval'))
+            context['error1'] = 'Prüfer hinzugefügt'
+        else:
+            context['error1'] = 'Füllen Sie bitte alles aus'
+    subjectsList = getSubjects()
+    subjects = ''
+    for elem in subjectsList:
+        subjects = '<option value="' + elem + '">' + elem + '</option>'
+    context['subjects'] = subjects
+    # Fill topics selection with data of database
+    topicsList = getTopics('Informatik')
+    topics = ''
+    for elem in topicsList:
+        topics += '<option value="' + elem + '">' + elem + '</option>'
+    context['topics'] = topics
+    return render(request, 'managementExaminer.html', context)
+
+
+def managementExtern(request):
+    context = {}
+    context['group'] = getUserGroup(request.user)
+    if context['group'] != "Office":
+        return redirect('/')
+    if request.POST.get('send') == 'extern':
+        if request.POST.get('type') and request.POST.get('subject') and request.POST.get('topic') \
+                and request.POST.get('approval') and request.POST.get('password') and request.POST.get('email') \
+                and request.POST.get('name'):
+            examinerId = createExternalExaminer(request.POST.get('name'), request.POST.get('email'),
+                                                request.POST.get('password'))
+            addQualification(examinerId, False, request.POST.get('type'), request.POST.get('subject'),
+                             request.POST.get('topic'), request.POST.get('approval'))
+            context['error1'] = 'Prüfer hinzugefügt'
+        else:
+            context['error1'] = 'Füllen Sie bitte alles aus'
+    subjectsList = getSubjects()
+    subjects = ''
+    for elem in subjectsList:
+        subjects = '<option value="' + elem + '">' + elem + '</option>'
+    context['subjects'] = subjects
+    # Fill topics selection with data of database
+    topicsList = getTopics('Informatik')
+    topics = ''
+    for elem in topicsList:
+        topics += '<option value="' + elem + '">' + elem + '</option>'
+    context['topics'] = topics
+    return render(request, 'managementExaminer.html', context)
+
+
+def managementRequest(request):
+    context = {}
+    context['group'] = getUserGroup(request.user)
+    roles = ['chairman', 'reporter1', 'reporter2', 'examiner', 'externalExaminer']
+    if context['group'] != "Office":
+        return redirect('/')
+    if request.POST.get('send') == 'email' or request.POST.get('change'):
+        if request.POST.get('send') == 'email':
+            email = request.POST.get('email')
+            request.session['email'] = email
+        else:
+            email = request.session['email']
+        if request.POST.get('change'):
+            if request.POST.get('change') == 'oral':
+                if request.POST.get('appointment1') and request.POST.get('chairman') and request.POST.get('reporter1') \
+                        and request.POST.get('reporter2') and request.POST.get('examiner') \
+                        and request.POST.get('externalExaminer'):
+                    constellation = {}
+                    for role in roles:
+                        constellation[role] = getExaminer(None, request.POST.get(role)[1:],
+                                                          int(request.POST.get(role)[0]))
+                    if checkConstellation(getStudentId(request.session['email']), constellation):
+                        if setExam(getStudentId(request.session['email']),
+                                   request.POST.get('appointment1') + ' ' + request.POST.get('appointment2'),
+                                   constellation):
+                            context['error1'] = 'Verteidigung erstellt<br><br>'
+                        else:
+                            context['error1'] = 'Konstellation oder Zeitslot nicht erlaubt<br><br>'
+                    else:
+                        context['error1'] = 'Konstellation nicht erlaubt <br><br>'
+            elif request.POST.get('change') == 'appointment':
+                updateRequest('appointment', request.POST.get('appointment1') + ' '
+                              + request.POST.get('appointment2'), email)
+            else:
+                updateRequest(request.POST.get('change'), request.POST.get(request.POST.get('change')), email)
+        content = getStudentRequest(None, None, email)
+        if content is not None:
+            context['found'] = True
+            context['title'] = content['title']
+            context['supervisor1'] = content['supervisor1'].name
+            context['supervisor2'] = content['supervisor2'].name
+            context['deadline'] = content['deadline']
+            context['topic'] = content['topic']
+            context['type'] = content['type']
+            context['status'] = content['status']
+            context['subject'] = content['subject']
+            if content['grade1'] is None:
+                context['grade1'] = "/"
+            else:
+                context['grade1'] = content['grade1']
+            if content['grade2'] is None:
+                context['grade2'] = "/"
+            else:
+                context['grade2'] = content['grade2']
+            if content['supervisor3']:
+                context['supervisor3Set'] = True
+                context['supervisor3'] = 'Betreuer 3:'
+                context['supervisor3r'] = content['supervisor3'].name
+            if content['grade3']:
+                context['grade3Set'] = True
+                context['grade3'] = 'Note Betreuer 3:'
+                context['grade3r'] = str(content['grade3'])
+            if content['appointment']:
+                context['appointment'] = 'Verteidigung:'
+                context['appointmentr'] = content['appointment']
+            else:
+                context['appointmentr'] = '/'
+            supervisors = getExaminers()
+            supervisorSelections = ''
+            for elem in supervisors[1]:
+                supervisorSelections += '<option value="1' + str(elem.id) + '">' + elem.name + '</option>'
+            for elem in supervisors[0]:
+                supervisorSelections += '<option value="0' + str(elem.id) + '">' + elem.name + '</option>'
+            context['supervisors'] = supervisorSelections
+            # Fill subjects selection with data of database
+            subjectsList = getSubjects()
+            subjects = ''
+            for elem in subjectsList:
+                subjects = '<option value="' + elem + '">' + elem + '</option>'
+            context['subjects'] = subjects
+            # Fill topics selection with data of database
+            topicsList = getTopics('Informatik')
+            topics = ''
+            for elem in topicsList:
+                topics += '<option value="' + elem + '">' + elem + '</option>'
+            context['topics'] = topics
+            constellation = getRequestConstellation(getStudentId(request.session['email']))
+            for key in constellation:
+                constellation[key] = constellation[key].name
+            context.update(constellation)
+            for role in roles:
+                if not role in context:
+                    context[role] = '/'
+    return render(request, 'managementRequest.html', context)

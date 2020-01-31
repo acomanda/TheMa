@@ -14,4 +14,8 @@ urlpatterns = [
     path('chairman', views.chairman),
     path('answerInvitation', views.answerInvitation),
     path('confirmAppointment', views.confirmAppointment),
+    path('management', views.management),
+    path('managementIntern', views.managementIntern),
+    path('managementExtern', views.managementExtern),
+    path('managementRequest', views.managementRequest),
 ]

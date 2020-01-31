@@ -1,0 +1,30 @@
+body {
+    overflow: hidden;
+    position: relative;
+    top: 0;
+    width: 100%;
+    text-align: center;
+    display: inline-block;
+    overflow: scroll;
+}
+
+.button {
+    display: inline-block;
+    margin-top: 10%;
+}
+
+@media only screen and (max-width: 599px) {
+    .mainCenter {
+        width: 100%;
+        height: 30%;
+    }
+}
+
+@media only screen and (min-width: 600px) {
+    .mainCenter {
+        width: 50%;
+        height: 30%;
+        margin-right: 25%;
+        margin-left: 25%;
+    }
+}

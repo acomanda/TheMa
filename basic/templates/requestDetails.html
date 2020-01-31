@@ -25,11 +25,13 @@
             Fach:<br><br>
             Themengebiet:<br><br>
             Art der Arbeit:<br><br>
-            {% if group == "Student"%}
+            {% if request.path == '/homestudent' %}
             Status:<br><br>
             Note Betreuer 1:<br><br>
             Note Betreuer 2:<br><br>
-            {{ drittgutachter }}
+            {{ supervisor3 | safe }}
+            {{ grade3 | safe }}<br><br>
+            {{ appointment | safe }}
             {% elif request.path == '/confirmrequest' %}
             <form method="post">{% csrf_token %}
                 <button type="submit" name="answerRequest" value="accept">Accept</button>
@@ -54,7 +56,9 @@
             &nbsp; &nbsp; <u>{{status}}</u><br><br>
             &nbsp; &nbsp; {{grade1}}<br><br>
             &nbsp; &nbsp; {{grade2}}<br><br>
-                {{grade3}}
+                &nbsp;&nbsp;&nbsp;&nbsp;{{ supervisor3r | safe }}
+                    &nbsp;&nbsp;&nbsp;&nbsp{{ grade3r | safe }} <br><br>
+                    &nbsp&nbsp&nbsp&nbsp{{ appointmentr | safe }}
                 {% elif request.path == '/confirmrequest' %}
                 <form method="post">{% csrf_token %}
                     <button type="submit" name="answerRequest" value="reject">Reject</button>

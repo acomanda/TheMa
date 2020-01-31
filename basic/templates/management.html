@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="../static/management.css">
+    <meta charset="UTF-8">
+    <title>
+        Verwaltung
+    </title>
+    {% include "navBar.html" %}
+</head>
+<body>
+    <div class="main">
+        <div class="mainCenter">
+            <form method="post">{% csrf_token %}
+                <button type="submit" class="button" name="send" value="request">Anfrage suchen <br> und bearbeiten</button> <br>
+                <button type="submit" class="button" name="send" value="extern">Externen Prüfer <br> hinzufügen/ <br> bearbeiten</button>
+                <button type="submit" class="button" name="send" value="intern">Internen Prüfer <br> hinzufügen/ <br> bearbeiten</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

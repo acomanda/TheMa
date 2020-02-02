@@ -81,6 +81,8 @@
                     </select>
                         <button name="change" value="supervisor3">Anwenden</button><br><br>
                     {% endif %}
+                    {{ error2 | safe }}
+                    <button name="confirmations" value="reset">Bestätigungen zurücksetzen</button><br><br>
 
                     Note 1: {{ grade1 | safe }} <br>
                     <select name="grade1">

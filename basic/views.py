@@ -755,7 +755,7 @@ def managementRequest(request):
     roles = ['chairman', 'reporter1', 'reporter2', 'examiner', 'externalExaminer']
     if context['group'] != "Office":
         return redirect('/')
-    if request.POST.get('send') == 'email' or request.POST.get('change'):
+    if request.POST.get('send') == 'email' or request.POST.get('change') or request.POST.get('confirmations'):
         if request.POST.get('send') == 'email':
             email = request.POST.get('email')
             request.session['email'] = email
@@ -784,6 +784,11 @@ def managementRequest(request):
                               + request.POST.get('appointment2'), email)
             else:
                 updateRequest(request.POST.get('change'), request.POST.get(request.POST.get('change')), email)
+        if request.POST.get('confirmations'):
+            updateRequest('supervisor1Confirmed', None, email)
+            updateRequest('supervisor2Confirmed', None, email)
+            updateRequest('officeConfirmed', None, email)
+            context['error2'] = 'Bestätigungen zurückgesetzt <br><br>'
         content = getStudentRequest(None, None, email)
         if content is not None:
             context['found'] = True

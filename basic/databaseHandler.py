@@ -255,6 +255,12 @@ def updateRequest(variable, value, studentEmail):
         student.grade3 = value
     elif variable == 'appointment':
         student.appointment = value
+    elif variable == 'supervisor1Confirmed':
+        student.supervisor1Confirmed = value
+    elif variable == 'supervisor2Confirmed':
+        student.supervisor2Confirmed = value
+    elif variable == 'officeConfirmed':
+        student.officeConfirmed = value
     student.save()
 
 

@@ -86,12 +86,18 @@ def homeOffice(request):
         container1 = ""
         for elem in container1Request:
             container1 += '<p class="alignleft">' + elem.name + ' </p> \n'
-            container1 += '<p class="alignright"><button type="submit" name="details" value="' + str(elem.id) \
-                          + '">Details</button></p><br/><br/>'
+            if isRequestRejected(elem):
+                container1 += '<p class="alignright">Abgelehnt</p><br/><br/>'
+            else:
+                container1 += '<p class="alignright"><button type="submit" name="details" value="' + str(elem.id) \
+                              + '">Details</button></p><br/><br/>'
         container1Request = getRequestsOfOffice("Anfrage wird bestätigt", True)
         for elem in container1Request:
             container1 += '<p class="alignleft">' + elem.name + ' </p> \n'
-            container1 += '<p class="alignright">Bestätigt</p><br/><br/>'
+            if isRequestRejected(elem):
+                container1 += '<p class="alignright">Abgelehnt</p><br/><br/>'
+            else:
+                container1 += '<p class="alignright">Bestätigt</p><br/><br/>'
         container1Request = getRequestsOfOffice("Schreibphase", None, True)
         for elem in container1Request:
             container1 += '<p class="alignleft">' + elem.name + ' </p> \n'
@@ -214,8 +220,11 @@ def homeExaminer(request):
         container1Request = getRequestsOfExaminer(request.user, "Anfrage wird bestätigt", False)
         for elem in container1Request:
             container1 += '<p class="alignleft">' + elem.name + ' </p>'
-            container1 += '<p class="alignright"><button type="submit" name="details" value="' + str(elem.id) \
-                          + '">Details</button></p><br/><br/>'
+            if isRequestRejected(elem):
+                container1 += '<p class="alignright">Abgelehnt</p><br/><br/>'
+            else:
+                container1 += '<p class="alignright"><button type="submit" name="details" value="' + str(elem.id) \
+                              + '">Details</button></p><br/><br/>'
         container1Request = getRequestsOfExaminer(request.user, "Schreibphase", True)
         for elem in container1Request:
             container1 += '<p class="alignleft">' + elem.name + ' </p>'
@@ -223,7 +232,10 @@ def homeExaminer(request):
         container1Request = getRequestsOfExaminer(request.user, "Anfrage wird bestätigt", True)
         for elem in container1Request:
             container1 += '<p class="alignleft">' + elem.name + ' </p>'
-            container1 += '<p class="alignright">Anfrage wird bestätigt</p><br/><br/>'
+            if isRequestRejected(elem):
+                container1 += '<p class="alignright">Abgelehnt</p><br/><br/>'
+            else:
+                container1 += '<p class="alignright">Anfrage wird bestätigt</p><br/><br/>'
         context['container1'] = container1
 
         #Container 2

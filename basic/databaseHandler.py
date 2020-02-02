@@ -1008,3 +1008,13 @@ def getExaminerInformations(examiner):
 
 def getOffice():
     return Office.objects.filter(id=1)[0]
+
+
+def isRequestRejected(student):
+    if student.supervisor1Confirmed is not None and not student.supervisor1Confirmed:
+        return True
+    if student.supervisor2Confirmed is not None and not student.supervisor1Confirmed:
+        return True
+    if student.officeConfirmed is not None and not student.officeConfirmed:
+        return True
+    return False

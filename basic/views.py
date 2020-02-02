@@ -270,7 +270,7 @@ def homeExaminer(request):
         container5Request = getRequestsOfExaminer(request.user, "Termin entstanden", None, None, None, False, False)
         for elem in container5Request:
             container5 += '<p class="alignleft">' + elem.name + ' </p> \n'
-            container5 += '<p class="alignright">Office must confirm</p><br/><br/>'
+            container5 += '<p class="alignright">Prüfungsamt muss bestätigen</p><br/><br/>'
         context['container5'] = container5
         return render(request, 'homePruefer.html', context)
     else:

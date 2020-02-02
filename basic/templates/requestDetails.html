@@ -34,7 +34,7 @@
             {{ appointment | safe }}
             {% elif request.path == '/confirmrequest' %}
             <form method="post">{% csrf_token %}
-                <button type="submit" name="answerRequest" value="accept">Accept</button>
+                <button type="submit" name="answerRequest" value="accept">Annehmen</button>
             </form>
             {% elif request.path == '/grading'%}
                 Note:<br><br>
@@ -61,7 +61,7 @@
                     &nbsp&nbsp&nbsp&nbsp{{ appointmentr | safe }}
                 {% elif request.path == '/confirmrequest' %}
                 <form method="post">{% csrf_token %}
-                    <button type="submit" name="answerRequest" value="reject">Reject</button>
+                    <button type="submit" name="answerRequest" value="reject">Ablehnen</button>
                 </form>
                 {% elif request.path == '/grading'%}
                     <form method="post">{% csrf_token %}

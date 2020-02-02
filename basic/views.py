@@ -269,7 +269,10 @@ def homeExaminer(request):
                                                                       None, True, None, False)
         for elem in container4Request:
             container4 += '<p class="alignleft">' + elem.name + ' </p>'
-            container4 += '<p class="alignright">Beantwortet</p><br/><br/>'
+            if noPossibleConstellation(elem):
+                container4 += '<p class="alignright">Keine Konstellation möglich</p><br/><br/>'
+            else:
+                container4 += '<p class="alignright">Beantwortet</p><br/><br/>'
         context['container4'] = container4
 
         # Container 5
@@ -427,7 +430,7 @@ def supervisor3(request):
     group = getUserGroup(request.user)
     context['group'] = group
     if request.POST.get('confirm') and request.POST.get('supervisor3'):
-        if not setSupervisor3(request.session['requestId'], request.POST.get('supervisor3')[1],
+        if not setSupervisor3(request.session['requestId'], request.POST.get('supervisor3')[1:],
                               request.POST.get('supervisor3')[0]):
             context['error'] = 'Wähle einen Drittprüfer, der nicht bereits ein Prüfer ist.'
         else:
@@ -606,7 +609,7 @@ def answerInvitation(request):
         context['status'] = content['status']
         context['subject'] = content['subject']
         examinerId, intern = getExaminer(request.user)
-        if isSupervisor(request.session['requestId'], examinerId, intern):
+        if isSupervisorOrChairman(request.session['requestId'], examinerId, intern):
             context['confirmationText'] = 'Wollen Sie als Supervisor wirklich ablehnen? Dies würde verursachen, dass ' \
                                           'alle Prüfer erneut eingeladen werden. Sie inklusive.'
         else:

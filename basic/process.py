@@ -41,11 +41,12 @@ def createExaminerConstellation(user, designations):
                         if constellation[elem] is None:
                             constellation[elem] = studentData['supervisor' + str(supervisors[0])]
                             break
+            print(supervisors)
             if len(supervisors) > 1:
                 if studentData['supervisor' + str(supervisors[1])] is not None \
                         and not studentData['topic'] in getExaminerInformations(
                         studentData['supervisor' + str(supervisors[1])])['topic'] and \
-                        not constellation['externalExaminer'] is None:
+                        constellation['externalExaminer'] is None:
                     constellation['externalExaminer'] = studentData['supervisor' + str(supervisors[1])]
                 else:
                     for elem in roles:
@@ -56,14 +57,13 @@ def createExaminerConstellation(user, designations):
                 if studentData['supervisor' + str(supervisors[2])] is not None \
                         and not studentData['topic'] in getExaminerInformations(
                         studentData['supervisor' + str(supervisors[2])])['topic'] and \
-                        not constellation['externalExaminer'] is None:
+                        constellation['externalExaminer'] is None:
                     constellation['externalExaminer'] = studentData['supervisor' + str(supervisors[2])]
                 else:
                     for elem in roles:
                         if constellation[elem] is None:
                             constellation[elem] = studentData['supervisor' + str(supervisors[2])]
                             break
-
             # Fill the role of an external Examiner, if it is not yet set
             if constellation['externalExaminer'] is None:
                 constellationValues = getConstellationValues(constellation)
@@ -142,10 +142,10 @@ def invitationAnswered(studentId, examiner, answer):
         role = getRole(examinerId, intern, studentId)
         constellation = getRequestConstellation(studentId)
         studentData = getStudentRequest(getStudentUser(studentId))
-        if isSupervisor(studentId, examinerId, intern):
+        if isSupervisorOrChairman(studentId, examinerId, intern):
             deleteExaminers = restartScheduling(studentId, 3)
             for elem in deleteExaminers:
-                if isSupervisor(studentId, elem[0], elem[1]):
+                if isSupervisorOrChairman(studentId, elem[0], elem[1]):
                     # send email to office
                     officeNoExaminersNotification(getStudent(None, studentId), getOffice())
                     return False
@@ -202,7 +202,7 @@ def invitationAnswered(studentId, examiner, answer):
                     intern2 = 0
                 elif isinstance(elem, InternExaminer):
                     intern2 = 1
-                if not isSupervisor(studentId, elem.id, intern2):
+                if not isSupervisorOrChairman(studentId, elem.id, intern2):
                     if reInviteExaminer(studentId, elem.id, intern2, 3, role):
                         examinerDeletedInvitationNotification(getExaminer(None, elem.id, intern2),
                                                               getStudent(None, studentId))

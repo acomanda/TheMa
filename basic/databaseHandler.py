@@ -879,7 +879,7 @@ def getStudentUser(studentId):
     return student.user
 
 
-def isSupervisor(studentId, examinerId, intern):
+def isSupervisorOrChairman(studentId, examinerId, intern):
     """
 
     :param studentId:
@@ -896,6 +896,11 @@ def isSupervisor(studentId, examinerId, intern):
             return True
         if student.supervisor3 == examinerId and student.isSupervisor3Intern == intern:
             return True
+        invitation = Invitation.objects.filter(student_id=studentId, examiner=examinerId, isExaminerIntern=intern)
+        if invitation.count() > 0:
+            invitation = invitation[0]
+            if invitation.role == "chairman":
+                return True
         return False
 
 
@@ -943,7 +948,8 @@ def reInviteExaminer(studentId, examinerId, intern, maxInvitation, role):
     if invitation.count() == 0:
         inviteExaminer(getStudent(None, studentId), getExaminer(None, examinerId, intern), role)
         return True
-    if invitation[0].numberInvitations >= maxInvitation:
+    if invitation[0].numberInvitations >= maxInvitation or invitation[0].accepted is None or \
+            invitation[0].accepted == True:
         return False
     invitation.update(accepted=None, numberInvitations=F('numberInvitations')+1, role=role)
     updateAvailabilities(studentId)
@@ -1031,5 +1037,13 @@ def isRequestRejected(student):
     if student.supervisor2Confirmed is not None and not student.supervisor2Confirmed:
         return True
     if student.officeConfirmed is not None and not student.officeConfirmed:
+        return True
+    return False
+
+
+def noPossibleConstellation(student):
+    accepted = Invitation.objects.filter(student=student, accepted=True).count()
+    notAnswered = Invitation.objects.filter(student=student, accepted=None).count()
+    if accepted + notAnswered < 5:
         return True
     return False

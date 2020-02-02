@@ -1019,7 +1019,7 @@ def getOffice():
 def isRequestRejected(student):
     if student.supervisor1Confirmed is not None and not student.supervisor1Confirmed:
         return True
-    if student.supervisor2Confirmed is not None and not student.supervisor1Confirmed:
+    if student.supervisor2Confirmed is not None and not student.supervisor2Confirmed:
         return True
     if student.officeConfirmed is not None and not student.officeConfirmed:
         return True

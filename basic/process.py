@@ -41,7 +41,6 @@ def createExaminerConstellation(user, designations):
                         if constellation[elem] is None:
                             constellation[elem] = studentData['supervisor' + str(supervisors[0])]
                             break
-            print(supervisors)
             if len(supervisors) > 1:
                 if studentData['supervisor' + str(supervisors[1])] is not None \
                         and not studentData['topic'] in getExaminerInformations(

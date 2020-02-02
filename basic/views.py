@@ -313,9 +313,11 @@ def confirmRequest(request):
         elif request.POST.get('answerRequest') == "reject":
             if group == "Examiner":
                 confirmOrNotRequest(request.session['requestId'], False, "Examiner", request.user)
+                officeRequestRejectedNotification(getStudent(None, request.session['requestId']), getOffice())
                 return redirect('/')
             else:
                 confirmOrNotRequest(request.session['requestId'], False, "Office", request.user)
+                officeRequestRejectedNotification(getStudent(None, request.session['requestId']), getOffice())
                 return redirect('/')
     return render(request, 'requestDetails.html', context)
 

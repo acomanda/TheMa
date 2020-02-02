@@ -358,7 +358,7 @@ def officeWaitForSchedulingNotification(student, office):
               + link
     return send_mail(subject, message, systemEmail, [to], fail_silently=True)
 
-# Not used yet
+
 def officeRequestRejectedNotification(student, office):
     subject = 'Anfrage von ' + student.name
     to = office.user.email

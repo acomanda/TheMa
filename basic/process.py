@@ -241,7 +241,7 @@ systemEmail = 'placeholder@thema.de'
 # todo Implement the use of URL's to redirect the user to the right place by including some Id's in the URL
 def examinerSupervisorNotification(examiner, student):
     subject = 'Betreueranfrage von ' + student.name
-    to = examiner.user.email
+    to = examiner.email
     link = 'https://thema.uni-mainz.de/homeexaminer'
     message = 'Sehr geehrter Herr ' + examiner.name + ',\n' \
               + 'hiermit wird Ihnen mitgeteilt, dass der Student ' + student.name \

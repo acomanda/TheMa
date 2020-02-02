@@ -217,7 +217,7 @@ def homeExaminer(request):
             return redirect('/answerInvitation')
         #Container 1
         container1 = ""
-        container1Request = getRequestsOfExaminer(request.user, "Anfrage wird bestätigt", False)
+        container1Request = getRequestsOfExaminer(request.user, "Anfrage wird bestätigt", False, None, None, None, True)
         for elem in container1Request:
             container1 += '<p class="alignleft">' + elem.name + ' </p>'
             if isRequestRejected(elem):
@@ -225,11 +225,11 @@ def homeExaminer(request):
             else:
                 container1 += '<p class="alignright"><button type="submit" name="details" value="' + str(elem.id) \
                               + '">Details</button></p><br/><br/>'
-        container1Request = getRequestsOfExaminer(request.user, "Schreibphase", True)
+        container1Request = getRequestsOfExaminer(request.user, "Schreibphase", True, None, None, None, True)
         for elem in container1Request:
             container1 += '<p class="alignleft">' + elem.name + ' </p>'
             container1 += '<p class="alignright">In Schreibphase</p><br/><br/>'
-        container1Request = getRequestsOfExaminer(request.user, "Anfrage wird bestätigt", True)
+        container1Request = getRequestsOfExaminer(request.user, "Anfrage wird bestätigt", True, None, None, None, True)
         for elem in container1Request:
             container1 += '<p class="alignleft">' + elem.name + ' </p>'
             if isRequestRejected(elem):
@@ -240,12 +240,12 @@ def homeExaminer(request):
 
         #Container 2
         container2 = ""
-        container2Request = getRequestsOfExaminer(request.user, "Gutachteneingabe", None, False)
+        container2Request = getRequestsOfExaminer(request.user, "Gutachteneingabe", None, False, None, None, True)
         for elem in container2Request:
             container2 += '<p class="alignleft">' + elem.name + ' </p>'
             container2 += '<p class="alignright"><button type="submit" name="rate" value="' + str(elem.id) \
                           + '">Bewerten</button></p><br/><br/>'
-        container2Request = getRequestsOfExaminer(request.user, "Gutachteneingabe", None, True)
+        container2Request = getRequestsOfExaminer(request.user, "Gutachteneingabe", None, True, None, None, True)
         for elem in container2Request:
             container2 += '<p class="alignleft">' + elem.name + ' </p>'
             container2 += '<p class="alignright">Bewertet</p><br/><br/>'
@@ -426,14 +426,15 @@ def supervisor3(request):
     context = {}
     group = getUserGroup(request.user)
     context['group'] = group
-    if request.POST.get('confirm'):
+    if request.POST.get('confirm') and request.POST.get('supervisor3'):
         if not setSupervisor3(request.session['requestId'], request.POST.get('supervisor3')[1],
                               request.POST.get('supervisor3')[0]):
             context['error'] = 'Wähle einen Drittprüfer, der nicht bereits ein Prüfer ist.'
         else:
-            examinerSupervisorNotification(getExaminer(None, request.POST.get('supervisor3')[1],
-                                                       request.POST.get('supervisor3')[0]),
+            examinerSupervisorNotification(getExaminer(None, int(request.POST.get('supervisor3')[1:]),
+                                                       int(request.POST.get('supervisor3')[0])),
                                            getStudent(None, request.session['requestId']))
+
             return redirect('/')
     content = getStudentRequest(None, request.session['requestId'])
     context['title'] = content['title']
@@ -634,7 +635,7 @@ def confirmAppointment(request):
     if request.user.is_authenticated:
         context = {}
         context['group'] = getUserGroup(request.user)
-        if request.POST.get('confirm'):
+        if request.POST.get('confirm') and request.POST.get('slot'):
             endRequest(request.session['requestId'], request.POST['slot'])
             constellation = getRequestConstellation(request.session['requestId'], True)
             student = getStudent(None, request.session['requestId'])
@@ -669,7 +670,7 @@ def confirmAppointment(request):
             context['supervisor3'] = 'Betreuer 3:<br><br>'
             context['supervisor3r'] = content['supervisor3'].name + '<br><br>'
         if content['grade3']:
-            context['grade3'] = 'Note Betreuer 3:<br><br>'
+            context['grade3'] = 'Note 3:<br><br>'
             context['grade3r'] = str(content['grade3']) + '<br><br>'
         return render(request, 'appointment.html', context)
     else:

@@ -219,6 +219,10 @@ def getStudentRequest(user, id=None, email=None):
     result['subject'] = student.subject
     result['student'] = student.name
     result['appointment'] = appointment
+
+    # Check if there are invited examiners
+    if student.status == "Terminfindung" or "Termin entstanden":
+        result.update(getRequestConstellation(student.id))
     return result
 
 def updateRequest(variable, value, studentEmail):

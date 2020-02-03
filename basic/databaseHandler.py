@@ -255,6 +255,12 @@ def updateRequest(variable, value, studentEmail):
         student.grade3 = value
     elif variable == 'appointment':
         student.appointment = value
+    elif variable == 'supervisor1Confirmed':
+        student.supervisor1Confirmed = value
+    elif variable == 'supervisor2Confirmed':
+        student.supervisor2Confirmed = value
+    elif variable == 'officeConfirmed':
+        student.officeConfirmed = value
     student.save()
 
 
@@ -391,10 +397,14 @@ def getRequestsOfExaminer(user, status, accepted=None, rated=None, answered=None
     """The function returns the requests of the user group 'Examiner'.
     If a status is passed, all requests that have this status are returned.
     The other parameters can be used to receive more specific requests."""
-    if status is not None:
+    if status is not None and user is not None:
         examinerId, intern = getExaminer(user)
-        if supervisor == False:
+        if not supervisor:
             requests = Student.objects.filter(status=status)
+            invitations = Invitation.objects.filter(
+                examiner=examinerId, isExaminerIntern=intern
+            )
+            requests = requests.filter(id__in=invitations.values('student'))
         else:
             requests = Student.objects.filter(
                 (Q(isSupervisor1Intern=intern, supervisor1=examinerId) |
@@ -402,13 +412,13 @@ def getRequestsOfExaminer(user, status, accepted=None, rated=None, answered=None
                  Q(isSupervisor3Intern=intern, supervisor3=examinerId)), status=status
             )
         if accepted is not None:
-            if supervisor != False:
+            if supervisor:
                 requests = requests.filter(
                     Q(isSupervisor1Intern=intern, supervisor1=examinerId, supervisor1Confirmed__isnull=not accepted) |
                     Q(isSupervisor2Intern=intern, supervisor2=examinerId, supervisor2Confirmed__isnull=not accepted)
                 )
         if rated is not None:
-            if supervisor != False:
+            if supervisor:
                 requests = requests.filter(
                     Q(isSupervisor1Intern=intern, supervisor1=examinerId, grade1__isnull=not rated) |
                     Q(isSupervisor2Intern=intern, supervisor2=examinerId, grade2__isnull=not rated) |
@@ -717,12 +727,17 @@ def moveAvailabilitiesToRequest(user, studentId):
         for elem in invitationAvailabilities:
             rows.append(AvailabilityRequest(student_id=studentId, timeSlot=elem.timeSlot))
         with transaction.atomic():
-            invitationAvailabilities.update(deleted=False)
             for elem in rows:
                 elem.save()
     else:
         AvailabilityRequest.objects.filter(student_id=studentId)\
             .exclude(timeSlot__in=invitationAvailabilities.values('timeSlot')).delete()
+        remainingAvailabilities = AvailabilityRequest.objects.filter(student_id=studentId)
+        invitations = Invitation.objects.filter(student_id=studentId)
+        AvailabilityInvitation.objects.filter(invitation_id__in=[o.id for o in invitations]).exclude(
+            timeSlot_id__in=[o.timeSlot_id for o in remainingAvailabilities]).update(
+                deleted=False
+            )
 
 
 def generateTimeSlots(year):
@@ -864,7 +879,7 @@ def getStudentUser(studentId):
     return student.user
 
 
-def isSupervisor(studentId, examinerId, intern):
+def isSupervisorOrChairman(studentId, examinerId, intern):
     """
 
     :param studentId:
@@ -881,6 +896,11 @@ def isSupervisor(studentId, examinerId, intern):
             return True
         if student.supervisor3 == examinerId and student.isSupervisor3Intern == intern:
             return True
+        invitation = Invitation.objects.filter(student_id=studentId, examiner=examinerId, isExaminerIntern=intern)
+        if invitation.count() > 0:
+            invitation = invitation[0]
+            if invitation.role == "chairman":
+                return True
         return False
 
 
@@ -928,7 +948,8 @@ def reInviteExaminer(studentId, examinerId, intern, maxInvitation, role):
     if invitation.count() == 0:
         inviteExaminer(getStudent(None, studentId), getExaminer(None, examinerId, intern), role)
         return True
-    if invitation[0].numberInvitations >= maxInvitation:
+    if invitation[0].numberInvitations >= maxInvitation or invitation[0].accepted is None or \
+            invitation[0].accepted == True:
         return False
     invitation.update(accepted=None, numberInvitations=F('numberInvitations')+1, role=role)
     updateAvailabilities(studentId)
@@ -1008,3 +1029,21 @@ def getExaminerInformations(examiner):
 
 def getOffice():
     return Office.objects.filter(id=1)[0]
+
+
+def isRequestRejected(student):
+    if student.supervisor1Confirmed is not None and not student.supervisor1Confirmed:
+        return True
+    if student.supervisor2Confirmed is not None and not student.supervisor2Confirmed:
+        return True
+    if student.officeConfirmed is not None and not student.officeConfirmed:
+        return True
+    return False
+
+
+def noPossibleConstellation(student):
+    accepted = Invitation.objects.filter(student=student, accepted=True).count()
+    notAnswered = Invitation.objects.filter(student=student, accepted=None).count()
+    if accepted + notAnswered < 5:
+        return True
+    return False

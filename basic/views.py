@@ -86,17 +86,23 @@ def homeOffice(request):
         container1 = ""
         for elem in container1Request:
             container1 += '<p class="alignleft">' + elem.name + ' </p> \n'
-            container1 += '<p class="alignright"><button type="submit" name="details" value="' + str(elem.id) \
-                          + '">Details</button></p><br/><br/>'
+            if isRequestRejected(elem):
+                container1 += '<p class="alignright">Abgelehnt</p><br/><br/>'
+            else:
+                container1 += '<p class="alignright"><button type="submit" name="details" value="' + str(elem.id) \
+                              + '">Details</button></p><br/><br/>'
         container1Request = getRequestsOfOffice("Anfrage wird bestätigt", True)
         for elem in container1Request:
             container1 += '<p class="alignleft">' + elem.name + ' </p> \n'
-            container1 += '<p class="alignright">Bestätigt</p><br/><br/>'
+            if isRequestRejected(elem):
+                container1 += '<p class="alignright">Abgelehnt</p><br/><br/>'
+            else:
+                container1 += '<p class="alignright">Bestätigt</p><br/><br/>'
         container1Request = getRequestsOfOffice("Schreibphase", None, True)
         for elem in container1Request:
             container1 += '<p class="alignleft">' + elem.name + ' </p> \n'
             container1 += '<p class="alignright"><button type="submit" name="rating" value="' + str(elem.id) \
-                          + '">Gutachteneingabe frei geben</button></p><br/><br/>'
+                          + '" onclick="return confirm(\'Sind sie sicher?\');">Gutachteneingabe frei geben</button></p><br/><br/>'
         container1Request = getRequestsOfOffice("Schreibphase").exclude(id__in=container1Request.values('id'))
         for elem in container1Request:
             container1 += '<p class="alignleft">' + elem.name + ' </p> \n'
@@ -114,7 +120,7 @@ def homeOffice(request):
         for elem in container2Request2:
             container2 += '<p class="alignleft">' + elem.name + ' </p> \n'
             container2 += '<p class="alignright"><button type="submit" name="scheduling" value="' + str(elem.id) \
-                          + '">Terminfindung starten</button></p><br/><br/>'
+                          + '" onclick="return confirm(\'Sind sie sicher?\');">Terminfindung starten</button></p><br/><br/>'
         container2Request = getRequestsOfOffice("Gutachteneingabe").exclude(Q(id__in=container2Request1.values('id')) |
                                                                             Q(id__in=container2Request2.values('id')))
         for elem in container2Request:
@@ -211,29 +217,35 @@ def homeExaminer(request):
             return redirect('/answerInvitation')
         #Container 1
         container1 = ""
-        container1Request = getRequestsOfExaminer(request.user, "Anfrage wird bestätigt", False)
+        container1Request = getRequestsOfExaminer(request.user, "Anfrage wird bestätigt", False, None, None, None, True)
         for elem in container1Request:
             container1 += '<p class="alignleft">' + elem.name + ' </p>'
-            container1 += '<p class="alignright"><button type="submit" name="details" value="' + str(elem.id) \
-                          + '">Details</button></p><br/><br/>'
-        container1Request = getRequestsOfExaminer(request.user, "Schreibphase", True)
+            if isRequestRejected(elem):
+                container1 += '<p class="alignright">Abgelehnt</p><br/><br/>'
+            else:
+                container1 += '<p class="alignright"><button type="submit" name="details" value="' + str(elem.id) \
+                              + '">Details</button></p><br/><br/>'
+        container1Request = getRequestsOfExaminer(request.user, "Schreibphase", True, None, None, None, True)
         for elem in container1Request:
             container1 += '<p class="alignleft">' + elem.name + ' </p>'
             container1 += '<p class="alignright">In Schreibphase</p><br/><br/>'
-        container1Request = getRequestsOfExaminer(request.user, "Anfrage wird bestätigt", True)
+        container1Request = getRequestsOfExaminer(request.user, "Anfrage wird bestätigt", True, None, None, None, True)
         for elem in container1Request:
             container1 += '<p class="alignleft">' + elem.name + ' </p>'
-            container1 += '<p class="alignright">Anfrage wird bestätigt</p><br/><br/>'
+            if isRequestRejected(elem):
+                container1 += '<p class="alignright">Abgelehnt</p><br/><br/>'
+            else:
+                container1 += '<p class="alignright">Anfrage wird bestätigt</p><br/><br/>'
         context['container1'] = container1
 
         #Container 2
         container2 = ""
-        container2Request = getRequestsOfExaminer(request.user, "Gutachteneingabe", None, False)
+        container2Request = getRequestsOfExaminer(request.user, "Gutachteneingabe", None, False, None, None, True)
         for elem in container2Request:
             container2 += '<p class="alignleft">' + elem.name + ' </p>'
             container2 += '<p class="alignright"><button type="submit" name="rate" value="' + str(elem.id) \
                           + '">Bewerten</button></p><br/><br/>'
-        container2Request = getRequestsOfExaminer(request.user, "Gutachteneingabe", None, True)
+        container2Request = getRequestsOfExaminer(request.user, "Gutachteneingabe", None, True, None, None, True)
         for elem in container2Request:
             container2 += '<p class="alignleft">' + elem.name + ' </p>'
             container2 += '<p class="alignright">Bewertet</p><br/><br/>'
@@ -257,7 +269,10 @@ def homeExaminer(request):
                                                                       None, True, None, False)
         for elem in container4Request:
             container4 += '<p class="alignleft">' + elem.name + ' </p>'
-            container4 += '<p class="alignright">Beantwortet</p><br/><br/>'
+            if noPossibleConstellation(elem):
+                container4 += '<p class="alignright">Keine Konstellation möglich</p><br/><br/>'
+            else:
+                container4 += '<p class="alignright">Beantwortet</p><br/><br/>'
         context['container4'] = container4
 
         # Container 5
@@ -270,7 +285,7 @@ def homeExaminer(request):
         container5Request = getRequestsOfExaminer(request.user, "Termin entstanden", None, None, None, False, False)
         for elem in container5Request:
             container5 += '<p class="alignleft">' + elem.name + ' </p> \n'
-            container5 += '<p class="alignright">Office must confirm</p><br/><br/>'
+            container5 += '<p class="alignright">Prüfungsamt muss bestätigen</p><br/><br/>'
         context['container5'] = container5
         return render(request, 'homePruefer.html', context)
     else:
@@ -313,9 +328,11 @@ def confirmRequest(request):
         elif request.POST.get('answerRequest') == "reject":
             if group == "Examiner":
                 confirmOrNotRequest(request.session['requestId'], False, "Examiner", request.user)
+                officeRequestRejectedNotification(getStudent(None, request.session['requestId']), getOffice())
                 return redirect('/')
             else:
                 confirmOrNotRequest(request.session['requestId'], False, "Office", request.user)
+                officeRequestRejectedNotification(getStudent(None, request.session['requestId']), getOffice())
                 return redirect('/')
     return render(request, 'requestDetails.html', context)
 
@@ -392,7 +409,7 @@ def grading(request):
     context = {}
     group = getUserGroup(request.user)
     context['group'] = group
-    if request.POST.get('confirm'):
+    if request.POST.get('confirmation'):
         if gradeRequest(request.user, request.session['requestId'], float(request.POST.get('grade'))):
             officeWaitForSchedulingNotification(getStudent(None, request.session['requestId']), getOffice())
         return redirect('/')
@@ -412,14 +429,15 @@ def supervisor3(request):
     context = {}
     group = getUserGroup(request.user)
     context['group'] = group
-    if request.POST.get('confirm'):
-        if not setSupervisor3(request.session['requestId'], request.POST.get('supervisor3')[1],
+    if request.POST.get('confirmation') and request.POST.get('supervisor3'):
+        if not setSupervisor3(request.session['requestId'], request.POST.get('supervisor3')[1:],
                               request.POST.get('supervisor3')[0]):
             context['error'] = 'Wähle einen Drittprüfer, der nicht bereits ein Prüfer ist.'
         else:
-            examinerSupervisorNotification(getExaminer(None, request.POST.get('supervisor3')[1],
-                                                       request.POST.get('supervisor3')[0]),
+            examinerSupervisorNotification(getExaminer(None, int(request.POST.get('supervisor3')[1:]),
+                                                       int(request.POST.get('supervisor3')[0])),
                                            getStudent(None, request.session['requestId']))
+
             return redirect('/')
     content = getStudentRequest(None, request.session['requestId'])
     context['title'] = content['title']
@@ -448,7 +466,7 @@ def chairman(request):
     student = getStudent(None, request.session['requestId'])
     if not getRequestsOfOffice("Gutachteneingabe", None, None, True, None).filter(id=student.id).count() > 0:
         return redirect('/')
-    if request.POST.get('confirm'):
+    if request.POST.get('confirmation'):
         if len(request.POST['chairman']) > 1:
             examiner = getExaminer(None, int(request.POST['chairman'][1:]), int(request.POST['chairman'][0]))
             if not createExaminerConstellation(Student.objects.filter(id=request.session['requestId'])[0].user,
@@ -591,7 +609,7 @@ def answerInvitation(request):
         context['status'] = content['status']
         context['subject'] = content['subject']
         examinerId, intern = getExaminer(request.user)
-        if isSupervisor(request.session['requestId'], examinerId, intern):
+        if isSupervisorOrChairman(request.session['requestId'], examinerId, intern):
             context['confirmationText'] = 'Wollen Sie als Supervisor wirklich ablehnen? Dies würde verursachen, dass ' \
                                           'alle Prüfer erneut eingeladen werden. Sie inklusive.'
         else:
@@ -620,7 +638,7 @@ def confirmAppointment(request):
     if request.user.is_authenticated:
         context = {}
         context['group'] = getUserGroup(request.user)
-        if request.POST.get('confirm'):
+        if request.POST.get('confirmation') and request.POST.get('slot'):
             endRequest(request.session['requestId'], request.POST['slot'])
             constellation = getRequestConstellation(request.session['requestId'], True)
             student = getStudent(None, request.session['requestId'])
@@ -655,7 +673,7 @@ def confirmAppointment(request):
             context['supervisor3'] = 'Betreuer 3:<br><br>'
             context['supervisor3r'] = content['supervisor3'].name + '<br><br>'
         if content['grade3']:
-            context['grade3'] = 'Note Betreuer 3:<br><br>'
+            context['grade3'] = 'Note 3:<br><br>'
             context['grade3r'] = str(content['grade3']) + '<br><br>'
         return render(request, 'appointment.html', context)
     else:
@@ -741,7 +759,7 @@ def managementRequest(request):
     roles = ['chairman', 'reporter1', 'reporter2', 'examiner', 'externalExaminer']
     if context['group'] != "Office":
         return redirect('/')
-    if request.POST.get('send') == 'email' or request.POST.get('change'):
+    if request.POST.get('send') == 'email' or request.POST.get('change') or request.POST.get('confirmations'):
         if request.POST.get('send') == 'email':
             email = request.POST.get('email')
             request.session['email'] = email
@@ -770,6 +788,11 @@ def managementRequest(request):
                               + request.POST.get('appointment2'), email)
             else:
                 updateRequest(request.POST.get('change'), request.POST.get(request.POST.get('change')), email)
+        if request.POST.get('confirmations'):
+            updateRequest('supervisor1Confirmed', None, email)
+            updateRequest('supervisor2Confirmed', None, email)
+            updateRequest('officeConfirmed', None, email)
+            context['error2'] = 'Bestätigungen zurückgesetzt <br><br>'
         content = getStudentRequest(None, None, email)
         if content is not None:
             context['found'] = True

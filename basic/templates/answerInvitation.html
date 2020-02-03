@@ -5,15 +5,6 @@
     <meta charset="UTF-8">
     <title>Einladung</title>
     {% include "navBar.html" %}
-    <script type="text/javascript">
-    function clicked() {
-       if (confirm("{{ confirmationText | safe }}")) {
-           yourformelement.submit();
-       } else {
-           return false;
-       }
-    }
-    </script>
 </head>
 <body>
     <div class = "left"></div>
@@ -121,8 +112,8 @@
                 </form>
             </table>
         <form method="post">{% csrf_token %}
-            <button class="rejectButton" type="submit" name="exit" value="accept">Abschließen</button>
-            <button class="rejectButton" type="submit" name="exit" value="reject" onclick="clicked();">Ablehnen</button>
+            <button class="rejectButton" type="submit" name="exit" value="accept" onclick="return confirm('Sind Sie sicher?');">Abschließen</button>
+            <button class="rejectButton" type="submit" name="exit" value="reject" onclick="return confirm('{{ confirmationText | safe }}');">Ablehnen</button>
         </form>
         </div>
     </div>

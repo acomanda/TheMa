@@ -24,14 +24,15 @@
             Titel:<br><br>
             Betreuer 1:<br><br>
             Betreuer 2:<br><br>
+            {{ supervisor3 | safe }}
             Abgabetermin:<br><br>
             Fach:<br><br>
             Themengebiet:<br><br>
             Art der Arbeit:<br><br>
             Status:<br><br>
-            Note Betreuer 1:<br><br>
-            Note Betreuer 2:<br><br>
-            {{ drittgutachter }}
+            Note 1:<br><br>
+            Note 2:<br><br>
+            {{ grade3 | safe }}
             <select id = "slot" name="slot">
                 <option></option>
                 {{ appointments | safe }}
@@ -41,16 +42,17 @@
             &nbsp; &nbsp; {{title}}<br><br>
             &nbsp; &nbsp; {{supervisor1}}<br><br>
             &nbsp; &nbsp; {{supervisor2}}<br><br>
+            &nbsp; &nbsp; {{ supervisor3r | safe }}
             &nbsp; &nbsp; {{deadline}}<br><br>
-                &nbsp;&nbsp;&nbsp;&nbsp;{{subject}}<br><br>
+            &nbsp; &nbsp; {{subject}}<br><br>
             &nbsp; &nbsp; {{topic}}<br><br>
             &nbsp; &nbsp; {{type}}<br><br>
             &nbsp; &nbsp; <u>{{status}}</u><br><br>
             &nbsp; &nbsp; {{grade1}}<br><br>
             &nbsp; &nbsp; {{grade2}}<br><br>
-                {{grade3}}
+            &nbsp; &nbsp; {{grade3r | safe }}
 
-                <button name="confirm" value="1">Bestätigen</button>
+            &nbsp; &nbsp; <button name="confirmation" value="1" onclick="return confirm('Sind Sie sicher?');">Bestätigen</button>
         </div>
     </div>
     <div class="right"></div>

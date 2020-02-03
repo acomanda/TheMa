@@ -34,7 +34,7 @@
             {{ appointment | safe }}
             {% elif request.path == '/confirmrequest' %}
             <form method="post">{% csrf_token %}
-                <button type="submit" name="answerRequest" value="accept">Accept</button>
+                <button type="submit" name="answerRequest" value="accept" onclick="return confirm('Sind sie sicher?');">Annehmen</button>
             </form>
             {% elif request.path == '/grading'%}
                 Note:<br><br>
@@ -61,7 +61,7 @@
                     &nbsp&nbsp&nbsp&nbsp{{ appointmentr | safe }}
                 {% elif request.path == '/confirmrequest' %}
                 <form method="post">{% csrf_token %}
-                    <button type="submit" name="answerRequest" value="reject">Reject</button>
+                    <button type="submit" name="answerRequest" value="reject" onclick="return confirm('Sind sie sicher?');">Ablehnen</button>
                 </form>
                 {% elif request.path == '/grading'%}
                     <form method="post">{% csrf_token %}
@@ -78,7 +78,7 @@
                             <option value="4.0">4.0</option>
                             <option value="5.0">5.0</option>
                         </select>
-                        <button type="submit" name="confirm" value=" ">Benoten</button>
+                        <button type="submit" name="confirmation" value=" " onclick="return confirm('Sind sie sicher?');">Benoten</button>
                     </form>
                 {% elif request.path == '/supervisor3'%}
                     <form method="post">{% csrf_token %}
@@ -86,7 +86,7 @@
                             <option></option>
                             {{ supervisors | safe}}
                         </select>
-                        <button type="submit" name="confirm" value="1">Bestätigen</button>
+                        <button type="submit" name="confirmation" value="1" onclick="return confirm('Sind sie sicher?');">Bestätigen</button>
                     </form>
                     {{ error | safe }}
                 {% elif request.path == '/chairman'%}
@@ -95,7 +95,7 @@
                             <option></option>
                             {{ supervisors | safe}}
                         </select>
-                        <button type="submit" name="confirm" value="1">Bestätigen</button>
+                        <button type="submit" name="confirmation" value="1" onclick="return confirm('Sind sie sicher?');">Bestätigen</button>
                     </form>
                     {{ error | safe }}
                 {% endif %}

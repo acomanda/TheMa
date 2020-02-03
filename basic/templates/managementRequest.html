@@ -30,25 +30,25 @@
                     <form method="post">{% csrf_token %}
                     Abgabetermin: {{ deadline | safe }} <br>
                     <input type="date" name="deadline">
-                    <button name="change" value="deadline">Anwenden</button><br><br>
+                    <button name="change" value="deadline" onclick="return confirm('Sind Sie sicher?');">Anwenden</button><br><br>
 
                     Titel: {{ title | safe }} <br>
                     <input type="text" name="title">
-                    <button name="change" value="title">Anwenden</button><br><br>
+                    <button name="change" value="title" onclick="return confirm('Sind Sie sicher?');">Anwenden</button><br><br>
 
                     Fach: {{ subject | safe }} <br>
                     <select name="subject">
                         <option></option>
                         {{ subjects | safe }}
                     </select>
-                    <button name="change" value="subject">Anwenden</button><br><br>
+                    <button name="change" value="subject" onclick="return confirm('Sind Sie sicher?');">Anwenden</button><br><br>
 
                     Themengebiet: {{ topic | safe }} <br>
                     <select name="topic">
                         <option></option>
                         {{ topics | safe }}
                     </select>
-                    <button name="change" value="topic">Anwenden</button><br><br>
+                    <button name="change" value="topic" onclick="return confirm('Sind Sie sicher?');">Anwenden</button><br><br>
 
                     Art der Arbeit: {{ type | safe }} <br>
                     <select name="type">
@@ -57,21 +57,21 @@
                         <option value="m.sc.">M.Sc.</option>
                         <option value="dr.">Dr.</option>
                     </select>
-                    <button name="change" value="type">Anwenden</button><br><br>
+                    <button name="change" value="type" onclick="return confirm('Sind Sie sicher?');">Anwenden</button><br><br>
 
                     Betreuer 1: {{ supervisor1 | safe }} <br>
                     <select name="supervisor1">
                         <option></option>
                         {{ supervisors | safe }}
                     </select>
-                    <button name="change" value="supervisor1">Anwenden</button><br><br>
+                    <button name="change" value="supervisor1" onclick="return confirm('Sind Sie sicher?');">Anwenden</button><br><br>
 
                     Betreuer 2: {{ supervisor2 | safe }} <br>
                     <select name="supervisor2">
                         <option></option>
                         {{ supervisors | safe }}
                     </select>
-                    <button name="change" value="supervisor2">Anwenden</button><br><br>
+                    <button name="change" value="supervisor2" onclick="return confirm('Sind Sie sicher?');">Anwenden</button><br><br>
 
                     {% if supervisor3Set %}
                         Betreuer 3: {{ supervisor3r | safe }} <br>
@@ -79,8 +79,10 @@
                         <option></option>
                         {{ supervisors | safe }}
                     </select>
-                        <button name="change" value="supervisor3">Anwenden</button><br><br>
+                        <button name="change" value="supervisor3" onclick="return confirm('Sind Sie sicher?');">Anwenden</button><br><br>
                     {% endif %}
+                    {{ error2 | safe }}
+                    <button name="confirmations" value="reset" onclick="return confirm('Sind Sie sicher?');">Bestätigungen zurücksetzen</button><br><br>
 
                     Note 1: {{ grade1 | safe }} <br>
                     <select name="grade1">
@@ -96,7 +98,7 @@
                         <option value="4.0">4.0</option>
                         <option value="5.0">5.0</option>
                     </select>
-                    <button name="change" value="grade1">Anwenden</button><br><br>
+                    <button name="change" value="grade1" onclick="return confirm('Sind Sie sicher?');">Anwenden</button><br><br>
 
                     Note 2: {{ grade2 | safe }} <br>
                     <select name="grade2">
@@ -112,7 +114,7 @@
                         <option value="4.0">4.0</option>
                         <option value="5.0">5.0</option>
                     </select>
-                    <button name="change" value="grade2">Anwenden</button><br><br>
+                    <button name="change" value="grade2" onclick="return confirm('Sind Sie sicher?');">Anwenden</button><br><br>
 
                     {% if grade3Set %}
                         Note 3: {{ grade3r | safe }} <br>
@@ -129,7 +131,7 @@
                             <option value="4.0">4.0</option>
                             <option value="5.0">5.0</option>
                         </select>
-                        <button name="change" value="grade3">Anwenden</button><br><br>
+                        <button name="change" value="grade3" onclick="return confirm('Sind Sie sicher?');">Anwenden</button><br><br>
                     {% endif %}
 
                     <div class="appointment">
@@ -174,7 +176,7 @@
                             <option></option>
                             {{ supervisors | safe }}
                         </select><br><br>
-                        <button name="change" value="oral">Verteidigung festlegen</button><br><br>
+                        <button name="change" value="oral" onclick="return confirm('Sind Sie sicher?');">Verteidigung festlegen</button><br><br>
 
                     </div>
                     </form>

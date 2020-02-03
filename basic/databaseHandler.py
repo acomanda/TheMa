@@ -555,8 +555,8 @@ def getExaminers(approvalToTest=None, subject=None, topic=None, title=None, excl
         qualifications = qualifications.intersection(Qualification.objects.exclude(topic=excludedTopic))
     externalExaminers = ExternalExaminer.objects.all()
     internExaminers = InternExaminer.objects.all()
-    externalQualifications = qualifications.filter(isExaminerIntern=False)
-    internalQualifications = qualifications.filter(isExaminerIntern=True)
+    externalQualifications = qualifications.intersection(Qualification.objects.filter(isExaminerIntern=False))
+    internalQualifications = qualifications.intersection(Qualification.objects.filter(isExaminerIntern=True))
     externalExaminers = externalExaminers and ExternalExaminer.objects.filter(
         id__in=[o.examiner for o in externalQualifications])
     internExaminers = internExaminers and InternExaminer.objects.filter(

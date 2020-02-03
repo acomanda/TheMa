@@ -102,7 +102,7 @@ def homeOffice(request):
         for elem in container1Request:
             container1 += '<p class="alignleft">' + elem.name + ' </p> \n'
             container1 += '<p class="alignright"><button type="submit" name="rating" value="' + str(elem.id) \
-                          + '">Gutachteneingabe frei geben</button></p><br/><br/>'
+                          + '" onclick="return confirm(\'Sind sie sicher?\');">Gutachteneingabe frei geben</button></p><br/><br/>'
         container1Request = getRequestsOfOffice("Schreibphase").exclude(id__in=container1Request.values('id'))
         for elem in container1Request:
             container1 += '<p class="alignleft">' + elem.name + ' </p> \n'
@@ -120,7 +120,7 @@ def homeOffice(request):
         for elem in container2Request2:
             container2 += '<p class="alignleft">' + elem.name + ' </p> \n'
             container2 += '<p class="alignright"><button type="submit" name="scheduling" value="' + str(elem.id) \
-                          + '">Terminfindung starten</button></p><br/><br/>'
+                          + '" onclick="return confirm(\'Sind sie sicher?\');">Terminfindung starten</button></p><br/><br/>'
         container2Request = getRequestsOfOffice("Gutachteneingabe").exclude(Q(id__in=container2Request1.values('id')) |
                                                                             Q(id__in=container2Request2.values('id')))
         for elem in container2Request:
@@ -409,7 +409,7 @@ def grading(request):
     context = {}
     group = getUserGroup(request.user)
     context['group'] = group
-    if request.POST.get('confirm'):
+    if request.POST.get('confirmation'):
         if gradeRequest(request.user, request.session['requestId'], float(request.POST.get('grade'))):
             officeWaitForSchedulingNotification(getStudent(None, request.session['requestId']), getOffice())
         return redirect('/')
@@ -429,7 +429,7 @@ def supervisor3(request):
     context = {}
     group = getUserGroup(request.user)
     context['group'] = group
-    if request.POST.get('confirm') and request.POST.get('supervisor3'):
+    if request.POST.get('confirmation') and request.POST.get('supervisor3'):
         if not setSupervisor3(request.session['requestId'], request.POST.get('supervisor3')[1:],
                               request.POST.get('supervisor3')[0]):
             context['error'] = 'Wähle einen Drittprüfer, der nicht bereits ein Prüfer ist.'
@@ -466,7 +466,7 @@ def chairman(request):
     student = getStudent(None, request.session['requestId'])
     if not getRequestsOfOffice("Gutachteneingabe", None, None, True, None).filter(id=student.id).count() > 0:
         return redirect('/')
-    if request.POST.get('confirm'):
+    if request.POST.get('confirmation'):
         if len(request.POST['chairman']) > 1:
             examiner = getExaminer(None, int(request.POST['chairman'][1:]), int(request.POST['chairman'][0]))
             if not createExaminerConstellation(Student.objects.filter(id=request.session['requestId'])[0].user,
@@ -638,7 +638,7 @@ def confirmAppointment(request):
     if request.user.is_authenticated:
         context = {}
         context['group'] = getUserGroup(request.user)
-        if request.POST.get('confirm') and request.POST.get('slot'):
+        if request.POST.get('confirmation') and request.POST.get('slot'):
             endRequest(request.session['requestId'], request.POST['slot'])
             constellation = getRequestConstellation(request.session['requestId'], True)
             student = getStudent(None, request.session['requestId'])

@@ -569,8 +569,8 @@ def getExaminers(approvalToTest=None, subject=None, topic=None, title=None, excl
     if maxInvitation is not None:
         invitationsExternal = Invitation.objects.filter(numberInvitations__gt=maxInvitation, isExaminerIntern=0)
         invitationsIntern = Invitation.objects.filter(numberInvitations__gt=maxInvitation, isExaminerIntern=1)
-        externalExaminers = externalExaminers.exclude(id__in=[o.examiner for o in invitationsExternal])
-        internExaminers = internExaminers.exclude(id__in=[o.examiner for o in invitationsIntern])
+        externalExaminers = externalExaminers.intersection(ExternalExaminer.objects.exclude(id__in=[o.examiner for o in invitationsExternal]))
+        internExaminers = internExaminers.intersection(InternExaminer.objects.exclude(id__in=[o.examiner for o in invitationsIntern]))
     return externalExaminers, internExaminers
 
 

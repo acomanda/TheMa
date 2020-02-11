@@ -21,7 +21,7 @@ body {
 
 .main.left {
     float: left;
-    width: 10%;
+    width: 50%;
     display: flex;
     border: 1px solid black;
 }
@@ -41,7 +41,7 @@ body {
     #request {
         display: flex;
         width: 100%;
-        height: 20%;
+        height: 40%;
         text-align: left;
         border: 1px solid black;
         margin-bottom: 10%;
@@ -66,7 +66,7 @@ body {
         display: flex;
         margin: 0 auto;
         width: 80%;
-        height: 20%;
+        height: 40%;
         text-align: left;
         border: 1px solid black;
         margin-bottom: 10%;

@@ -33,6 +33,12 @@
             Note 1:<br><br>
             Note 2:<br><br>
             {{ grade3 | safe }}
+            <b>Konstellation</b><br><br>
+            Vorsitzender: <br><br>
+            Prüfer: <br><br>
+            Externer Prüfer: <br><br>
+            1. Berichterstatter: <br><br>
+            2. Berichterstatter: <br><br>
             <select id = "slot" name="slot">
                 <option></option>
                 {{ appointments | safe }}
@@ -51,6 +57,12 @@
             &nbsp; &nbsp; {{grade1}}<br><br>
             &nbsp; &nbsp; {{grade2}}<br><br>
             &nbsp; &nbsp; {{grade3r | safe }}
+                <br><br>
+            &nbsp; &nbsp; {{ chairman | safe }}
+            &nbsp; &nbsp; {{ examiner | safe }}
+            &nbsp; &nbsp; {{ externalExaminer | safe }}
+            &nbsp; &nbsp; {{ reporter1 | safe }}
+            &nbsp; &nbsp; {{ reporter2 | safe }}
 
             &nbsp; &nbsp; <button name="confirmation" value="1" onclick="return confirm('Sind Sie sicher?');">Bestätigen</button>
         </div>

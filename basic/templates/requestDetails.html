@@ -30,9 +30,18 @@
             Note Betreuer 1:<br><br>
             Note Betreuer 2:<br><br>
             {{ supervisor3 | safe }}
-            {{ grade3 | safe }}<br><br>
+            {{ grade3 | safe }}
             {{ appointment | safe }}
-            {% elif request.path == '/confirmrequest' %}
+            {% endif %}
+            {% if scheduling %}
+                <b>Konstellation</b><br><br>
+                Vorsitzender: <br><br>
+                Prüfer: <br><br>
+                Externer Prüfer: <br><br>
+                1. Berichterstatter: <br><br>
+                2. Berichterstatter: <br><br>
+            {% endif %}
+            {% if request.path == '/confirmrequest' %}
             <form method="post">{% csrf_token %}
                 <button type="submit" name="answerRequest" value="accept" onclick="return confirm('Sind sie sicher?');">Annehmen</button>
             </form>
@@ -49,17 +58,30 @@
             &nbsp; &nbsp; {{supervisor1}}<br><br>
             &nbsp; &nbsp; {{supervisor2}}<br><br>
             &nbsp; &nbsp; {{deadline}}<br><br>
-                &nbsp;&nbsp;&nbsp;&nbsp;{{subject}}<br><br>
+            &nbsp; &nbsp; {{subject}}<br><br>
             &nbsp; &nbsp; {{topic}}<br><br>
             &nbsp; &nbsp; {{type}}<br><br>
                 {% if group == "Student"%}
             &nbsp; &nbsp; <u>{{status}}</u><br><br>
             &nbsp; &nbsp; {{grade1}}<br><br>
             &nbsp; &nbsp; {{grade2}}<br><br>
-                &nbsp;&nbsp;&nbsp;&nbsp;{{ supervisor3r | safe }}
-                    &nbsp;&nbsp;&nbsp;&nbsp{{ grade3r | safe }} <br><br>
-                    &nbsp&nbsp&nbsp&nbsp{{ appointmentr | safe }}
-                {% elif request.path == '/confirmrequest' %}
+                {% if supervisor3r %}
+            &nbsp; &nbsp; {{ supervisor3r | safe }}
+            &nbsp; &nbsp; {{ grade3r | safe }}
+                {% endif %}
+                {% if appointmentr %}
+            &nbsp; &nbsp; {{ appointmentr | safe }}
+                {% endif %}
+                {% endif %}
+                {% if scheduling %}
+                    <br><br>
+            &nbsp; &nbsp; {{ chairman | safe }}
+            &nbsp; &nbsp; {{ examiner | safe }}
+            &nbsp; &nbsp; {{ externalExaminer | safe }}
+            &nbsp; &nbsp; {{ reporter1 | safe }}
+            &nbsp; &nbsp; {{ reporter2 | safe }}
+                {% endif %}
+                {% if request.path == '/confirmrequest' %}
                 <form method="post">{% csrf_token %}
                     <button type="submit" name="answerRequest" value="reject" onclick="return confirm('Sind sie sicher?');">Ablehnen</button>
                 </form>

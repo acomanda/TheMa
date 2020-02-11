@@ -192,6 +192,15 @@ def homeStudent(request):
         if content['appointment']:
             context['appointment'] = 'Verteidigung:<br><br>'
             context['appointmentr'] = content['appointment']
+        constellation = getRequestConstellation(getStudent(request.user))
+        if len(constellation) == 5:
+            context['scheduling'] = True
+            context['chairman'] = constellation['chairman'].name + '<br><br>'
+            context['examiner'] = constellation['examiner'].name + '<br><br>'
+            context['externalExaminer'] = constellation['externalExaminer'].name + '<br><br>'
+            context['reporter1'] = constellation['reporter1'].name + '<br><br>'
+            context['reporter2'] = constellation['reporter2'].name + '<br><br>'
+
         return render(request, 'requestDetails.html', context)
     else:
         return redirect('/')
@@ -552,6 +561,16 @@ def answerInvitation(request):
         context['wednesday'] = (startDate + timedelta(days=2)).strftime("%d.%m")
         context['thursday'] = (startDate + timedelta(days=3)).strftime("%d.%m")
         context['endDate'] = endDate.strftime("%d.%m")
+        group = getUserGroup(request.user)
+        context['group'] = group
+        constellation = getRequestConstellation(getStudent(None, request.session['requestId']))
+        if len(constellation) == 5:
+            context['chairman'] = constellation['chairman'].name + '<br><br>'
+            context['examiner'] = constellation['examiner'].name + '<br><br>'
+            context['externalExaminer'] = constellation['externalExaminer'].name + '<br><br>'
+            context['reporter1'] = constellation['reporter1'].name + '<br><br>'
+            context['reporter2'] = constellation['reporter2'].name + '<br><br>'
+
 
         timeSlots = getTimeSlots(request.session['requestId'], startDate.strftime("%m/%d/%Y"),
                                  endDate.strftime("%m/%d/%Y"))
@@ -661,6 +680,13 @@ def confirmAppointment(request):
         context['type'] = content['type']
         context['status'] = content['status']
         context['subject'] = content['subject']
+        constellation = getRequestConstellation(getStudent(None, request.session['requestId']))
+        if len(constellation) == 5:
+            context['chairman'] = constellation['chairman'].name + '<br><br>'
+            context['examiner'] = constellation['examiner'].name + '<br><br>'
+            context['externalExaminer'] = constellation['externalExaminer'].name + '<br><br>'
+            context['reporter1'] = constellation['reporter1'].name + '<br><br>'
+            context['reporter2'] = constellation['reporter2'].name + '<br><br>'
         if content['grade1'] is None:
             context['grade1'] = "/"
         else:

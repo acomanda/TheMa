@@ -9,7 +9,7 @@ def createExaminerConstellation(user, designations):
     At this moment this function allows only to designate a chairman.
     :param user: Django user object of the Student/Request
     :param designations: Dictionary that stores for the key 'chairman' an Examiner Object
- :return: Returns the generated constellation of examiners for the oral exam
+    :return: Returns the generated constellation of examiners for the oral exam
     """
     studentData = getStudentRequest(user)
     if studentData['subject'] == 'Informatik':
@@ -217,6 +217,12 @@ def invitationAnswered(studentId, examiner, answer):
 
 
 def orderByAvailabilities(constellation):
+    """
+    This function orders the constellation by the amount of the chosen availabilities. From less
+    to more.
+    :param constellation: Dictionary that contains the constellation of examiners.
+    :return: The sorted constellation as a dictionary
+    """
     examiners = list(constellation.values())
     availabilities = {}
     for elem in examiners:

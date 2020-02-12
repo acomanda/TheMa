@@ -11,7 +11,7 @@ from datetime import timedelta, datetime
 
 def randomString(length=20):
     """
-
+    This function returns a random string of the given length that contains letters and digits
     :param length: Integer that tells how long the result should be. (int)
     :return: Random string that contains letters and digits and is of the given length. (str)
     """
@@ -940,9 +940,10 @@ def getDaysPerYear(year):
 
 def getRequestConstellation(studentId, accepted=None):
     """
-
-    :param studentId:
-    :return:
+    This function is used to receive the current constellation of examiners for the oral exam
+    :param studentId: Id of the student (int)
+    :param accepted: Bool that tells if only the examiners should be returned, that have already accepted the invitation
+    :return: Dictionary that contains the specified constellation of examiners (dict)
     """
     if accepted:
         invitations = Invitation.objects.filter(student_id=studentId, accepted=True)
@@ -956,6 +957,11 @@ def getRequestConstellation(studentId, accepted=None):
 
 
 def getStudentId(email):
+    """
+    This function is used to receive the Id of the student that has the given email
+    :param email: E-mail of the student (str)
+    :return: Id of the specified student (int)
+    """
     student = Student.objects.filter(email=email)
     if student.count() > 0:
         return student[0].id
@@ -963,8 +969,8 @@ def getStudentId(email):
 
 def setAppointmentEmerged(studentId):
     """
-
-    :param studentId:
+    This function sets the column appointmentEmerged of a student to True
+    :param studentId: Id of the student (int)
     :return:
     """
     student = Student.objects.filter(id=studentId)[0]
@@ -975,11 +981,11 @@ def setAppointmentEmerged(studentId):
 
 def getRole(examinerId, isExaminerIntern, studentId):
     """
-
-    :param examinerId:
-    :param isExaminerIntern:
-    :param studentId:
-    :return:
+    This function is used to receive the role that was assigned to the given examiner for the given student oral exam
+    :param examinerId: Id of the examiner (int)
+    :param isExaminerIntern: Bool that tells if the examiner is intern or external (bool)
+    :param studentId: Id of the student (int)
+    :return: Role of the examiner for the students oral exam (str)
     """
     invitation = Invitation.objects.filter(examiner=examinerId, isExaminerIntern=isExaminerIntern,
                                            student_id=studentId)[0]
@@ -988,9 +994,9 @@ def getRole(examinerId, isExaminerIntern, studentId):
 
 def getStudentUser(studentId):
     """
-
-    :param studentId:
-    :return:
+    This function is used to receive the student object of the student that has the given Id
+    :param studentId: Id of the student (int)
+    :return: student object (Student)
     """
     student = Student.objects.filter(id=studentId)[0]
     return student.user
@@ -998,11 +1004,11 @@ def getStudentUser(studentId):
 
 def isSupervisorOrChairman(studentId, examinerId, intern):
     """
-
-    :param studentId:
-    :param examinerId:
-    :param intern:
-    :return:
+    This function is used to know if the given examiner is a supervisor or a chairman of the given student
+    :param studentId: Id of the student (int)
+    :param examinerId: Id of the examiner (int)
+    :param intern: Bool that tells if the examiner is intern or external (bool)
+    :return: Bool that tells if the examiner is a supervisor or chairman of the student (bool)
     """
     student = Student.objects.filter(id=studentId)
     if student.count() == 1:
@@ -1022,6 +1028,12 @@ def isSupervisorOrChairman(studentId, examinerId, intern):
 
 
 def getRequestsAppointments(studentId):
+    """
+    This function is used to receive all timeSlots that are currently possible for the students oral exam.
+    It doesn't mean that all examiners have already accepted the invitation.
+    :param studentId: Id of the student (int)
+    :return: List of all the time slots objects ([TimeSlot])
+    """
     slotsId = AvailabilityRequest.objects.filter(student_id=studentId)
     if slotsId.count() > 0:
         slots = TimeSlot.objects.filter(id__in=[o.timeSlot_id for o in slotsId])
@@ -1031,6 +1043,12 @@ def getRequestsAppointments(studentId):
 
 
 def endRequest(studentId, slotId):
+    """
+    This function is used to choose a final timeSlot for the appointment of the given student
+    :param studentId: Id of the student (int)
+    :param slotId: Id of the time slot (int)
+    :return:
+    """
     student = Student.objects.filter(id=studentId)
     if student.count() > 0:
         student = student[0]
@@ -1042,9 +1060,9 @@ def endRequest(studentId, slotId):
 
 def restartScheduling(studentId, maxInvitation):
     """
-    The function deletes all availabilities of invitations and requests and re invite all examiners.
-    :param studentId: Id of the request/student
-    :return: An array that contains all examiners that must be removed of the request
+    The function deletes all availabilities for the oral exam of the given student and re invites all examiners.
+    :param studentId: Id of the student (int)
+    :return: An array that contains all examiners that must be removed of the request [(examiner Id, isExaminerIntern)]
     """
     result = []
     invitations = Invitation.objects.filter(student_id=studentId)
@@ -1061,6 +1079,15 @@ def restartScheduling(studentId, maxInvitation):
 
 
 def reInviteExaminer(studentId, examinerId, intern, maxInvitation, role):
+    """
+    This function is used to invite or reinvite an examiner for the oral exam of the given student
+    :param studentId: Id of the student (int)
+    :param examinerId: Id of the examiner (int)
+    :param intern: Bool that tells if the examiner is intern or external (bool)
+    :param maxInvitation: Maximum number of invitations that can be send to an examiner (int)
+    :param role: Role that should be assigned to the examiner for this invitation (str)
+    :return: True if the examiner have been invited, otherwise False (bool)
+    """
     invitation = Invitation.objects.filter(student_id=studentId, examiner=examinerId, isExaminerIntern=intern)
     if invitation.count() == 0:
         inviteExaminer(getStudent(None, studentId), getExaminer(None, examinerId, intern), role)
@@ -1074,6 +1101,12 @@ def reInviteExaminer(studentId, examinerId, intern, maxInvitation, role):
 
 
 def updateAvailabilities(studentId):
+    """
+    This function updates the available time Slots for a students oral exam.
+    Should be called when an examiner has answered the invitation
+    :param studentId: Id of the student
+    :return:
+    """
     invitations = Invitation.objects.filter(student_id=studentId, accepted=True)
     timeSlots = []
     for elem in invitations:
@@ -1087,12 +1120,30 @@ def updateAvailabilities(studentId):
 
 
 def addQualification(examinerId, isExaminerIntern, title, subject, topic, approval):
+    """
+    This function adds a new qualification to an existing examiner
+    :param examinerId: Id of the examiner (int)
+    :param isExaminerIntern: Bool that tells if the examiner is intern or external (bool)
+    :param title: Title of the examiner for this qualification ('dr.', 'b.sc.', 'm.sc.')(str)
+    :param subject: Subject of the qualification (str)
+    :param topic: Topic of the qualification (str)
+    :param approval: Bool that tells if the examiner has the approval to be an examiner for this subject (bool)
+    :return:
+    """
     qualification = Qualification(title=title, subject=subject, topic=topic, approvalToTest=approval,
                                   examiner=examinerId, isExaminerIntern=isExaminerIntern)
     qualification.save()
 
 
 def setExam(studentId, timeSlot, constellation):
+    """
+    This function sets all invitations for the students oral exam to rejected and
+    defines a new constellation and appointment
+    :param studentId: Id of the student
+    :param timeSlot: Id of the time slot in which the oral exam takes place
+    :param constellation: Dictionary of the form role: examiner ({str:Examiner})
+    :return: True if no errors occured (bool)
+    """
     # set all invitations to rejected
     Invitation.objects.filter(student_id=studentId).update(accepted=False)
     for role, examiner in constellation.items():
@@ -1111,6 +1162,12 @@ def setExam(studentId, timeSlot, constellation):
 
 
 def checkConstellation(studentId, constellation):
+    """
+    This function checks if the constellation is allowed
+    :param studentId: Id of the student (int)
+    :param constellation: Constellation of examiners for the oral exam of the student (dict)
+    :return: True if it is allowed, otherwise False (bool)
+    """
     result = True
     # check that there are not the same examiner twice in the constellation
     if not len(list(constellation.values())) == len(set(list(constellation.values()))):
@@ -1130,6 +1187,11 @@ def checkConstellation(studentId, constellation):
 
 
 def getExaminerInformations(examiner):
+    """
+    This function is used to receive a dictionary with some informations about the given examiner
+    :param examiner: Examiner object (InternExaminer or ExternalExaminer)
+    :return: Dictionary that contains informations about the examiner such as topic isIntern id... (dict)
+    """
     result = {}
     if isinstance(examiner, ExternalExaminer):
         intern = 0
@@ -1145,10 +1207,19 @@ def getExaminerInformations(examiner):
 
 
 def getOffice():
+    """
+    This function is used to receive an office object
+    :return: The first Office object of the database (Office)
+    """
     return Office.objects.filter(id=1)[0]
 
 
 def isRequestRejected(student):
+    """
+    This function is used to check if a students request was declined by a supervisor or the office
+    :param student: Student object (Student)
+    :return: True if someone declined the request, otherwise False (bool)
+    """
     if student.supervisor1Confirmed is not None and not student.supervisor1Confirmed:
         return True
     if student.supervisor2Confirmed is not None and not student.supervisor2Confirmed:
@@ -1159,6 +1230,12 @@ def isRequestRejected(student):
 
 
 def noPossibleConstellation(student):
+    """
+    This function is used to check if a request doesnt't have a constellation of examiners for the oral exam
+    because there are no more possible constellations
+    :param student: Student object (Student)
+    :return: True if there are no more constellations, otherwise False (bool)
+    """
     accepted = Invitation.objects.filter(student=student, accepted=True).count()
     notAnswered = Invitation.objects.filter(student=student, accepted=None).count()
     if accepted + notAnswered < 5:

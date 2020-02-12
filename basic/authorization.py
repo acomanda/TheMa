@@ -5,6 +5,8 @@ import base64
 import json
 
 client_id = 'jgu.net_test_thema'
+# Usually the client secret should be saved separately.
+# In this case, however, it is only a test client ID that will never actually be used.
 client_secret = 'jcOdxmM,IjY6W8DSv[qn_,+*WidEjZLaEZ/*D05qRJS2_yv1'
 redirect_uri = 'http://localhost:8000'
 authorize_url = "https://openid.uni-mainz.de/connect/authorize"

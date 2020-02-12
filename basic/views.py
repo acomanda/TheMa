@@ -415,6 +415,7 @@ def logout(request):
 
 
 def grading(request):
+    """This function controls the behavior of the page that is used to give a grade for a request."""
     context = {}
     group = getUserGroup(request.user)
     context['group'] = group
@@ -435,6 +436,7 @@ def grading(request):
 
 
 def supervisor3(request):
+    """This function controls the behavior of the page that is used to choose a third supervisor."""
     context = {}
     group = getUserGroup(request.user)
     context['group'] = group
@@ -469,6 +471,7 @@ def supervisor3(request):
 
 
 def chairman(request):
+    """This function controls the behavior of the page that is used to choose the chairman for the oral exam."""
     context = {}
     group = getUserGroup(request.user)
     context['group'] = group
@@ -654,6 +657,7 @@ def answerInvitation(request):
 
 
 def confirmAppointment(request):
+    """This function controls the behavior of the page that is used to choose a final time slot for the appointment."""
     if request.user.is_authenticated:
         context = {}
         context['group'] = getUserGroup(request.user)
@@ -707,6 +711,7 @@ def confirmAppointment(request):
 
 
 def management(request):
+    """This function controls the behavior of the page that is used to reach the management pages."""
     context = {}
     context['group'] = getUserGroup(request.user)
     if context['group'] != "Office":
@@ -721,6 +726,7 @@ def management(request):
 
 
 def managementIntern(request):
+    """This function controls the behavior of the page that is used to manage the intern examiners."""
     context = {}
     context['group'] = getUserGroup(request.user)
     if context['group'] != "Office":
@@ -750,6 +756,7 @@ def managementIntern(request):
 
 
 def managementExtern(request):
+    """This function controls the behavior of the page that is used to manage the external examiners."""
     context = {}
     context['group'] = getUserGroup(request.user)
     if context['group'] != "Office":
@@ -780,6 +787,7 @@ def managementExtern(request):
 
 
 def managementRequest(request):
+    """This function controls the behavior of the page that is used to manage the requests of the students."""
     context = {}
     context['group'] = getUserGroup(request.user)
     roles = ['chairman', 'reporter1', 'reporter2', 'examiner', 'externalExaminer']

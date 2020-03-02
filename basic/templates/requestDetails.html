@@ -74,7 +74,10 @@
                 {% endif %}
                 {% endif %}
                 {% if scheduling %}
-                    <br><br><br><br>
+                    {% if appointment %}
+                        <br><br>
+                    {% endif %}
+                    <br><br>
             &nbsp; &nbsp; {{ chairman | safe }}
             &nbsp; &nbsp; {{ examiner | safe }}
             &nbsp; &nbsp; {{ externalExaminer | safe }}

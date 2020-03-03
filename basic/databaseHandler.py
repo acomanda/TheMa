@@ -1219,6 +1219,19 @@ def getExaminerInformations(examiner):
     return result
 
 
+def deleteQualification(id):
+    """
+    This function deletes the qualification with the given id
+    :param id: Id of the qualification (int)
+    :return: True if the id corresponds to a qualification, otherwise False (Bool)
+    """
+    objects = Qualification.objects.filter(id=id)
+    if objects.count() > 0:
+        objects[0].delete()
+    else:
+        return False
+
+
 def getOffice():
     """
     This function is used to receive an office object

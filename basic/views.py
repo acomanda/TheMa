@@ -747,6 +747,8 @@ def managementIntern(request):
         if request.POST.get('email'):
             email = request.POST.get('email')
             request.session['email'] = email
+        if request.POST.get('delete'):
+            deleteQualification(request.POST.get('delete'))
         context['searched'] = True
         examiner = getExaminer(None, None, True, request.session['email'])
         if examiner:
@@ -806,6 +808,8 @@ def managementExtern(request):
         if request.POST.get('email'):
             email = request.POST.get('email')
             request.session['email'] = email
+        if request.POST.get('delete'):
+            deleteQualification(request.POST.get('delete'))
         context['searched'] = True
         examiner = getExaminer(None, None, False, request.session['email'])
         if examiner:
@@ -821,7 +825,9 @@ def managementExtern(request):
                                   '</td><td>' + str(informations['approval'][i]) + \
                                   '</td><td><button ' \
                                   'type="submit" class="button" name="delete" value="' \
-                                  + str(informations['qualId'][i]) + '">Entfernen</button></td></tr>'
+                                  + str(informations['qualId'][i]) + '" onclick="return ' \
+                                                                     'confirm(\'Sind Sie sicher?\');">' \
+                                                                     'Entfernen</button></td></tr>'
             context['qualifications'] = qualifications
         else:
             context['found'] = False

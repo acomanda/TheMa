@@ -344,7 +344,7 @@ def confirmOrNotRequest(requestId, confirm, group, user=None):
     return checkStatus(student)
 
 
-def getExaminer(user, examinerId = None, intern=None):
+def getExaminer(user, examinerId = None, intern=None, email=None):
     """
     If the user is given, the function returns the examiner Object.
     If user is None and the other two parameters are not None, then the function returns
@@ -366,15 +366,20 @@ def getExaminer(user, examinerId = None, intern=None):
             return examiner.id, intern
         else:
             return False
-    else:
+    elif examinerId:
         if intern:
             examiner = InternExaminer.objects.filter(id=examinerId)
         else:
             examiner = ExternalExaminer.objects.filter(id=examinerId)
-        if examiner.count() > 0:
-            return examiner[0]
+    elif email:
+        if intern:
+            examiner = InternExaminer.objects.filter(email=email)
         else:
-            return False
+            examiner = ExternalExaminer.objects.filter(email=email)
+    if examiner.count() > 0:
+        return examiner[0]
+    else:
+        return False
 
 
 def getRequestsOfOffice(status, accepted=None, allAccepted=None, allRated=None, supervisor3Needed=None,
@@ -1198,11 +1203,19 @@ def getExaminerInformations(examiner):
     elif isinstance(examiner, InternExaminer):
         intern = 1
     result['topic'] = []
+    result['subject'] = []
+    result['title'] = []
+    result['approval'] = []
+    result['qualId'] = []
     result['isIntern'] = intern
     result['id'] = examiner.id
     qualification = Qualification.objects.filter(isExaminerIntern=intern, examiner=examiner.id)
     for elem in qualification:
         result['topic'].append(elem.topic)
+        result['subject'].append(elem.subject)
+        result['title'].append(elem.title)
+        result['approval'].append(elem.approvalToTest)
+        result['qualId'].append(elem.id)
     return result
 
 

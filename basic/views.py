@@ -794,6 +794,7 @@ def managementRequest(request):
     if context['group'] != "Office":
         return redirect('/')
     if request.POST.get('send') == 'email' or request.POST.get('change') or request.POST.get('confirmations'):
+        context['searched'] = True
         if request.POST.get('send') == 'email':
             email = request.POST.get('email')
             request.session['email'] = email
@@ -885,4 +886,6 @@ def managementRequest(request):
             for role in roles:
                 if not role in context:
                     context[role] = '/'
+    else:
+        context['searched'] = False
     return render(request, 'managementRequest.html', context)

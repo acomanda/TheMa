@@ -731,7 +731,7 @@ def managementIntern(request):
     context['group'] = getUserGroup(request.user)
     if context['group'] != "Office":
         return redirect('/')
-    if request.POST.get('send') == 'intern':
+    if request.POST.get('add') == 'intern':
         if request.POST.get('type') and request.POST.get('subject') and request.POST.get('topic') \
                 and request.POST.get('approval') and request.POST.get('email') \
                 and request.POST.get('name'):
@@ -741,6 +741,42 @@ def managementIntern(request):
             context['error1'] = 'Prüfer hinzugefügt'
         else:
             context['error1'] = 'Füllen Sie bitte alles aus'
+
+    if request.POST.get('send') == 'email' and (request.POST.get('email') or request.session['email']) or \
+            request.POST.get('delete') or request.POST.get('addQuali'):
+        if request.POST.get('email'):
+            email = request.POST.get('email')
+            request.session['email'] = email
+        if request.POST.get('delete'):
+            deleteQualification(request.POST.get('delete'))
+        if request.POST.get('addQuali') and request.POST.get('subject') and request.POST.get('topic'):
+            examiner = getExaminer(None, None, True, request.session['email'])
+            addQualification(examiner.id, True, request.POST.get('title'), request.POST.get('subject'),
+                             request.POST.get('topic'), request.POST.get('approval'))
+        context['searched'] = True
+        examiner = getExaminer(None, None, True, request.session['email'])
+        if examiner:
+            context['found'] = True
+            context['name'] = examiner.name
+            context['email'] = examiner.email
+            qualifications = ''
+            informations = getExaminerInformations(examiner)
+            for i in range(len(informations['topic'])):
+                qualifications += '<tr><td>' + informations['title'][i] + \
+                                  '</td><td>' + informations['subject'][i] + \
+                                  '</td><td>' + informations['topic'][i] + \
+                                  '</td><td>' + str(informations['approval'][i]) + \
+                                  '</td><td><button ' \
+                                  'type="submit" class="button" name="delete" value="' \
+                                  + str(informations['qualId'][i]) + '" onclick="return ' \
+                                                                     'confirm(\'Sind Sie sicher?\');">' \
+                                                                     'Entfernen</button></td></tr>'
+            context['qualifications'] = qualifications
+        else:
+            context['found'] = False
+    else:
+        context['searched'] = False
+
     subjectsList = getSubjects()
     subjects = ''
     for elem in subjectsList:
@@ -761,7 +797,7 @@ def managementExtern(request):
     context['group'] = getUserGroup(request.user)
     if context['group'] != "Office":
         return redirect('/')
-    if request.POST.get('send') == 'extern':
+    if request.POST.get('add') == 'extern':
         if request.POST.get('type') and request.POST.get('subject') and request.POST.get('topic') \
                 and request.POST.get('approval') and request.POST.get('password') and request.POST.get('email') \
                 and request.POST.get('name'):
@@ -772,6 +808,43 @@ def managementExtern(request):
             context['error1'] = 'Prüfer hinzugefügt'
         else:
             context['error1'] = 'Füllen Sie bitte alles aus'
+
+    if request.POST.get('send') == 'email' and (request.POST.get('email') or request.session['email']) or\
+        request.POST.get('delete') or request.POST.get('addQuali'):
+        if request.POST.get('email'):
+            email = request.POST.get('email')
+            request.session['email'] = email
+        if request.POST.get('delete'):
+            deleteQualification(request.POST.get('delete'))
+        if request.POST.get('addQuali') and request.POST.get('subject') and request.POST.get('topic'):
+            examiner = getExaminer(None, None, False, request.session['email'])
+            addQualification(examiner.id, False, request.POST.get('title'), request.POST.get('subject'),
+                             request.POST.get('topic'), request.POST.get('approval'))
+        context['searched'] = True
+        examiner = getExaminer(None, None, False, request.session['email'])
+        if examiner:
+            context['found'] = True
+            context['name'] = examiner.name
+            context['email'] = examiner.email
+            qualifications = ''
+            informations = getExaminerInformations(examiner)
+            for i in range(len(informations['topic'])):
+                qualifications += '<tr><td>' + informations['title'][i] + \
+                                  '</td><td>' + informations['subject'][i] + \
+                                  '</td><td>' + informations['topic'][i] + \
+                                  '</td><td>' + str(informations['approval'][i]) + \
+                                  '</td><td><button ' \
+                                  'type="submit" class="button" name="delete" value="' \
+                                  + str(informations['qualId'][i]) + '" onclick="return ' \
+                                                                     'confirm(\'Sind Sie sicher?\');">' \
+                                                                     'Entfernen</button></td></tr>'
+            context['qualifications'] = qualifications
+        else:
+            context['found'] = False
+
+    else:
+        context['searched'] = False
+
     subjectsList = getSubjects()
     subjects = ''
     for elem in subjectsList:
@@ -794,6 +867,7 @@ def managementRequest(request):
     if context['group'] != "Office":
         return redirect('/')
     if request.POST.get('send') == 'email' or request.POST.get('change') or request.POST.get('confirmations'):
+        context['searched'] = True
         if request.POST.get('send') == 'email':
             email = request.POST.get('email')
             request.session['email'] = email
@@ -885,4 +959,6 @@ def managementRequest(request):
             for role in roles:
                 if not role in context:
                     context[role] = '/'
+    else:
+        context['searched'] = False
     return render(request, 'managementRequest.html', context)

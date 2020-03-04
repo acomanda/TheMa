@@ -743,12 +743,16 @@ def managementIntern(request):
             context['error1'] = 'Füllen Sie bitte alles aus'
 
     if request.POST.get('send') == 'email' and (request.POST.get('email') or request.session['email']) or \
-            request.POST.get('delete'):
+            request.POST.get('delete') or request.POST.get('addQuali'):
         if request.POST.get('email'):
             email = request.POST.get('email')
             request.session['email'] = email
         if request.POST.get('delete'):
             deleteQualification(request.POST.get('delete'))
+        if request.POST.get('addQuali') and request.POST.get('subject') and request.POST.get('topic'):
+            examiner = getExaminer(None, None, True, request.session['email'])
+            addQualification(examiner.id, True, request.POST.get('title'), request.POST.get('subject'),
+                             request.POST.get('topic'), request.POST.get('approval'))
         context['searched'] = True
         examiner = getExaminer(None, None, True, request.session['email'])
         if examiner:
@@ -764,7 +768,9 @@ def managementIntern(request):
                                   '</td><td>' + str(informations['approval'][i]) + \
                                   '</td><td><button ' \
                                   'type="submit" class="button" name="delete" value="' \
-                                  + str(informations['qualId'][i]) + '">Entfernen</button></td></tr>'
+                                  + str(informations['qualId'][i]) + '" onclick="return ' \
+                                                                     'confirm(\'Sind Sie sicher?\');">' \
+                                                                     'Entfernen</button></td></tr>'
             context['qualifications'] = qualifications
         else:
             context['found'] = False
@@ -804,12 +810,16 @@ def managementExtern(request):
             context['error1'] = 'Füllen Sie bitte alles aus'
 
     if request.POST.get('send') == 'email' and (request.POST.get('email') or request.session['email']) or\
-        request.POST.get('delete'):
+        request.POST.get('delete') or request.POST.get('addQuali'):
         if request.POST.get('email'):
             email = request.POST.get('email')
             request.session['email'] = email
         if request.POST.get('delete'):
             deleteQualification(request.POST.get('delete'))
+        if request.POST.get('addQuali') and request.POST.get('subject') and request.POST.get('topic'):
+            examiner = getExaminer(None, None, False, request.session['email'])
+            addQualification(examiner.id, False, request.POST.get('title'), request.POST.get('subject'),
+                             request.POST.get('topic'), request.POST.get('approval'))
         context['searched'] = True
         examiner = getExaminer(None, None, False, request.session['email'])
         if examiner:
